@@ -145,36 +145,15 @@ fn print_doctor_text(
 
 ///|
 fn print_doctor_json(checks : Array[DoctorCheck]) -> Unit {
-  let json = "["
-  let mut first = true
-  let mut result = json
+  let items : Array[Json] = []
   for check in checks {
-    if !first {
-      result = result + ","
-    }
-    first = false
-    result = result +
-      "{\"name\":\"" +
-      check.name +
-      "\",\"ok\":" +
-      bool_json(check.ok) +
-      ",\"detail\":\"" +
-      escape_json(check.detail) +
-      "\"}"
+    items.push(
+      ({
+        "name": check.name,
+        "ok": check.ok,
+        "detail": check.detail,
+      } : Json),
+    )
   }
-  println(result + "]")
-}
-
-///|
-fn bool_json(value : Bool) -> String {
-  if value {
-    "true"
-  } else {
-    "false"
-  }
-}
-
-///|
-fn escape_json(text : String) -> String {
-  text.replace(old="\\", new="\\\\").replace(old="\"", new="\\\"")
+  println(ToJson::to_json(items).stringify())
 }

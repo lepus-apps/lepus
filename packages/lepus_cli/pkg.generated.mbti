@@ -6,9 +6,13 @@ import {
 }
 
 // Values
+pub fn canonicalize_path(String) -> String
+
 pub fn command_exists(Bytes) -> Int
 
 pub fn current_dir() -> Bytes
+
+pub fn directory_exists(Bytes) -> Int
 
 pub fn env_get(Bytes) -> Bytes
 
@@ -20,9 +24,17 @@ pub fn get_cwd() -> String
 
 pub fn get_platform() -> String
 
+pub fn get_repo_root() -> String
+
 pub fn getenv(String) -> String?
 
 pub fn has_command(String) -> Bool
+
+pub fn is_directory(String) -> Bool
+
+pub fn mkdir_p(String) -> Bool
+
+pub fn mkdir_p_ffi(Bytes) -> Int
 
 pub fn parse_build_config(@argparse.Matches, @argparse.Matches) -> BuildConfig
 
@@ -36,6 +48,10 @@ pub fn path_exists(String) -> Bool
 
 pub fn platform_name() -> Bytes
 
+pub fn realpath_ffi(Bytes) -> Bytes
+
+pub fn repo_root() -> Bytes
+
 pub fn root_command() -> @argparse.Command
 
 pub fn run_build(BuildConfig) -> Int
@@ -45,6 +61,10 @@ pub fn run_dev(DevConfig) -> Int
 pub fn run_doctor(DoctorConfig) -> Int
 
 pub fn run_init(InitConfig) -> Int
+
+pub fn write_text_file(String, String) -> Bool
+
+pub fn write_text_file_ffi(Bytes, Bytes) -> Int
 
 // Errors
 
@@ -75,6 +95,8 @@ pub struct DoctorConfig {
   json : Bool
   verbose : Int
 }
+
+type GeneratedFile
 
 pub struct InitConfig {
   project_name : String?

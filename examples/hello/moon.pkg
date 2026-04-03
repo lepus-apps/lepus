@@ -8,8 +8,8 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../packages/lepus_runtime_webview/lib"
-    }
+      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../packages/lepus_runtime_webview/lib",
+    },
   },
   targets: { "main.mbt": [ "native" ] },
 )

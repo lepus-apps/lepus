@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @lepus.default_app()
+  @lepus.Builder::new()
   .title("Hello Lepus")
   .html(
     (
