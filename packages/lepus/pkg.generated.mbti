@@ -2,7 +2,6 @@
 package "lepus-apps/lepus/packages/lepus"
 
 // Values
-pub fn default_app() -> Builder
 
 // Errors
 

@@ -114,7 +114,7 @@ pub fn PluginHost::new(
 /// The host is created lazily and reused by `webview.install_plugin(...)` and
 /// `webview.emit_plugin(...)`.
 pub fn Webview::plugin_host(self : Webview) -> PluginHost {
-  let key = self.identity()
+  let key = self.plugin_host_registry_key()
   match default_plugin_hosts.get(key) {
     Some(host) => host
     None => {
@@ -213,10 +213,7 @@ pub fn PluginHost::install(self : PluginHost, plugin : Plugin) -> Unit {
 /// Drops all registered plugin metadata and destroys the underlying
 /// `CommandBridge`.
 pub fn PluginHost::destroy(self : PluginHost) -> Unit {
-  match self.default_registry_key {
-    Some(key) => default_plugin_hosts.remove(key)
-    None => ()
-  }
+  self.unregister_default_host()
   self.webview.unregister_destroy_hook(self.destroy_hook_name)
   for _, hook in self.destroy_hooks {
     hook()
@@ -290,17 +287,9 @@ pub fn[Payload : @json.FromJson, Reply : ToJson] PluginContext::command(
   api_name : String,
   callback : (Payload) -> Reply,
 ) -> Unit {
-  let command_name = self.register_api(api_name)
-  self.host.bridge.handle(command_name, callback)
-  self.host.install_script(
-    make_plugin_api_script(
-      self.host.global_name,
-      self.host.bridge.global_name(),
-      self.plugin_name,
-      api_name,
-      command_name,
-    ),
-  )
+  self.install_command_api(api_name, fn(command_name) {
+    self.host.bridge.handle(command_name, callback)
+  })
 }
 
 ///|
@@ -310,17 +299,9 @@ pub fn[Payload : @json.FromJson, Reply : ToJson] PluginContext::command_result(
   api_name : String,
   callback : (Payload) -> Result[Reply, String],
 ) -> Unit {
-  let command_name = self.register_api(api_name)
-  self.host.bridge.handle_result(command_name, callback)
-  self.host.install_script(
-    make_plugin_api_script(
-      self.host.global_name,
-      self.host.bridge.global_name(),
-      self.plugin_name,
-      api_name,
-      command_name,
-    ),
-  )
+  self.install_command_api(api_name, fn(command_name) {
+    self.host.bridge.handle_result(command_name, callback)
+  })
 }
 
 ///|
@@ -350,17 +331,51 @@ fn PluginContext::register_api(
 }
 
 ///|
+fn PluginContext::install_command_api(
+  self : PluginContext,
+  api_name : String,
+  register : (String) -> Unit,
+) -> Unit {
+  let command_name = self.register_api(api_name)
+  register(command_name)
+  self.host.install_script(
+    make_plugin_api_script(
+      self.host.global_name,
+      self.host.bridge.global_name(),
+      self.plugin_name,
+      api_name,
+      command_name,
+    ),
+  )
+}
+
+///|
 fn PluginHost::install_script(self : PluginHost, script : String) -> Unit {
   self.webview.init(script)
   self.webview.dispatch(fn() { self.webview.eval(script) })
 }
 
 ///|
+fn Webview::plugin_host_registry_key(self : Webview) -> Int64 {
+  self.identity()
+}
+
+///|
+fn PluginHost::unregister_default_host(self : PluginHost) -> Unit {
+  match self.default_registry_key {
+    Some(key) => default_plugin_hosts.remove(key)
+    None => ()
+  }
+}
+
+///|
+fn string_literal(value : String) -> String {
+  Json::string(value).stringify()
+}
+
+///|
 fn plugin_command_name(plugin_name : String, api_name : String) -> String {
-  "plugin:" +
-  Json::string(plugin_name).stringify() +
-  ":" +
-  Json::string(api_name).stringify()
+  "plugin:\{string_literal(plugin_name)}:\{string_literal(api_name)}"
 }
 
 ///|
@@ -373,25 +388,27 @@ fn plugin_host_destroy_hook_name(
   global_name : String,
   binding_name : String,
 ) -> String {
-  "plugin-host:" + global_name + ":" + binding_name
+  "plugin-host:\{global_name}:\{binding_name}"
 }
 
 ///|
 fn is_disallowed_js_property_name(name : String) -> Bool {
-  name.has_prefix("@@") ||
-  name == "__proto__" ||
-  name == "prototype" ||
-  name == "constructor"
+  name is (['@', '@', ..] | "__proto__" | "prototype" | "constructor")
 }
 
 ///|
 fn is_reserved_plugin_name(plugin_name : String) -> Bool {
-  is_disallowed_js_property_name(plugin_name)
+  is_reserved_js_name(plugin_name)
 }
 
 ///|
 fn is_reserved_api_name(api_name : String) -> Bool {
-  is_disallowed_js_property_name(api_name)
+  is_reserved_js_name(api_name)
+}
+
+///|
+fn is_reserved_js_name(name : String) -> Bool {
+  is_disallowed_js_property_name(name)
 }
 
 ///|
@@ -399,124 +416,122 @@ fn make_plugin_host_script(
   global_name : String,
   bridge_global_name : String,
 ) -> String {
-  let global_name_js = Json::string(global_name).stringify()
-  let bridge_global_name_js = Json::string(bridge_global_name).stringify()
-  "(function() {" +
-  "  const globalName = " +
-  global_name_js +
-  ";" +
-  "  const bridgeName = " +
-  bridge_global_name_js +
-  ";" +
-  "  const pluginEventCommand = '@@plugin:event';" +
-  "  const existing = window[globalName];" +
-  "  const root = existing && typeof existing === 'object' ? existing : Object.create(null);" +
-  "  function getBridge() {" +
-  "    const bridge = window[bridgeName];" +
-  "    return bridge && typeof bridge.send === 'function' ? bridge : null;" +
-  "  }" +
-  "  function ensurePluginHelpers(plugin) {" +
-  "    if (!Array.isArray(plugin['@@listeners'])) {" +
-  "      plugin['@@listeners'] = [];" +
-  "    }" +
-  "    if (typeof plugin['@@on'] !== 'function') {" +
-  "      plugin['@@on'] = function(listener) {" +
-  "        root['@@ensureBridgeListener']();" +
-  "        if (typeof listener !== 'function') {" +
-  "          throw new TypeError('MoonBit plugin listener must be a function');" +
-  "        }" +
-  "        plugin['@@listeners'].push(listener);" +
-  "        return function() {" +
-  "          plugin['@@listeners'] = plugin['@@listeners'].filter(function(candidate) {" +
-  "            return candidate !== listener;" +
-  "          });" +
-  "        };" +
-  "      };" +
-  "    }" +
-  "    if (typeof plugin['@@onEvent'] !== 'function') {" +
-  "      plugin['@@onEvent'] = function(eventName, listener) {" +
-  "        if (typeof listener !== 'function') {" +
-  "          throw new TypeError('MoonBit plugin listener must be a function');" +
-  "        }" +
-  "        return plugin['@@on'](function(event) {" +
-  "          if (event.name === eventName) {" +
-  "            listener(event);" +
-  "          }" +
-  "        });" +
-  "      };" +
-  "    }" +
-  "    return plugin;" +
-  "  }" +
-  "  root['@@call'] = function(pluginName, apiName, payload) {" +
-  "    root['@@ensureBridgeListener']();" +
-  "    const bridge = getBridge();" +
-  "    if (!bridge) {" +
-  "      return Promise.reject(new Error('MoonBit command bridge is not available'));" +
-  "    }" +
-  "    return bridge.send('plugin:' + JSON.stringify(pluginName) + ':' + JSON.stringify(apiName), payload);" +
-  "  };" +
-  "  root['@@ensurePlugin'] = function(pluginName) {" +
-  "    const plugin = root[pluginName];" +
-  "    if (plugin && typeof plugin === 'object') {" +
-  "      return ensurePluginHelpers(plugin);" +
-  "    }" +
-  "    const next = Object.create(null);" +
-  "    root[pluginName] = next;" +
-  "    return ensurePluginHelpers(next);" +
-  "  };" +
-  "  root['@@emit'] = function(pluginName, eventName, payload) {" +
-  "    const plugin = root['@@ensurePlugin'](pluginName);" +
-  "    const event = {" +
-  "      plugin: pluginName," +
-  "      name: eventName," +
-  "      payload: payload === undefined ? null : payload" +
-  "    };" +
-  "    const listeners = plugin['@@listeners'].slice();" +
-  "    for (const listener of listeners) {" +
-  "      listener(event);" +
-  "    }" +
-  "    return event;" +
-  "  };" +
-  "  root['@@ensureBridgeListener'] = function() {" +
-  "    if (root['@@bridgeListenerInstalled']) {" +
-  "      return true;" +
-  "    }" +
-  "    const bridge = getBridge();" +
-  "    if (!bridge || typeof bridge.onCommand !== 'function') {" +
-  "      return false;" +
-  "    }" +
-  "    bridge.onCommand(function(command) {" +
-  "      if (!command || command.name !== pluginEventCommand) {" +
-  "        return;" +
-  "      }" +
-  "      const event = command.payload;" +
-  "      if (!event || typeof event !== 'object') {" +
-  "        return;" +
-  "      }" +
-  "      root['@@emit'](event.plugin, event.name, event.payload);" +
-  "    });" +
-  "    root['@@bridgeListenerInstalled'] = true;" +
-  "    return true;" +
-  "  };" +
-  "  root['@@defineApi'] = function(pluginName, apiName, commandName) {" +
-  "    const plugin = root['@@ensurePlugin'](pluginName);" +
-  "    root['@@ensureBridgeListener']();" +
-  "    plugin[apiName] = function(payload) {" +
-  "      const bridge = getBridge();" +
-  "      if (!bridge) {" +
-  "        return Promise.reject(new Error('MoonBit command bridge is not available'));" +
-  "      }" +
-  "      return bridge.send(commandName, payload);" +
-  "    };" +
-  "    return plugin[apiName];" +
-  "  };" +
-  "  root['@@has'] = function(pluginName, apiName) {" +
-  "    const plugin = root[pluginName];" +
-  "    return !!(plugin && typeof plugin[apiName] === 'function');" +
-  "  };" +
-  "  root['@@ensureBridgeListener']();" +
-  "  window[globalName] = root;" +
-  "})();"
+  let global_name_js = string_literal(global_name)
+  let bridge_global_name_js = string_literal(bridge_global_name)
+  (
+    #|(function() {
+    $|  const globalName = \{global_name_js};
+    $|  const bridgeName = \{bridge_global_name_js};
+    #|  const pluginEventCommand = '@@plugin:event';
+    #|  const existing = window[globalName];
+    #|  const root = existing && typeof existing === 'object' ? existing : Object.create(null);
+    #|  function getBridge() {
+    #|    const bridge = window[bridgeName];
+    #|    return bridge && typeof bridge.send === 'function' ? bridge : null;
+    #|  }
+    #|  function ensurePluginHelpers(plugin) {
+    #|    if (!Array.isArray(plugin['@@listeners'])) {
+    #|      plugin['@@listeners'] = [];
+    #|    }
+    #|    if (typeof plugin['@@on'] !== 'function') {
+    #|      plugin['@@on'] = function(listener) {
+    #|        root['@@ensureBridgeListener']();
+    #|        if (typeof listener !== 'function') {
+    #|          throw new TypeError('MoonBit plugin listener must be a function');
+    #|        }
+    #|        plugin['@@listeners'].push(listener);
+    #|        return function() {
+    #|          plugin['@@listeners'] = plugin['@@listeners'].filter(function(candidate) {
+    #|            return candidate !== listener;
+    #|          });
+    #|        };
+    #|      };
+    #|    }
+    #|    if (typeof plugin['@@onEvent'] !== 'function') {
+    #|      plugin['@@onEvent'] = function(eventName, listener) {
+    #|        if (typeof listener !== 'function') {
+    #|          throw new TypeError('MoonBit plugin listener must be a function');
+    #|        }
+    #|        return plugin['@@on'](function(event) {
+    #|          if (event.name === eventName) {
+    #|            listener(event);
+    #|          }
+    #|        });
+    #|      };
+    #|    }
+    #|    return plugin;
+    #|  }
+    #|  root['@@call'] = function(pluginName, apiName, payload) {
+    #|    root['@@ensureBridgeListener']();
+    #|    const bridge = getBridge();
+    #|    if (!bridge) {
+    #|      return Promise.reject(new Error('MoonBit command bridge is not available'));
+    #|    }
+    #|    return bridge.send('plugin:' + JSON.stringify(pluginName) + ':' + JSON.stringify(apiName), payload);
+    #|  };
+    #|  root['@@ensurePlugin'] = function(pluginName) {
+    #|    const plugin = root[pluginName];
+    #|    if (plugin && typeof plugin === 'object') {
+    #|      return ensurePluginHelpers(plugin);
+    #|    }
+    #|    const next = Object.create(null);
+    #|    root[pluginName] = next;
+    #|    return ensurePluginHelpers(next);
+    #|  };
+    #|  root['@@emit'] = function(pluginName, eventName, payload) {
+    #|    const plugin = root['@@ensurePlugin'](pluginName);
+    #|    const event = {
+    #|      plugin: pluginName,
+    #|      name: eventName,
+    #|      payload: payload === undefined ? null : payload
+    #|    };
+    #|    const listeners = plugin['@@listeners'].slice();
+    #|    for (const listener of listeners) {
+    #|      listener(event);
+    #|    }
+    #|    return event;
+    #|  };
+    #|  root['@@ensureBridgeListener'] = function() {
+    #|    if (root['@@bridgeListenerInstalled']) {
+    #|      return true;
+    #|    }
+    #|    const bridge = getBridge();
+    #|    if (!bridge || typeof bridge.onCommand !== 'function') {
+    #|      return false;
+    #|    }
+    #|    bridge.onCommand(function(command) {
+    #|      if (!command || command.name !== pluginEventCommand) {
+    #|        return;
+    #|      }
+    #|      const event = command.payload;
+    #|      if (!event || typeof event !== 'object') {
+    #|        return;
+    #|      }
+    #|      root['@@emit'](event.plugin, event.name, event.payload);
+    #|    });
+    #|    root['@@bridgeListenerInstalled'] = true;
+    #|    return true;
+    #|  };
+    #|  root['@@defineApi'] = function(pluginName, apiName, commandName) {
+    #|    const plugin = root['@@ensurePlugin'](pluginName);
+    #|    root['@@ensureBridgeListener']();
+    #|    plugin[apiName] = function(payload) {
+    #|      const bridge = getBridge();
+    #|      if (!bridge) {
+    #|        return Promise.reject(new Error('MoonBit command bridge is not available'));
+    #|      }
+    #|      return bridge.send(commandName, payload);
+    #|    };
+    #|    return plugin[apiName];
+    #|  };
+    #|  root['@@has'] = function(pluginName, apiName) {
+    #|    const plugin = root[pluginName];
+    #|    return !!(plugin && typeof plugin[apiName] === 'function');
+    #|  };
+    #|  root['@@ensureBridgeListener']();
+    #|  window[globalName] = root;
+    #|})();
+  )
 }
 
 ///|
@@ -524,8 +539,8 @@ fn make_plugin_namespace_script(
   global_name : String,
   plugin_name : String,
 ) -> String {
-  let global_name_js = Json::string(global_name).stringify()
-  let plugin_name_js = Json::string(plugin_name).stringify()
+  let global_name_js = string_literal(global_name)
+  let plugin_name_js = string_literal(plugin_name)
   "(function() {" +
   "  const globalName = " +
   global_name_js +
@@ -554,11 +569,11 @@ fn make_plugin_api_script(
   api_name : String,
   command_name : String,
 ) -> String {
-  let global_name_js = Json::string(global_name).stringify()
-  let bridge_global_name_js = Json::string(bridge_global_name).stringify()
-  let plugin_name_js = Json::string(plugin_name).stringify()
-  let api_name_js = Json::string(api_name).stringify()
-  let command_name_js = Json::string(command_name).stringify()
+  let global_name_js = string_literal(global_name)
+  let bridge_global_name_js = string_literal(bridge_global_name)
+  let plugin_name_js = string_literal(plugin_name)
+  let api_name_js = string_literal(api_name)
+  let command_name_js = string_literal(command_name)
   "(function() {" +
   "  const globalName = " +
   global_name_js +
@@ -593,4 +608,31 @@ fn make_plugin_api_script(
   "    return bridge.send(commandName, payload);" +
   "  };" +
   "})();"
+}
+
+///|
+test "reserved plugin and api names share JS property guard" {
+  assert_true(is_reserved_plugin_name("@@call"))
+  assert_true(is_reserved_plugin_name("__proto__"))
+  assert_true(is_reserved_api_name("constructor"))
+  assert_false(is_reserved_plugin_name("math"))
+  assert_false(is_reserved_api_name("sum"))
+}
+
+///|
+test "plugin command names remain JSON quoted for stable JS dispatch" {
+  assert_eq(plugin_command_name("math", "sum"), "plugin:\"math\":\"sum\"")
+  assert_eq(plugin_command_name("a:b", "c"), "plugin:\"a:b\":\"c\"")
+  assert_eq(
+    plugin_command_name("quote\"plugin", "slash\\api"),
+    "plugin:\"quote\\\"plugin\":\"slash\\\\api\"",
+  )
+}
+
+///|
+test "plugin host destroy hook name stays deterministic" {
+  assert_eq(
+    plugin_host_destroy_hook_name("MoonBitPlugins", "__moonbit_command"),
+    "plugin-host:MoonBitPlugins:__moonbit_command",
+  )
 }

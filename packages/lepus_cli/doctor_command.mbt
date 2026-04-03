@@ -147,13 +147,7 @@ fn print_doctor_text(
 fn print_doctor_json(checks : Array[DoctorCheck]) -> Unit {
   let items : Array[Json] = []
   for check in checks {
-    items.push(
-      ({
-        "name": check.name,
-        "ok": check.ok,
-        "detail": check.detail,
-      } : Json),
-    )
+    items.push({ "name": check.name, "ok": check.ok, "detail": check.detail })
   }
-  println(ToJson::to_json(items).stringify())
+  println(items.to_json().stringify())
 }

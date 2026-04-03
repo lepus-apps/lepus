@@ -6,7 +6,11 @@ import {
 supported_targets = "+native"
 
 options(
-  link: { "native": { "cc-link-flags": "-Llib -lwebview" } },
+  link: {
+    "native": {
+      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../packages/lepus_runtime_webview/lib",
+    },
+  },
   "native-stub": [ "stub.c" ],
   targets: {
     "binding.mbt": [ "native" ],
