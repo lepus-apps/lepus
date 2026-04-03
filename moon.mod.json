@@ -1,0 +1,19 @@
+{
+  "name": "lepus-apps/lepus",
+  "version": "0.1.0",
+  "deps": {
+    "justjavac/ffi": "0.2.0"
+  },
+  "readme": "README.mbt.md",
+  "repository": "https://github.com/lepus-apps/lepus",
+  "license": "Apache-2.0",
+  "keywords": [
+    "webview",
+    "desktop",
+    "app",
+    "framework"
+  ],
+  "description": "A modern desktop application framework based on web technologies.",
+  "source": "",
+  "preferred-target": "native"
+}

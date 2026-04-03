@@ -1,0 +1,14 @@
+import {
+  "lepus-apps/lepus/packages/lepus_runtime_webview",
+}
+
+supported_targets = "+native"
+
+options(
+  link: {
+    "native": {
+      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview"
+    }
+  },
+  targets: { "lepus.mbt": [ "native" ] },
+)

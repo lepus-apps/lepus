@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/packages/lepus"
+
+// Values
+pub fn default_app() -> Builder
+
+// Errors
+
+// Types and methods
+pub struct App {
+  config : WindowConfig
+} derive(Eq, Show)
+pub fn App::run(Self) -> Unit
+
+pub struct Builder {
+  mut config : WindowConfig
+}
+pub fn Builder::build(Self) -> App
+pub fn Builder::debug(Self, Int) -> Self
+pub fn Builder::html(Self, String) -> Self
+pub fn Builder::new() -> Self
+pub fn Builder::size(Self, Int, Int) -> Self
+pub fn Builder::title(Self, String) -> Self
+pub fn Builder::url(Self, String) -> Self
+
+pub struct WindowConfig {
+  title : String
+  width : Int
+  height : Int
+  debug : Int
+  html : String?
+  url : String?
+} derive(Eq, Show)
+
+// Type aliases
+
+// Traits
+
