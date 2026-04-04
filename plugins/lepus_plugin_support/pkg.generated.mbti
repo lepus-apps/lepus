@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/plugins/lepus_plugin_support"
+
+import {
+  "lepus-apps/lepus/webview",
+}
+
+// Values
+pub fn example_html(String, String) -> String
+
+pub fn install_js_api(@webview.PluginContext, String, String) -> Unit
+
+pub fn install_js_initializer(@webview.PluginContext, String) -> Unit
+
+pub fn install_rejecting_api(@webview.PluginContext, String, String) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

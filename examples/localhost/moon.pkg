@@ -1,7 +1,7 @@
 import {
-  "lepus-apps/lepus/packages/lepus",
-  "lepus-apps/lepus/packages/lepus_plugin_localhost",
-  "lepus-apps/lepus/packages/lepus_plugin_support",
+  "lepus-apps/lepus",
+  "lepus-apps/lepus/plugins/lepus_plugin_localhost",
+  "lepus-apps/lepus/plugins/lepus_plugin_support",
 }
 
 supported_targets = "+native"
@@ -10,7 +10,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../packages/lepus_runtime_webview/lib",
+      "cc-link-flags": "-Lwebview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../webview/lib",
     },
   },
   targets: { "main.mbt": [ "native" ] },

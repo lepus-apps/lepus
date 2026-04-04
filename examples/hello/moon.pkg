@@ -1,5 +1,5 @@
 import {
-  "lepus-apps/lepus/packages/lepus",
+  "lepus-apps/lepus",
 }
 
 supported_targets = "+native"
@@ -8,7 +8,7 @@ options(
   "is-main": true,
   link: {
     "native": {
-      "cc-link-flags": "-Lpackages/lepus_runtime_webview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../packages/lepus_runtime_webview/lib",
+      "cc-link-flags": "-Lwebview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../webview/lib",
     },
   },
   targets: { "main.mbt": [ "native" ] },

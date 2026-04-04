@@ -1,0 +1,10 @@
+import {
+  "lepus-apps/lepus/plugins/lepus_plugin_support",
+  "lepus-apps/lepus/webview",
+}
+
+supported_targets = "+native"
+
+options(
+  targets: { "plugin.mbt": [ "native" ] },
+)

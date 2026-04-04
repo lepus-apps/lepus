@@ -1,0 +1,113 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/cli/lepus"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub fn canonicalize_path(String) -> String
+
+pub fn command_exists(Bytes) -> Int
+
+pub fn current_dir() -> Bytes
+
+pub fn directory_exists(Bytes) -> Int
+
+pub fn env_get(Bytes) -> Bytes
+
+pub fn exit_process(Int) -> Unit
+
+pub fn file_exists(Bytes) -> Int
+
+pub fn get_cwd() -> String
+
+pub fn get_platform() -> String
+
+pub fn get_repo_root() -> String
+
+pub fn getenv(String) -> String?
+
+pub fn has_command(String) -> Bool
+
+pub fn is_directory(String) -> Bool
+
+pub fn mkdir_p(String) -> Bool
+
+pub fn mkdir_p_ffi(Bytes) -> Int
+
+pub fn parse_build_config(@argparse.Matches, @argparse.Matches) -> BuildConfig
+
+pub fn parse_dev_config(@argparse.Matches, @argparse.Matches) -> DevConfig
+
+pub fn parse_doctor_config(@argparse.Matches, @argparse.Matches) -> DoctorConfig
+
+pub fn parse_init_config(@argparse.Matches, @argparse.Matches) -> InitConfig
+
+pub fn path_exists(String) -> Bool
+
+pub fn platform_name() -> Bytes
+
+pub fn realpath_ffi(Bytes) -> Bytes
+
+pub fn repo_root() -> Bytes
+
+pub fn root_command() -> @argparse.Command
+
+pub fn run_build(BuildConfig) -> Int
+
+pub fn run_dev(DevConfig) -> Int
+
+pub fn run_doctor(DoctorConfig) -> Int
+
+pub fn run_init(InitConfig) -> Int
+
+pub fn write_text_file(String, String) -> Bool
+
+pub fn write_text_file_ffi(Bytes, Bytes) -> Int
+
+// Errors
+
+// Types and methods
+pub struct BuildConfig {
+  cwd : String
+  config_path : String?
+  frontend_dir : String?
+  out_dir : String?
+  embed_assets : Bool
+  verbose : Int
+}
+
+pub struct DevConfig {
+  cwd : String
+  config_path : String?
+  frontend_dir : String?
+  port : Int?
+  host : String?
+  verbose : Int
+}
+
+type DoctorCheck
+
+pub struct DoctorConfig {
+  cwd : String
+  config_path : String?
+  json : Bool
+  verbose : Int
+}
+
+type GeneratedFile
+
+pub struct InitConfig {
+  project_name : String?
+  template : String
+  frontend : String
+  force : Bool
+  cwd : String
+  verbose : Int
+}
+
+// Type aliases
+
+// Traits
+

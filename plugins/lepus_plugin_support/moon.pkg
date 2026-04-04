@@ -1,0 +1,10 @@
+import {
+  "lepus-apps/lepus/webview",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "+native"
+
+options(
+  targets: { "support.mbt": [ "native" ] },
+)

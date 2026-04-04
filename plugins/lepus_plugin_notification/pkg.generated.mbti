@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/plugins/lepus_plugin_notification"
+
+import {
+  "lepus-apps/lepus/webview",
+}
+
+// Values
+pub fn plugin() -> @webview.Plugin
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
