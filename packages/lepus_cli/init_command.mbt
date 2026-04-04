@@ -165,13 +165,12 @@ fn moon_pkg(dep_path : String) -> String {
 fn main_mbt(package_name : String) -> String {
   "///|\n" +
   "fn main {\n" +
-  "  @lepus.default_app()\n" +
-  "  .title(\"" +
+  "  @lepus.App::new(\n" +
+  "    title=\"" +
   package_name +
-  "\")\n" +
-  "  .html(resource)\n" +
-  "  .build()\n" +
-  "  .run()\n" +
+  "\",\n" +
+  "    html=resource,\n" +
+  "  ).run()\n" +
   "}\n"
 }
 

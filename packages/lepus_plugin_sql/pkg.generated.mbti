@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/packages/lepus_plugin_sql"
+
+import {
+  "lepus-apps/lepus/packages/lepus_runtime_webview",
+}
+
+// Values
+pub fn plugin() -> @lepus_runtime_webview.Plugin
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

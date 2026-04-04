@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "lepus-apps/lepus/packages/lepus"
 
+import {
+  "lepus-apps/lepus/packages/lepus_runtime_webview",
+}
+
 // Values
 
 // Errors
@@ -8,19 +12,10 @@ package "lepus-apps/lepus/packages/lepus"
 // Types and methods
 pub struct App {
   config : WindowConfig
-} derive(Eq, Show)
-pub fn App::run(Self) -> Unit
-
-pub struct Builder {
-  mut config : WindowConfig
+  plugins : Array[@lepus_runtime_webview.Plugin]
 }
-pub fn Builder::build(Self) -> App
-pub fn Builder::debug(Self, Int) -> Self
-pub fn Builder::html(Self, String) -> Self
-pub fn Builder::new() -> Self
-pub fn Builder::size(Self, Int, Int) -> Self
-pub fn Builder::title(Self, String) -> Self
-pub fn Builder::url(Self, String) -> Self
+pub fn App::new(title? : String, width? : Int, height? : Int, debug? : Int, html? : String, url? : String, plugins? : Array[@lepus_runtime_webview.Plugin]) -> Self
+pub fn App::run(Self) -> Unit
 
 pub struct WindowConfig {
   title : String

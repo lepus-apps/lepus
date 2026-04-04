@@ -83,6 +83,8 @@ type PluginContext
 pub fn[Payload : @json.FromJson, Reply : ToJson] PluginContext::command(Self, String, (Payload) -> Reply) -> Unit
 pub fn[Payload : @json.FromJson, Reply : ToJson] PluginContext::command_result(Self, String, (Payload) -> Result[Reply, String]) -> Unit
 pub fn[Payload : ToJson] PluginContext::emit(Self, String, Payload) -> Unit
+pub fn PluginContext::global_name(Self) -> String
+pub fn PluginContext::install_script(Self, String) -> Unit
 pub fn PluginContext::name(Self) -> String
 
 pub struct PluginEvent {

@@ -241,6 +241,24 @@ pub fn PluginContext::name(self : PluginContext) -> String {
 }
 
 ///|
+/// Returns the JavaScript global object name used by the owning plugin host.
+pub fn PluginContext::global_name(self : PluginContext) -> String {
+  self.host.global_name
+}
+
+///|
+/// Installs raw JavaScript into the owning plugin host.
+///
+/// This is useful for plugins that expose browser-side helpers directly instead
+/// of routing every call through MoonBit command handlers.
+pub fn PluginContext::install_script(
+  self : PluginContext,
+  script : String,
+) -> Unit {
+  self.host.install_script(script)
+}
+
+///|
 /// Emits a plugin-scoped event from the main program to JavaScript.
 ///
 /// JavaScript receives these events through
@@ -419,118 +437,7 @@ fn make_plugin_host_script(
   let global_name_js = string_literal(global_name)
   let bridge_global_name_js = string_literal(bridge_global_name)
   (
-    #|(function() {
-    $|  const globalName = \{global_name_js};
-    $|  const bridgeName = \{bridge_global_name_js};
-    #|  const pluginEventCommand = '@@plugin:event';
-    #|  const existing = window[globalName];
-    #|  const root = existing && typeof existing === 'object' ? existing : Object.create(null);
-    #|  function getBridge() {
-    #|    const bridge = window[bridgeName];
-    #|    return bridge && typeof bridge.send === 'function' ? bridge : null;
-    #|  }
-    #|  function ensurePluginHelpers(plugin) {
-    #|    if (!Array.isArray(plugin['@@listeners'])) {
-    #|      plugin['@@listeners'] = [];
-    #|    }
-    #|    if (typeof plugin['@@on'] !== 'function') {
-    #|      plugin['@@on'] = function(listener) {
-    #|        root['@@ensureBridgeListener']();
-    #|        if (typeof listener !== 'function') {
-    #|          throw new TypeError('MoonBit plugin listener must be a function');
-    #|        }
-    #|        plugin['@@listeners'].push(listener);
-    #|        return function() {
-    #|          plugin['@@listeners'] = plugin['@@listeners'].filter(function(candidate) {
-    #|            return candidate !== listener;
-    #|          });
-    #|        };
-    #|      };
-    #|    }
-    #|    if (typeof plugin['@@onEvent'] !== 'function') {
-    #|      plugin['@@onEvent'] = function(eventName, listener) {
-    #|        if (typeof listener !== 'function') {
-    #|          throw new TypeError('MoonBit plugin listener must be a function');
-    #|        }
-    #|        return plugin['@@on'](function(event) {
-    #|          if (event.name === eventName) {
-    #|            listener(event);
-    #|          }
-    #|        });
-    #|      };
-    #|    }
-    #|    return plugin;
-    #|  }
-    #|  root['@@call'] = function(pluginName, apiName, payload) {
-    #|    root['@@ensureBridgeListener']();
-    #|    const bridge = getBridge();
-    #|    if (!bridge) {
-    #|      return Promise.reject(new Error('MoonBit command bridge is not available'));
-    #|    }
-    #|    return bridge.send('plugin:' + JSON.stringify(pluginName) + ':' + JSON.stringify(apiName), payload);
-    #|  };
-    #|  root['@@ensurePlugin'] = function(pluginName) {
-    #|    const plugin = root[pluginName];
-    #|    if (plugin && typeof plugin === 'object') {
-    #|      return ensurePluginHelpers(plugin);
-    #|    }
-    #|    const next = Object.create(null);
-    #|    root[pluginName] = next;
-    #|    return ensurePluginHelpers(next);
-    #|  };
-    #|  root['@@emit'] = function(pluginName, eventName, payload) {
-    #|    const plugin = root['@@ensurePlugin'](pluginName);
-    #|    const event = {
-    #|      plugin: pluginName,
-    #|      name: eventName,
-    #|      payload: payload === undefined ? null : payload
-    #|    };
-    #|    const listeners = plugin['@@listeners'].slice();
-    #|    for (const listener of listeners) {
-    #|      listener(event);
-    #|    }
-    #|    return event;
-    #|  };
-    #|  root['@@ensureBridgeListener'] = function() {
-    #|    if (root['@@bridgeListenerInstalled']) {
-    #|      return true;
-    #|    }
-    #|    const bridge = getBridge();
-    #|    if (!bridge || typeof bridge.onCommand !== 'function') {
-    #|      return false;
-    #|    }
-    #|    bridge.onCommand(function(command) {
-    #|      if (!command || command.name !== pluginEventCommand) {
-    #|        return;
-    #|      }
-    #|      const event = command.payload;
-    #|      if (!event || typeof event !== 'object') {
-    #|        return;
-    #|      }
-    #|      root['@@emit'](event.plugin, event.name, event.payload);
-    #|    });
-    #|    root['@@bridgeListenerInstalled'] = true;
-    #|    return true;
-    #|  };
-    #|  root['@@defineApi'] = function(pluginName, apiName, commandName) {
-    #|    const plugin = root['@@ensurePlugin'](pluginName);
-    #|    root['@@ensureBridgeListener']();
-    #|    plugin[apiName] = function(payload) {
-    #|      const bridge = getBridge();
-    #|      if (!bridge) {
-    #|        return Promise.reject(new Error('MoonBit command bridge is not available'));
-    #|      }
-    #|      return bridge.send(commandName, payload);
-    #|    };
-    #|    return plugin[apiName];
-    #|  };
-    #|  root['@@has'] = function(pluginName, apiName) {
-    #|    const plugin = root[pluginName];
-    #|    return !!(plugin && typeof plugin[apiName] === 'function');
-    #|  };
-    #|  root['@@ensureBridgeListener']();
-    #|  window[globalName] = root;
-    #|})();
+    $|!function(){const n=\{global_name_js},e=window[n],t=e&&"object"==typeof e?e:Object.create(null);function r(){const n=window[\{bridge_global_name_js}];return n&&"function"==typeof n.send?n:null}function i(n){return Array.isArray(n["@@listeners"])||(n["@@listeners"]=[]),"function"!=typeof n["@@on"]&&(n["@@on"]=function(e){if(t["@@ensureBridgeListener"](),"function"!=typeof e)throw new TypeError("MoonBit plugin listener must be a function");return n["@@listeners"].push(e),function(){n["@@listeners"]=n["@@listeners"].filter(function(n){return n!==e})}}),"function"!=typeof n["@@onEvent"]&&(n["@@onEvent"]=function(e,t){if("function"!=typeof t)throw new TypeError("MoonBit plugin listener must be a function");return n["@@on"](function(n){n.name===e&&t(n)})}),n}t["@@call"]=function(n,e,i){t["@@ensureBridgeListener"]();const o=r();return o?o.send("plugin:"+JSON.stringify(n)+":"+JSON.stringify(e),i):Promise.reject(new Error("MoonBit command bridge is not available"))},t["@@ensurePlugin"]=function(n){const e=t[n];if(e&&"object"==typeof e)return i(e);const r=Object.create(null);return t[n]=r,i(r)},t["@@emit"]=function(n,e,r){const i={plugin:n,name:e,payload:void 0===r?null:r},o=t["@@ensurePlugin"](n)["@@listeners"].slice();for(const n of o)n(i);return i},t["@@ensureBridgeListener"]=function(){if(t["@@bridgeListenerInstalled"])return!0;const n=r();return!(!n||"function"!=typeof n.onCommand)&&(n.onCommand(function(n){if(!n||"@@plugin:event"!==n.name)return;const e=n.payload;e&&"object"==typeof e&&t["@@emit"](e.plugin,e.name,e.payload)}),t["@@bridgeListenerInstalled"]=!0,!0)},t["@@defineApi"]=function(n,e,i){const o=t["@@ensurePlugin"](n);return t["@@ensureBridgeListener"](),o[e]=function(n){const e=r();return e?e.send(i,n):Promise.reject(new Error("MoonBit command bridge is not available"))},o[e]},t["@@has"]=function(n,e){const r=t[n];return!(!r||"function"!=typeof r[e])},t["@@ensureBridgeListener"](),window[n]=t}();
   )
 }
 
@@ -541,24 +448,9 @@ fn make_plugin_namespace_script(
 ) -> String {
   let global_name_js = string_literal(global_name)
   let plugin_name_js = string_literal(plugin_name)
-  "(function() {" +
-  "  const globalName = " +
-  global_name_js +
-  ";" +
-  "  const pluginName = " +
-  plugin_name_js +
-  ";" +
-  "  const root = window[globalName] && typeof window[globalName] === 'object'" +
-  "    ? window[globalName]" +
-  "    : (window[globalName] = Object.create(null));" +
-  "  if (typeof root['@@ensurePlugin'] === 'function') {" +
-  "    root['@@ensurePlugin'](pluginName);" +
-  "    return;" +
-  "  }" +
-  "  if (!root[pluginName] || typeof root[pluginName] !== 'object') {" +
-  "    root[pluginName] = Object.create(null);" +
-  "  }" +
-  "})();"
+  (
+    $|!function(){const e=\{global_name_js},n=\{plugin_name_js},o=window[e]&&"object"==typeof window[e]?window[e]:window[e]=Object.create(null);"function"!=typeof o["@@ensurePlugin"]?o[n]&&"object"==typeof o[n]||(o[n]=Object.create(null)):o["@@ensurePlugin"](n)}();
+  )
 }
 
 ///|
@@ -570,44 +462,12 @@ fn make_plugin_api_script(
   command_name : String,
 ) -> String {
   let global_name_js = string_literal(global_name)
-  let bridge_global_name_js = string_literal(bridge_global_name)
   let plugin_name_js = string_literal(plugin_name)
   let api_name_js = string_literal(api_name)
   let command_name_js = string_literal(command_name)
-  "(function() {" +
-  "  const globalName = " +
-  global_name_js +
-  ";" +
-  "  const bridgeName = " +
-  bridge_global_name_js +
-  ";" +
-  "  const pluginName = " +
-  plugin_name_js +
-  ";" +
-  "  const apiName = " +
-  api_name_js +
-  ";" +
-  "  const commandName = " +
-  command_name_js +
-  ";" +
-  "  const root = window[globalName] && typeof window[globalName] === 'object'" +
-  "    ? window[globalName]" +
-  "    : (window[globalName] = Object.create(null));" +
-  "  if (typeof root['@@defineApi'] === 'function') {" +
-  "    root['@@defineApi'](pluginName, apiName, commandName);" +
-  "    return;" +
-  "  }" +
-  "  const plugin = root[pluginName] && typeof root[pluginName] === 'object'" +
-  "    ? root[pluginName]" +
-  "    : (root[pluginName] = Object.create(null));" +
-  "  plugin[apiName] = function(payload) {" +
-  "    const bridge = window[bridgeName];" +
-  "    if (!bridge || typeof bridge.send !== 'function') {" +
-  "      return Promise.reject(new Error('MoonBit command bridge is not available'));" +
-  "    }" +
-  "    return bridge.send(commandName, payload);" +
-  "  };" +
-  "})();"
+  (
+    $|!function(){const n=\{global_name_js},e=\{plugin_name_js},o=\{api_name_js},t=\{command_name_js},i=window[n]&&"object"==typeof window[n]?window[n]:window[n]=Object.create(null);if("function"==typeof i["@@defineApi"])return void i["@@defineApi"](e,o,t);(i[e]&&"object"==typeof i[e]?i[e]:i[e]=Object.create(null))[o]=function(n){const e=window[\{string_literal(bridge_global_name)}];return e&&"function"==typeof e.send?e.send(t,n):Promise.reject(new Error("MoonBit command bridge is not available"))}}();
+  )
 }
 
 ///|

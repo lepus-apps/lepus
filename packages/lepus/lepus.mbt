@@ -11,60 +11,38 @@ pub struct WindowConfig {
 ///|
 pub struct App {
   config : WindowConfig
-} derive(Show, Eq)
-
-///|
-pub struct Builder {
-  mut config : WindowConfig
+  plugins : Array[@lepus_runtime_webview.Plugin]
 }
 
 ///|
-pub fn Builder::new() -> Builder {
-  Builder::{
+pub fn App::new(
+  title? : String = "Lepus App",
+  width? : Int = 800,
+  height? : Int = 600,
+  debug? : Int = 0,
+  html? : String = "",
+  url? : String = "",
+  plugins? : Array[@lepus_runtime_webview.Plugin] = [],
+) -> App {
+  App::{
     config: {
-      title: "Lepus App",
-      width: 800,
-      height: 600,
-      debug: 0,
-      html: None,
-      url: None,
+      title,
+      width,
+      height,
+      debug,
+      html: if html == "" {
+        None
+      } else {
+        Some(html)
+      },
+      url: if url == "" {
+        None
+      } else {
+        Some(url)
+      },
     },
+    plugins,
   }
-}
-
-///|
-pub fn Builder::title(self : Builder, title : String) -> Builder {
-  self.config = { ..self.config, title, }
-  self
-}
-
-///|
-pub fn Builder::size(self : Builder, width : Int, height : Int) -> Builder {
-  self.config = { ..self.config, width, height }
-  self
-}
-
-///|
-pub fn Builder::debug(self : Builder, debug : Int) -> Builder {
-  self.config = { ..self.config, debug, }
-  self
-}
-
-///|
-pub fn Builder::html(self : Builder, html : String) -> Builder {
-  self.config = { ..self.config, html: Some(html), url: None }
-  self
-}
-
-///|
-pub fn Builder::url(self : Builder, url : String) -> Builder {
-  self.config = { ..self.config, url: Some(url), html: None }
-  self
-}
-
-///|
-pub fn Builder::build(self : Builder) -> App {
-  App::{ config: self.config }
 }
 
 ///|
@@ -83,6 +61,9 @@ pub fn App::run(self : App) -> Unit {
         Some(html) => webview.set_html(html)
         None => webview.set_html(default_html(self.config.title))
       }
+  }
+  for plugin in self.plugins {
+    webview.install_plugin(plugin)
   }
   webview.run()
 }
