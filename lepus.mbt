@@ -20,29 +20,11 @@ pub fn App::new(
   width? : Int = 800,
   height? : Int = 600,
   debug? : Int = 0,
-  html? : String = "",
-  url? : String = "",
+  html? : String,
+  url? : String,
   plugins? : Array[@webview.Plugin] = [],
 ) -> App {
-  App::{
-    config: {
-      title,
-      width,
-      height,
-      debug,
-      html: if html == "" {
-        None
-      } else {
-        Some(html)
-      },
-      url: if url == "" {
-        None
-      } else {
-        Some(url)
-      },
-    },
-    plugins,
-  }
+  App::{ config: { title, width, height, debug, html, url }, plugins }
 }
 
 ///|
