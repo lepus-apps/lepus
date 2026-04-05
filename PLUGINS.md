@@ -1,8 +1,7 @@
 # Lepus Plugin Matrix
 
 Source of truth for the plugin list:
-- Tauri plugins workspace: https://github.com/tauri-apps/plugins-workspace
-- GitHub API plugin directory listing: https://api.github.com/repos/tauri-apps/plugins-workspace/contents/plugins
+- Lepus plugin packages in this repository (`plugins/`)
 
 ## Current Status
 
@@ -14,7 +13,7 @@ Implemented as register-style Lepus plugins with examples:
 - clipboard-manager: browser clipboard example
 - deep-link: browser location/protocol example
 - dialog: browser confirm example
-- fs: localStorage-backed example
+- fs: native filesystem command bridge
 - geolocation: browser geolocation example
 - global-shortcut: browser key listener example
 - haptics: browser vibration example
