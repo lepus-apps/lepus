@@ -29,7 +29,7 @@ pub fn App::new(
 
 ///|
 pub fn App::run(self : App) -> Unit {
-  let webview = @webview.Webview::new(debug=self.config.debug)
+  let webview = @webview.WebView::new(debug=self.config.debug)
   webview.set_title(self.config.title)
   webview.set_size(
     self.config.width,

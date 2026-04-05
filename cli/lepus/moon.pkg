@@ -2,7 +2,7 @@ import {
   "moonbitlang/core/argparse",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "justjavac/ffi",
+  "lepus-apps/lepus/ffi",
 }
 
 supported_targets = "+native"
