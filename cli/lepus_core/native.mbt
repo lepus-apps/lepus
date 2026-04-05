@@ -17,9 +17,6 @@ pub extern "C" fn current_dir() -> Bytes = "lepus_current_dir"
 pub extern "C" fn platform_name() -> Bytes = "lepus_platform_name"
 
 ///|
-pub extern "C" fn repo_root() -> Bytes = "lepus_repo_root"
-
-///|
 #borrow(path)
 pub extern "C" fn realpath_ffi(path : Bytes) -> Bytes = "lepus_realpath"
 
@@ -30,6 +27,10 @@ pub extern "C" fn mkdir_p_ffi(path : Bytes) -> Int = "lepus_mkdir_p"
 ///|
 #borrow(path, content)
 pub extern "C" fn write_text_file_ffi(path : Bytes, content : Bytes) -> Int = "lepus_write_text_file"
+
+///|
+#borrow(path)
+pub extern "C" fn read_text_file_ffi(path : Bytes) -> Bytes = "lepus_read_text_file"
 
 ///|
 pub fn getenv(name : String) -> String? {
@@ -66,13 +67,6 @@ pub fn get_platform() -> String {
 }
 
 ///|
-pub fn get_repo_root() -> String {
-  @encoding/utf8.decode(repo_root()) catch {
-    _ => "."
-  }
-}
-
-///|
 pub fn canonicalize_path(path : String) -> String {
   let resolved = @encoding/utf8.decode(
     realpath_ffi(@encoding/utf8.encode(path)),
@@ -98,4 +92,18 @@ pub fn write_text_file(path : String, content : String) -> Bool {
     @encoding/utf8.encode(content),
   ) ==
   0
+}
+
+///|
+pub fn read_text_file(path : String) -> String? {
+  let content = @encoding/utf8.decode(
+    read_text_file_ffi(@encoding/utf8.encode(path)),
+  ) catch {
+    _ => ""
+  }
+  if content == "" && !path_exists(path) {
+    None
+  } else {
+    Some(content)
+  }
 }

@@ -1,0 +1,123 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/cli/lepus_core"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub fn canonicalize_path(String) -> String
+
+pub fn command_exists(Bytes) -> Int
+
+pub fn current_dir() -> Bytes
+
+pub fn directory_exists(Bytes) -> Int
+
+pub fn embed_module_source(String) -> String
+
+pub async fn ensure_npm_ready(String) -> Int
+
+pub fn file_exists(Bytes) -> Int
+
+pub fn get_cwd() -> String
+
+pub fn get_platform() -> String
+
+pub fn getenv(String) -> String?
+
+pub fn has_command(String) -> Bool
+
+pub fn is_directory(String) -> Bool
+
+pub fn join_path(String, String) -> String
+
+pub fn mkdir_p(String) -> Bool
+
+pub fn mkdir_p_ffi(Bytes) -> Int
+
+pub fn moonbit_string_literal(String) -> String
+
+pub fn npm_command() -> String
+
+pub fn parse_build_config(@argparse.Matches, @argparse.Matches) -> BuildConfig
+
+pub fn parse_dev_config(@argparse.Matches, @argparse.Matches) -> DevConfig
+
+pub fn parse_doctor_config(@argparse.Matches, @argparse.Matches) -> DoctorConfig
+
+pub fn parse_init_config(@argparse.Matches, @argparse.Matches) -> InitConfig
+
+pub fn path_exists(String) -> Bool
+
+pub fn platform_name() -> Bytes
+
+pub fn project_basename(String) -> String
+
+pub fn read_text_file(String) -> String?
+
+pub fn read_text_file_ffi(Bytes) -> Bytes
+
+pub fn realpath_ffi(Bytes) -> Bytes
+
+pub fn resolve_path(String, String?) -> String
+
+pub fn root_command() -> @argparse.Command
+
+pub async fn run_build(BuildConfig) -> Int
+
+pub async fn run_cli() -> Int
+
+pub async fn run_dev(DevConfig) -> Int
+
+pub fn run_doctor(DoctorConfig) -> Int
+
+pub fn run_init(InitConfig) -> Int
+
+pub async fn run_moon_command(String, Array[String], extra_env? : Map[String, String]) -> Int
+
+pub fn write_text_file(String, String) -> Bool
+
+pub fn write_text_file_ffi(Bytes, Bytes) -> Int
+
+// Errors
+
+// Types and methods
+pub struct BuildConfig {
+  cwd : String
+  config_path : String?
+  frontend_dir : String?
+  out_dir : String?
+  embed_assets : Bool
+  verbose : Int
+}
+
+pub struct DevConfig {
+  cwd : String
+  config_path : String?
+  frontend_dir : String?
+  port : Int?
+  host : String?
+  verbose : Int
+}
+
+pub struct DoctorConfig {
+  cwd : String
+  config_path : String?
+  json : Bool
+  verbose : Int
+}
+
+pub struct InitConfig {
+  project_name : String?
+  template : String
+  frontend : String
+  force : Bool
+  cwd : String
+  verbose : Int
+}
+
+// Type aliases
+
+// Traits
+

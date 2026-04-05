@@ -1,26 +1,14 @@
 import {
   "moonbitlang/x/sys",
-  "moonbitlang/core/argparse",
-  "moonbitlang/core/json",
-  "moonbitlang/core/string",
-  "moonbitlang/core/env",
-  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+  "moonbitlang/async",
+  "lepus-apps/lepus/cli/lepus_core",
 }
 
 supported_targets = "+native"
 
 options(
+  "bin-name": "lepus",
+  "bin-target": "native",
   "is-main": true,
-  "native-stub": [ "native.c" ],
-  targets: {
-    "build_command.mbt": [ "native" ],
-    "cli_test.mbt": [ "native" ],
-    "command_spec.mbt": [ "native" ],
-    "dev_command.mbt": [ "native" ],
-    "doctor_command.mbt": [ "native" ],
-    "init_command.mbt": [ "native" ],
-    "main.mbt": [ "native" ],
-    "matches.mbt": [ "native" ],
-    "native.mbt": [ "native" ],
-  },
+  targets: { "main.mbt": [ "native" ] },
 )

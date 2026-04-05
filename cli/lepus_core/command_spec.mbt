@@ -7,7 +7,7 @@ pub fn root_command() -> @argparse.Command {
     options=[
       @argparse.OptionArg("template", long="template", default_values=["basic"]),
       @argparse.OptionArg("frontend", long="frontend", default_values=[
-        "vanilla",
+        "vanilla", "vite",
       ]),
     ],
     positionals=[

@@ -9,8 +9,6 @@
 
 #include "moonbit.h"
 
-#define LEPUS_NATIVE_SUFFIX "/packages/lepus_cli/native.c"
-
 static moonbit_bytes_t lepus_copy_string(const char *value) {
   if (value == NULL || value[0] == '\0') {
     moonbit_bytes_t bytes = moonbit_make_bytes_raw(1);
@@ -70,29 +68,6 @@ MOONBIT_FFI_EXPORT void lepus_exit(int code) {
   exit(code);
 }
 
-MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_repo_root(void) {
-  const char *source = __FILE__;
-  const char *suffix = LEPUS_NATIVE_SUFFIX;
-  size_t source_len = strlen(source);
-  size_t suffix_len = strlen(suffix);
-
-  if (source_len >= suffix_len &&
-      strcmp(source + source_len - suffix_len, suffix) == 0) {
-    size_t root_len = source_len - suffix_len;
-    char *buffer = (char *)malloc(root_len + 1);
-    if (buffer == NULL) {
-      return lepus_copy_string("");
-    }
-    memcpy(buffer, source, root_len);
-    buffer[root_len] = '\0';
-    moonbit_bytes_t result = lepus_copy_string(buffer);
-    free(buffer);
-    return result;
-  }
-
-  return lepus_copy_string("");
-}
-
 MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_realpath(moonbit_bytes_t path) {
   char resolved[PATH_MAX];
   if (realpath((const char *)path, resolved) == NULL) {
@@ -150,4 +125,43 @@ MOONBIT_FFI_EXPORT int lepus_write_text_file(
   }
 
   return 0;
+}
+
+MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_read_text_file(moonbit_bytes_t path) {
+  FILE *file = fopen((const char *)path, "rb");
+  long length;
+  size_t read_size;
+  moonbit_bytes_t bytes;
+
+  if (file == NULL) {
+    return lepus_copy_string("");
+  }
+
+  if (fseek(file, 0, SEEK_END) != 0) {
+    fclose(file);
+    return lepus_copy_string("");
+  }
+
+  length = ftell(file);
+  if (length < 0) {
+    fclose(file);
+    return lepus_copy_string("");
+  }
+
+  if (fseek(file, 0, SEEK_SET) != 0) {
+    fclose(file);
+    return lepus_copy_string("");
+  }
+
+  bytes = moonbit_make_bytes_raw((int32_t)length + 1);
+  read_size = fread(bytes, 1, (size_t)length, file);
+  fclose(file);
+
+  if (read_size != (size_t)length) {
+    bytes[0] = '\0';
+    return bytes;
+  }
+
+  bytes[length] = '\0';
+  return bytes;
 }

@@ -1,0 +1,28 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/process" @process,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "native.c" ],
+  targets: {
+    "build_command.mbt": [ "native" ],
+    "cli_test.mbt": [ "native" ],
+    "command_spec.mbt": [ "native" ],
+    "dev_command.mbt": [ "native" ],
+    "doctor_command.mbt": [ "native" ],
+    "init_command.mbt": [ "native" ],
+    "main.mbt": [ "native" ],
+    "matches.mbt": [ "native" ],
+    "native.mbt": [ "native" ],
+    "process_runner.mbt": [ "native" ],
+    "project.mbt": [ "native" ],
+  },
+)

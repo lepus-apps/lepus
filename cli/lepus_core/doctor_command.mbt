@@ -1,5 +1,5 @@
 ///|
-struct DoctorCheck {
+priv struct DoctorCheck {
   name : String
   ok : Bool
   detail : String

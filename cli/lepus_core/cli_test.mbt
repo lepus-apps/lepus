@@ -39,3 +39,20 @@ test "init config defaults and cwd are inferred" {
     _ => panic()
   }
 }
+
+///|
+test "init config accepts vite frontend" {
+  let matches = root_command().parse(
+    argv=["init", "demo", "--frontend", "vite"],
+    env={},
+  ) catch {
+    _ => panic()
+  }
+  match matches.subcommand {
+    Some(("init", sub)) => {
+      let config = parse_init_config(matches, sub)
+      assert_eq(config.frontend, "vite")
+    }
+    _ => panic()
+  }
+}
