@@ -1,11 +1,14 @@
 import {
-  "moonbitlang/core/env"
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "moonbitlang/async",
+  "moonbitlang/async/process",
 }
 
 supported_targets = "+native"
 
 options(
+  "bin-name": "cc",
+  "bin-target": "native",
   "is-main": true,
-  
-  targets: { },
 )

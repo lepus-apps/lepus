@@ -128,7 +128,7 @@ Useful commands:
 
 ```sh
 moon check
-moon test --target native -p lepus-apps/lepus/webview
+moon test --target native -p lepus-apps/webview
 moon info && moon fmt
 ```
 

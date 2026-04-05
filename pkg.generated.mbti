@@ -2,7 +2,8 @@
 package "lepus-apps/lepus"
 
 import {
-  "lepus-apps/lepus/webview",
+  "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -24,7 +25,7 @@ pub struct WindowConfig {
   debug : Int
   html : String?
   url : String?
-} derive(Eq, Show)
+} derive(Eq, Hash, Show, ToJson, @json.FromJson)
 
 // Type aliases
 

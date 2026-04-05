@@ -4,7 +4,7 @@ fn main {
   let matches = root.parse() catch {
     err => {
       println(err.to_string())
-      exit_process(2)
+      @sys.exit(2)
       abort("unreachable")
     }
   }
@@ -23,6 +23,6 @@ fn main {
     }
   }
   if exit_code != 0 {
-    exit_process(exit_code)
+    @sys.exit(exit_code)
   }
 }

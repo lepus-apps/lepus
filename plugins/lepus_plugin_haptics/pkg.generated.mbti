@@ -2,7 +2,7 @@
 package "lepus-apps/lepus/plugins/lepus_plugin_haptics"
 
 import {
-  "lepus-apps/lepus/webview",
+  "lepus-apps/webview",
 }
 
 // Values

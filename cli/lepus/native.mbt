@@ -1,8 +1,4 @@
 ///|
-#borrow(name)
-pub extern "C" fn env_get(name : Bytes) -> Bytes = "lepus_env_get"
-
-///|
 #borrow(path)
 pub extern "C" fn file_exists(path : Bytes) -> Int = "lepus_file_exists"
 
@@ -21,9 +17,6 @@ pub extern "C" fn current_dir() -> Bytes = "lepus_current_dir"
 pub extern "C" fn platform_name() -> Bytes = "lepus_platform_name"
 
 ///|
-pub extern "C" fn exit_process(code : Int) -> Unit = "lepus_exit"
-
-///|
 pub extern "C" fn repo_root() -> Bytes = "lepus_repo_root"
 
 ///|
@@ -39,53 +32,53 @@ pub extern "C" fn mkdir_p_ffi(path : Bytes) -> Int = "lepus_mkdir_p"
 pub extern "C" fn write_text_file_ffi(path : Bytes, content : Bytes) -> Int = "lepus_write_text_file"
 
 ///|
-fn bytes_to_string(bytes : Bytes) -> String {
-  @ffi.from_cstr(bytes)
-}
-
-///|
 pub fn getenv(name : String) -> String? {
-  let value = bytes_to_string(env_get(@ffi.to_cstr(name)))
-  if value == "" {
-    None
-  } else {
-    Some(value)
-  }
+  @env.get_env_var(name)
 }
 
 ///|
 pub fn path_exists(path : String) -> Bool {
-  file_exists(@ffi.to_cstr(path)) != 0
+  file_exists(@encoding/utf8.encode(path)) != 0
 }
 
 ///|
 pub fn is_directory(path : String) -> Bool {
-  directory_exists(@ffi.to_cstr(path)) != 0
+  directory_exists(@encoding/utf8.encode(path)) != 0
 }
 
 ///|
 pub fn has_command(command : String) -> Bool {
-  command_exists(@ffi.to_cstr(command)) != 0
+  command_exists(@encoding/utf8.encode(command)) != 0
 }
 
 ///|
 pub fn get_cwd() -> String {
-  bytes_to_string(current_dir())
+  @encoding/utf8.decode(current_dir()) catch {
+    _ => "."
+  }
 }
 
 ///|
 pub fn get_platform() -> String {
-  bytes_to_string(platform_name())
+  @encoding/utf8.decode(platform_name()) catch {
+    _ => "unknown"
+  }
 }
 
 ///|
 pub fn get_repo_root() -> String {
-  bytes_to_string(repo_root())
+  @encoding/utf8.decode(repo_root()) catch {
+    _ => "."
+  }
 }
 
 ///|
 pub fn canonicalize_path(path : String) -> String {
-  let resolved = bytes_to_string(realpath_ffi(@ffi.to_cstr(path)))
+  let resolved = @encoding/utf8.decode(
+    realpath_ffi(@encoding/utf8.encode(path)),
+  ) catch {
+    _ => path
+  }
   if resolved == "" {
     path
   } else {
@@ -95,10 +88,14 @@ pub fn canonicalize_path(path : String) -> String {
 
 ///|
 pub fn mkdir_p(path : String) -> Bool {
-  mkdir_p_ffi(@ffi.to_cstr(path)) == 0
+  mkdir_p_ffi(@encoding/utf8.encode(path)) == 0
 }
 
 ///|
 pub fn write_text_file(path : String, content : String) -> Bool {
-  write_text_file_ffi(@ffi.to_cstr(path), @ffi.to_cstr(content)) == 0
+  write_text_file_ffi(
+    @encoding/utf8.encode(path),
+    @encoding/utf8.encode(content),
+  ) ==
+  0
 }

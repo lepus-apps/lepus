@@ -1,40 +1,31 @@
 ///|
-enum Platform {
-  Windows
-  Linux
-  MacOS
-  Solaris
-  BSD
-  Unknown
-}
-
-///|
 /// proxy of c compiler for cross platform
-fn main {
-  let args = @env.args()
-  let platform = get_platform()
-  let (compiler, compiler_args) = match platform {
-    Windows => ("cl.exe", [..args, "/nologo", "/EHsc"])
-    MacOS => ("cc", [..args, "-Lwebview/lib", "-lwebview", "-Wl,-rpath,@loader_path/../../../../../../webview/lib"])
-    Linux => ("cc", [..args, ""])
-  }
+async fn main {
+  let args = @env.args()[1:]
+  let (compiler, compiler_args) = get_compile_args()
+  @sys.exit(
+    @process.run(compiler, [..args, ..compiler_args]) catch {
+      err => {
+        println("Failed to execute compiler: \{err}")
+        1
+      }
+    },
+  )
 }
 
 ///|
 #cfg(platform="windows")
-fn get_platform() -> Platform {
-  Windows
+fn get_compile_args() -> (String, Array[String]) {
+  ("cl.exe", [".mooncakes/lepus-apps/webview/lib/webview.lib"])
 }
 
 ///|
 #cfg(not(platform="windows"))
-fn get_platform() -> Platform {
-  match @env.get_env_var("OSTYPE") {
-    Some(ostype) if ostype.contains("darwin") => MacOS
-    Some(ostype) if ostype.contains("solaris") => Solaris
-    Some(ostype) if ostype.contains("freebsd") ||
-      ostype.contains("openbsd") ||
-      ostype.contains("netbsd") => BSD
-    _ => Unknown
-  }
+fn get_compile_args() -> (String, Array[String]) {
+  (
+    "cc",
+    [
+      "-L.mooncakes/lepus-apps/webview/lib", "-lwebview", "-Wl,-rpath,.mooncakes/lepus-apps/webview/lib",
+    ],
+  )
 }

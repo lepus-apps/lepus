@@ -14,10 +14,6 @@ pub fn current_dir() -> Bytes
 
 pub fn directory_exists(Bytes) -> Int
 
-pub fn env_get(Bytes) -> Bytes
-
-pub fn exit_process(Int) -> Unit
-
 pub fn file_exists(Bytes) -> Int
 
 pub fn get_cwd() -> String

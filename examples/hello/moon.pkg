@@ -6,10 +6,6 @@ supported_targets = "+native"
 
 options(
   "is-main": true,
-  link: {
-    "native": {
-      "cc-link-flags": "-Lwebview/lib -lwebview -Wl,-rpath,@loader_path/../../../../../../webview/lib",
-    },
-  },
+  link: { "native": { "cc": "_build/native/release/build/cli/cc/cc.exe" } },
   targets: { "main.mbt": [ "native" ] },
 )

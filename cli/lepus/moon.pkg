@@ -1,8 +1,10 @@
 import {
+  "moonbitlang/x/sys",
   "moonbitlang/core/argparse",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "lepus-apps/lepus/ffi",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }
 
 supported_targets = "+native"

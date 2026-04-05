@@ -1,10 +1,10 @@
 import {
-  "lepus-apps/lepus/webview",
+  "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 supported_targets = "+native"
 
 options(
-  link: { "native": { "cc-link-flags": "-Lwebview/lib -lwebview" } },
   targets: { "lepus.mbt": [ "native" ] },
 )

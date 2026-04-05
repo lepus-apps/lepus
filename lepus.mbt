@@ -12,7 +12,7 @@ pub struct WindowConfig {
 pub struct App {
   config : WindowConfig
   plugins : Array[@webview.Plugin]
-} derive(Show, Eq, ToJson, FromJson, Hash)
+}
 
 ///|
 pub fn App::new(
