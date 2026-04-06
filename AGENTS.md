@@ -15,6 +15,11 @@ You can browse and install extra skills here:
 - In the toplevel directory, there is a `moon.mod.json` file listing module
   metadata.
 
+## Readonly Directories
+
+- `_build/` and `.mooncakes/` are readonly directories in this repository.
+- Do not edit, create, delete, or patch any files under `_build/` or `.mooncakes/`.
+
 ## Coding convention
 
 - MoonBit code is organized in block style, each block is separated by `///|`,
