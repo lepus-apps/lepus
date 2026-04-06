@@ -23,10 +23,7 @@ pub fn plugin() -> @webview.Plugin {
     context.command_result("_writeTextFile", write_text_file_command)
     context.command_result("_mkdir", mkdir_command)
     context.command_result("_remove", remove_command)
-    @lepus_plugin_support.install_js_initializer(
-      context,
-      fs_api_script(),
-    )
+    @lepus_plugin_support.install_js_initializer(context, fs_api_script())
   })
 }
 
@@ -75,10 +72,59 @@ fn ensure_path(path : String, api_name : String) -> Result[String, String] {
 }
 
 ///|
+fn io_error(api_name : String, err : Error) -> String {
+  api_name + ": " + err.to_string()
+}
+
+///|
+fn[X] run_async_result(
+  api_name : String,
+  task : async () -> Result[X, String],
+) -> Result[X, String] {
+  let mut result = Err(api_name + ": internal execution failed")
+  @async.run_async_main(() => {
+    result = task() catch { err => Err(io_error(api_name, err)) }
+  })
+  result
+}
+
+///|
+async fn exists_checked(
+  path : String,
+  api_name : String,
+) -> Result[Bool, String] {
+  Ok(@fs.exists(path)) catch {
+    err => Err(io_error(api_name, err))
+  }
+}
+
+///|
+async fn is_dir_checked(
+  path : String,
+  api_name : String,
+) -> Result[Bool, String] {
+  Ok(@fs.kind(path) is @fs.FileKind::Directory) catch {
+    err => Err(io_error(api_name, err))
+  }
+}
+
+///|
+async fn is_dir_if_exists(
+  path : String,
+  api_name : String,
+) -> Result[Bool, String] {
+  match exists_checked(path, api_name) {
+    Err(err) => Err(err)
+    Ok(false) => Ok(false)
+    Ok(true) => is_dir_checked(path, api_name)
+  }
+}
+
+///|
 fn exists_command(request : PathRequest) -> Result[Bool, String] {
   match ensure_path(request.path, "exists") {
     Err(err) => Err(err)
-    Ok(path) => Ok(fs_exists(path))
+    Ok(path) => run_async_result("exists", () => exists_checked(path, "exists"))
   }
 }
 
@@ -86,18 +132,22 @@ fn exists_command(request : PathRequest) -> Result[Bool, String] {
 fn read_text_file_command(request : PathRequest) -> Result[String, String] {
   match ensure_path(request.path, "readTextFile") {
     Err(err) => Err(err)
-    Ok(path) => {
-      guard fs_exists(path) else {
-        return Err("readTextFile: path does not exist: " + path)
-      }
-      guard !fs_is_dir(path) else {
-        return Err("readTextFile: path is a directory: " + path)
-      }
-      match fs_read_text(path) {
-        Ok(content) => Ok(content)
-        Err(err) => Err("readTextFile: " + err)
-      }
-    }
+    Ok(path) =>
+      run_async_result("readTextFile", () => {
+        match exists_checked(path, "readTextFile") {
+          Err(err) => Err(err)
+          Ok(false) => Err("readTextFile: path does not exist: " + path)
+          Ok(true) =>
+            match is_dir_checked(path, "readTextFile") {
+              Err(err) => Err(err)
+              Ok(true) => Err("readTextFile: path is a directory: " + path)
+              Ok(false) =>
+                Ok(@fs.read_file(path).text()) catch {
+                  err => Err(io_error("readTextFile", err))
+                }
+            }
+        }
+      })
   }
 }
 
@@ -107,15 +157,25 @@ fn write_text_file_command(
 ) -> Result[Bool, String] {
   match ensure_path(request.path, "writeTextFile") {
     Err(err) => Err(err)
-    Ok(path) => {
-      guard !fs_is_dir(path) else {
-        return Err("writeTextFile: path is a directory: " + path)
-      }
-      match fs_write_text(path, request.contents) {
-        Ok(_) => Ok(true)
-        Err(err) => Err("writeTextFile: " + err)
-      }
-    }
+    Ok(path) =>
+      run_async_result("writeTextFile", () => {
+        match is_dir_if_exists(path, "writeTextFile") {
+          Err(err) => Err(err)
+          Ok(true) => Err("writeTextFile: path is a directory: " + path)
+          Ok(false) =>
+            try {
+              @fs.write_file(
+                path,
+                request.contents,
+                create=0o644,
+                truncate=true,
+              )
+              Ok(true)
+            } catch {
+              err => Err(io_error("writeTextFile", err))
+            }
+        }
+      })
   }
 }
 
@@ -125,10 +185,14 @@ fn mkdir_command(request : RecursivePathRequest) -> Result[Bool, String] {
     Err(err) => Err(err)
     Ok(path) => {
       let recursive = request.recursive.unwrap_or(false)
-      match fs_mkdir(path, recursive) {
-        Ok(_) => Ok(true)
-        Err(err) => Err("mkdir: " + err)
-      }
+      run_async_result("mkdir", () => {
+        try {
+          @fs.mkdir(path, permission=0o755, recursive~)
+          Ok(true)
+        } catch {
+          err => Err(io_error("mkdir", err))
+        }
+      })
     }
   }
 }
@@ -139,12 +203,52 @@ fn remove_command(request : RecursivePathRequest) -> Result[Bool, String] {
     Err(err) => Err(err)
     Ok(path) => {
       let recursive = request.recursive.unwrap_or(false)
-      match fs_remove(path, recursive) {
-        Ok(_) => Ok(true)
-        Err(err) => Err("remove: " + err)
-      }
+      run_async_result("remove", () => {
+        match exists_checked(path, "remove") {
+          Err(err) => Err(err)
+          Ok(false) => Err("remove: path does not exist: " + path)
+          Ok(true) =>
+            match is_dir_checked(path, "remove") {
+              Err(err) => Err(err)
+              Ok(true) =>
+                try {
+                  @fs.rmdir(path, recursive~)
+                  Ok(true)
+                } catch {
+                  err => Err(io_error("remove", err))
+                }
+              Ok(false) =>
+                try {
+                  @fs.remove(path)
+                  Ok(true)
+                } catch {
+                  err => Err(io_error("remove", err))
+                }
+            }
+        }
+      })
     }
   }
+}
+
+///|
+fn remove_if_exists(path : String) -> Unit {
+  ignore(
+    run_async_result("remove", () => {
+      try {
+        if @fs.exists(path) {
+          if @fs.kind(path) is @fs.FileKind::Directory {
+            @fs.rmdir(path, recursive=true)
+          } else {
+            @fs.remove(path)
+          }
+        }
+      } catch {
+        _ => ()
+      }
+      Ok(())
+    }),
+  )
 }
 
 ///|
@@ -159,7 +263,7 @@ test "fs plugin validates empty path" {
 test "fs plugin read/write roundtrip" {
   let root = ".lepus-fs-plugin-test"
   let file = root + "/roundtrip.txt"
-  ignore(fs_remove(root, true))
+  remove_if_exists(root)
   assert_eq(
     mkdir_command(RecursivePathRequest::{ path: root, recursive: Some(true) }),
     Ok(true),
@@ -192,7 +296,7 @@ test "fs plugin recursive remove handles nested directories" {
   let root = ".lepus-fs-plugin-rm-test"
   let nested_dir = root + "/a/b"
   let nested_file = nested_dir + "/x.txt"
-  ignore(fs_remove(root, true))
+  remove_if_exists(root)
   assert_eq(
     mkdir_command(RecursivePathRequest::{
       path: nested_dir,

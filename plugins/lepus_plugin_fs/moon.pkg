@@ -1,13 +1,13 @@
 import {
   "lepus-apps/lepus/plugins/lepus_plugin_support",
   "lepus-apps/webview",
+  "moonbitlang/async" @async,
+  "moonbitlang/async/fs" @fs,
   "moonbitlang/core/json",
-  "moonbitlang/core/encoding/utf8" @encoding/utf8,
 }
 
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "native.c" ],
-  targets: { "native.mbt": [ "native" ], "plugin.mbt": [ "native" ] },
+  targets: { "plugin.mbt": [ "native" ] },
 )
