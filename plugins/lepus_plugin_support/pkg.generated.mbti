@@ -3,9 +3,14 @@ package "lepus-apps/lepus/plugins/lepus_plugin_support"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn[Payload : @json.FromJson, Reply : ToJson] command_async(@webview.PluginContext, String, async (Payload) -> Reply) -> Unit
+
+pub fn[Payload : @json.FromJson, Reply : ToJson] command_result_async(@webview.PluginContext, String, async (Payload) -> Result[Reply, String]) -> Unit
+
 pub fn example_html(String, String) -> String
 
 pub fn install_js_api(@webview.PluginContext, String, String) -> Unit

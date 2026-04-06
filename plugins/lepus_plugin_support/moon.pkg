@@ -1,5 +1,6 @@
 import {
   "lepus-apps/webview",
+  "moonbitlang/async" @async,
   "moonbitlang/core/json",
 }
 

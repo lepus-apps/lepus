@@ -50,6 +50,37 @@ pub fn install_rejecting_api(
 }
 
 ///|
+fn async_command_error(api_name : String, err : Error) -> String {
+  api_name + ": " + err.to_string()
+}
+
+///|
+pub fn[Payload : @json.FromJson, Reply : ToJson] command_result_async(
+  context : @webview.PluginContext,
+  api_name : String,
+  callback : async (Payload) -> Result[Reply, String],
+) -> Unit {
+  context.command_result(api_name, fn(payload) {
+    let mut result = Err(api_name + ": internal execution failed")
+    @async.run_async_main(() => {
+      result = callback(payload) catch {
+        err => Err(async_command_error(api_name, err))
+      }
+    })
+    result
+  })
+}
+
+///|
+pub fn[Payload : @json.FromJson, Reply : ToJson] command_async(
+  context : @webview.PluginContext,
+  api_name : String,
+  callback : async (Payload) -> Reply,
+) -> Unit {
+  command_result_async(context, api_name, payload => Ok(callback(payload)))
+}
+
+///|
 pub fn example_html(plugin_name : String, title : String) -> String {
   let plugin_name_js = string_literal(plugin_name)
   (

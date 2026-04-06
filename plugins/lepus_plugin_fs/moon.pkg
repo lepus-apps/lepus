@@ -1,7 +1,7 @@
 import {
   "lepus-apps/lepus/plugins/lepus_plugin_support",
   "lepus-apps/webview",
-  "moonbitlang/async" @async,
+  "moonbitlang/async",
   "moonbitlang/async/fs" @fs,
   "moonbitlang/core/json",
 }
