@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @lepus.App::new(
+  @lepus.Window::new(
     title="Lepus Geolocation Plugin",
     html=@lepus_plugin_support.example_html(
       "geolocation", "Geolocation Plugin Example",

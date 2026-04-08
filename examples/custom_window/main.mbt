@@ -1,11 +1,12 @@
 ///|
 fn main {
-  @lepus.App::new(
+  @lepus.Window::new(
     title="Lepus Custom Window",
     width=980,
     height=620,
     frameless=true,
     resizable=true,
+    transparent=true,
     html=(
       #|<!doctype html>
       #|<html>

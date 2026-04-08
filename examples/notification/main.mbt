@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @lepus.App::new(
+  @lepus.Window::new(
     title="Lepus Notification Plugin",
     html=@lepus_plugin_support.example_html(
       "notification", "Notification Plugin Example",

@@ -65,20 +65,26 @@ moon run --target native cli/lepus -- init my-app
 
 ## API
 
-The current top-level API is centered around `App::new(...)`.
+The current top-level API is centered around:
+
+- `WindowConfig::new(...)`
+- `App::new(main_window, plugins?)`
+- `App::with_windows(windows, plugins?)`
+- `App::add_window(config)`
 
 Minimal app:
 
 ```moonbit nocheck
 ///|
 fn main {
-  @lepus.App::new(
+  let main_window = @lepus.WindowConfig::new(
     title="Hello Lepus",
     html=(
       #|<!doctype html>
       #|<html><body><h1>Hello Lepus</h1></body></html>,
     ),
-  ).run()
+  )
+  @lepus.App::new(main_window).run()
 }
 ```
 
@@ -87,11 +93,28 @@ Plugin-enabled app:
 ```moonbit nocheck
 ///|
 fn main {
-  @lepus.App::new(
+  let main_window = @lepus.WindowConfig::new(
     title="Dialog Example",
     html=@lepus_plugin_support.example_html("dialog", "Dialog Plugin Example"),
-    plugins=[@lepus_plugin_dialog.plugin()],
-  ).run()
+  )
+  @lepus.App::new(main_window, plugins=[@lepus_plugin_dialog.plugin()]).run()
+}
+```
+
+Window customization example:
+
+```moonbit nocheck
+///|
+fn main {
+  let window = @lepus.WindowConfig::new(
+    title="Custom Window",
+    frameless=true,
+    transparent=true,
+    title_bar_style=1, // hidden
+    title_bar_overlay=true, // overlay controls
+    html="<div class='lepus-titlebar'>Drag me</div>",
+  )
+  @lepus.App::new(window).run()
 }
 ```
 

@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @lepus.App::new(
+  @lepus.Window::new(
     title="Lepus Deep Link Plugin",
     html=@lepus_plugin_support.example_html(
       "deep_link", "Deep Link Plugin Example",

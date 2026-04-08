@@ -1,6 +1,6 @@
 ///|
 fn main {
-  @lepus.App::new(
+  @lepus.Window::new(
     title="Lepus Single Instance Plugin",
     html=@lepus_plugin_support.example_html(
       "single_instance", "Single Instance Plugin Example",

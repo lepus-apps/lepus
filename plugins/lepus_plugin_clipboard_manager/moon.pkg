@@ -7,8 +7,8 @@ import {
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "clipboard_native.c" ],
   link: { "native": { "cc": "_build/native/release/build/cli/cc/cc.exe" } },
+  "native-stub": [ "clipboard_native.c" ],
   targets: {
     "clipboard.mbt": [ "native" ],
     "clipboard_wbtest.mbt": [ "native" ],
