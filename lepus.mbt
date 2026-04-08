@@ -15,6 +15,7 @@ pub struct WindowConfig {
   width : Int
   height : Int
   debug : Int
+  devtools : Bool
   frameless : Bool
   resizable : Bool
   always_on_top : Bool
@@ -32,6 +33,7 @@ pub fn WindowConfig::new(
   width? : Int = 800,
   height? : Int = 600,
   debug? : Int = 0,
+  devtools? : Bool = false,
   frameless? : Bool = false,
   resizable? : Bool = true,
   always_on_top? : Bool = false,
@@ -47,6 +49,7 @@ pub fn WindowConfig::new(
     width,
     height,
     debug,
+    devtools,
     frameless,
     resizable,
     always_on_top,
@@ -77,6 +80,7 @@ pub fn Window::new(
   width? : Int = 800,
   height? : Int = 600,
   debug? : Int = 0,
+  devtools? : Bool = false,
   frameless? : Bool = false,
   resizable? : Bool = true,
   always_on_top? : Bool = false,
@@ -94,6 +98,7 @@ pub fn Window::new(
       width,
       height,
       debug,
+      devtools,
       frameless,
       resizable,
       always_on_top,
@@ -148,11 +153,16 @@ pub fn App::run(self : App, window_index? : Int = 0) -> Unit {
     abort("App::run window_index out of range")
   }
   let config = self.windows[window_index]
+  let effective_debug = if config.devtools && config.debug <= 0 {
+    1
+  } else {
+    config.debug
+  }
   let window = @webview.Window::new(
     title=config.title,
     width=config.width,
     height=config.height,
-    debug=config.debug,
+    debug=effective_debug,
     frameless=config.frameless,
     resizable=config.resizable,
     always_on_top=config.always_on_top,
