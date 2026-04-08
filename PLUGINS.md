@@ -42,5 +42,5 @@ Implemented as register-style Lepus plugins with examples:
 
 - Every plugin package exports `plugin()`.
 - Every example installs the plugin through `.plugin(@lepus_plugin_x.plugin())`.
-- Examples render HTML via `@lepus_plugin_support.example_html(...)` and call `window.MoonBitPlugins[pluginName].example()`.
+- Examples render HTML via `@lepus_plugin_support.example_html(...)` and call `window.lepusApi[pluginName].example()`.
 - Unsupported plugins are explicit runtime errors instead of empty shells.

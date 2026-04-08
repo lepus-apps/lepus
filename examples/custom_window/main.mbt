@@ -4,8 +4,7 @@ fn main {
     title="Lepus Custom Window",
     width=980,
     height=620,
-    frameless=true,
-    resizable=true,
+    frameless=false,
     transparent=true,
     html=(
       #|<!doctype html>
@@ -31,12 +30,10 @@ fn main {
       #|        color: var(--ink);
       #|      }
       #|      .window {
-      #|        margin: 14px;
       #|        border: 1px solid var(--line);
       #|        border-radius: 14px;
       #|        overflow: hidden;
       #|        background: var(--panel);
-      #|        box-shadow: 0 14px 38px rgba(16, 24, 40, 0.14);
       #|      }
       #|      .titlebar {
       #|        height: 44px;
@@ -96,7 +93,6 @@ fn main {
       #|      <div class="titlebar lepus-drag">
       #|        <div class="title">Lepus Custom Window</div>
       #|        <div class="actions lepus-no-drag">
-      #|          <button class="button" onclick="window.location.reload()">Reload</button>
       #|          <button class="button primary" onclick="window.close()">Close</button>
       #|        </div>
       #|      </div>
