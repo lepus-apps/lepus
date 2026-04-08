@@ -1,6 +1,9 @@
 ///|
-pub fn example_html(plugin_name : String, title : String) -> String {
-  let plugin_name_js = plugin_name.to_json().stringify()
+pub fn example_html(
+  plugin_name : String,
+  title : String,
+  content? : String = "",
+) -> String {
   (
     #|<!doctype html>
     #|<html>
@@ -22,30 +25,10 @@ pub fn example_html(plugin_name : String, title : String) -> String {
     #|  <main>
     #|    <section>
     $|      <h1>\{title}</h1>
-    #|      <p>This example installs the plugin through Lepus register flow and calls <code>example()</code> from the frontend.</p>
-    #|      <button id="run">Run Plugin Example</button>
-    #|      <pre id="output">Click the button to run the plugin example.</pre>
+    $|      <p>This is an example app for the <strong>\{plugin_name}</strong> plugin.</p>
+    $|      \{content}
     #|    </section>
     #|  </main>
-    #|  <script>
-    #|    const output = document.getElementById('output');
-    #|    const run = document.getElementById('run');
-    $|    const pluginName = \{plugin_name_js};
-    #|    async function execute() {
-    #|      output.textContent = 'Running...';
-    #|      try {
-    #|        const plugin = window.MoonBitPlugins?.[pluginName];
-    #|        if (!plugin || typeof plugin.example !== 'function') {
-    #|          throw new Error('Plugin example API is not installed');
-    #|        }
-    #|        const result = await plugin.example();
-    #|        output.textContent = JSON.stringify(result, null, 2);
-    #|      } catch (error) {
-    #|        output.textContent = String(error && error.message ? error.message : error);
-    #|      }
-    #|    }
-    #|    run.addEventListener('click', execute);
-    #|  </script>
     #|</body>
     #|</html>
   )

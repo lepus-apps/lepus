@@ -3,14 +3,59 @@ package "lepus-apps/lepus/plugins/lepus_plugin_clipboard_manager"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn clear() -> Unit raise ClipboardError
+
+pub fn ensure_supported() -> Unit raise ClipboardError
+
+pub fn has_text() -> Bool raise ClipboardError
+
+pub fn is_supported() -> Bool
+
 pub fn plugin() -> @webview.Plugin
 
+pub fn read_text() -> String? raise ClipboardError
+
+pub fn write_text(String) -> Unit raise ClipboardError
+
 // Errors
+pub(all) suberror ClipboardError {
+  ClipboardError(String)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
+pub struct ClipboardBoolReply {
+  supported : Bool
+  value : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ClipboardExampleReply {
+  supported : Bool
+  before : String?
+  after : String?
+  restored : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ClipboardTextReply {
+  supported : Bool
+  text : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ClipboardWriteReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ClipboardWriteRequest {
+  text : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

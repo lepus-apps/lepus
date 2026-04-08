@@ -11,7 +11,7 @@ Implemented as register-style Lepus plugins with examples:
 - barcode-scanner: browser capability example
 - biometric: browser capability example
 - cli: browser location/query example
-- clipboard-manager: browser clipboard example
+- clipboard_manager: browser clipboard example
 - deep-link: browser location/protocol example
 - dialog: browser confirm example
 - fs: localStorage-backed example
