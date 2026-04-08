@@ -1,4 +1,4 @@
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("barcode-scanner", _ => ())
+  @webview.Plugin::new("barcode_scanner", _ => ())
 }

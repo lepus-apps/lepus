@@ -1,4 +1,4 @@
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("deep-link", _ => ())
+  @webview.Plugin::new("deep_link", _ => ())
 }
