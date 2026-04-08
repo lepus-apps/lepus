@@ -6,7 +6,7 @@ pub struct WindowConfig {
   debug : Int
   html : String?
   url : String?
-} derive(Show, Eq, ToJson, FromJson, Hash)
+} derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
 pub struct App {
@@ -29,14 +29,17 @@ pub fn App::new(
 
 ///|
 pub fn App::run(self : App) -> Unit {
-  let webview = @webview.WebView::new(debug=self.config.debug)
-    ..set_title(self.config.title)
-    ..set_size(self.config.width, self.config.height, @webview.SizeHint::None)
+  let window = @webview.Window::new(
+    title=self.config.title,
+    width=self.config.width,
+    height=self.config.height,
+    debug=self.config.debug,
+  )
   match self.config {
-    { url: Some(url), .. } => webview.navigate(url)
-    { html: Some(html), .. } => webview.set_html(html)
+    { url: Some(url), .. } => window.navigate(url)
+    { html: Some(html), .. } => window.set_html(html)
     _ => ()
   }
-  self.plugins.each(plugin => webview.install_plugin(plugin))
-  webview.run()
+  self.plugins.each(plugin => window.install(plugin))
+  window.run()
 }

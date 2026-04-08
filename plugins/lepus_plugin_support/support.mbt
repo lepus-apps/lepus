@@ -1,57 +1,6 @@
 ///|
-fn string_literal(value : String) -> String {
-  Json::string(value).stringify()
-}
-
-///|
-pub fn install_js_initializer(
-  context : @webview.PluginContext,
-  body : String,
-) -> Unit {
-  let global_name_js = string_literal(context.global_name())
-  let plugin_name_js = string_literal(context.name())
-  context.install_script(
-    "(function(){const root=window[" +
-    global_name_js +
-    "];if(!root||typeof root['@@ensurePlugin']!=='function'){return;}const plugin=root['@@ensurePlugin'](" +
-    plugin_name_js +
-    ");" +
-    body +
-    "})();",
-  )
-}
-
-///|
-pub fn install_js_api(
-  context : @webview.PluginContext,
-  api_name : String,
-  function_source : String,
-) -> Unit {
-  let api_name_js = string_literal(api_name)
-  install_js_initializer(
-    context,
-    "plugin[" + api_name_js + "]=" + function_source + ";",
-  )
-}
-
-///|
-pub fn install_rejecting_api(
-  context : @webview.PluginContext,
-  api_name : String,
-  message : String,
-) -> Unit {
-  install_js_api(
-    context,
-    api_name,
-    "function(){return Promise.reject(new Error(" +
-    string_literal(message) +
-    "))}",
-  )
-}
-
-///|
 pub fn example_html(plugin_name : String, title : String) -> String {
-  let plugin_name_js = string_literal(plugin_name)
+  let plugin_name_js = plugin_name.to_json().stringify()
   (
     #|<!doctype html>
     #|<html>
