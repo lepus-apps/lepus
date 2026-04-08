@@ -6,6 +6,7 @@ fn main {
     height=620,
     frameless=false,
     transparent=true,
+    devtools=true
     html=(
       #|<!doctype html>
       #|<html>

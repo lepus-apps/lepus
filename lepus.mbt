@@ -1,7 +1,4 @@
 ///|
-using @webview {type TrafficLightPosition}
-
-///|
 pub enum TitleBarStyle {
   Default = 0
   Hidden = 1
@@ -22,7 +19,7 @@ pub struct WindowConfig {
   transparent : Bool
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
-  traffic_light_position : TrafficLightPosition
+  traffic_light_position? : (Int, Int) = (-1, -1)
   html : String?
   url : String?
 } derive(Debug, Eq, ToJson, FromJson, Hash)
@@ -40,7 +37,7 @@ pub fn WindowConfig::new(
   transparent? : Bool = false,
   title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
   title_bar_overlay? : Bool = false,
-  traffic_light_position? : TrafficLightPosition = { x: -1, y: -1 },
+  traffic_light_position? : (Int, Int) = (-1, -1),
   html? : String,
   url? : String,
 ) -> WindowConfig {
@@ -87,7 +84,7 @@ pub fn Window::new(
   transparent? : Bool = false,
   title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
   title_bar_overlay? : Bool = false,
-  traffic_light_position? : TrafficLightPosition = { x: -1, y: -1 },
+  traffic_light_position? : (Int, Int) = (-1, -1),
   html? : String,
   url? : String,
   plugins? : Array[@webview.Plugin] = [],
