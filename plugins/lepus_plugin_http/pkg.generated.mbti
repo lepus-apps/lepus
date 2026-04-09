@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_http"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,9 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+type FetchInit derive(ToJson, @json.FromJson)
+
+type FetchReply derive(ToJson, @json.FromJson)
 
 // Type aliases
 
