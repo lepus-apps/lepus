@@ -4,88 +4,140 @@ fn main {
     title="Lepus Custom Window",
     width=980,
     height=620,
-    frameless=false,
+    frameless=true,
     transparent=true,
-    devtools=true,
+    // devtools=true,
     html=(
       #|<!doctype html>
-      #|<html>
+      #|<html lang="en">
       #|  <head>
       #|    <meta charset="utf-8" />
       #|    <meta name="viewport" content="width=device-width, initial-scale=1" />
       #|    <style>
       #|      :root {
-      #|        color-scheme: light;
-      #|        --bg: #f2f4f8;
+      #|        --bg: #f5f7fa;
       #|        --panel: #ffffff;
-      #|        --ink: #151a22;
-      #|        --muted: #6a7381;
-      #|        --line: #d7dde8;
+      #|        --text: #2c3e50;
+      #|        --muted: #7f8c8d;
       #|        --accent: #1769ff;
+      #|        --accent-hover: #0d52d4;
+      #|        --border: #e1e4e8;
+      #|        --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       #|      }
-      #|      * { box-sizing: border-box; }
+      #|
+      #|      * { box-sizing: border-box; margin: 0; padding: 0; }
+      #|
       #|      body {
-      #|        margin: 0;
-      #|        font-family: "SF Pro Text", "PingFang SC", "Noto Sans SC", sans-serif;
-      #|        background: radial-gradient(1200px 520px at 20% -10%, #dbe7ff 0%, var(--bg) 48%);
-      #|        color: var(--ink);
-      #|      }
-      #|      .window {
-      #|        border: 1px solid var(--line);
-      #|        border-radius: 14px;
+      #|        height: 100vh;
+      #|        width: 100vw;
+      #|        font-family: "SF Pro Text", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+      #|        background: var(--bg);
+      #|        color: var(--text);
+      #|        display: flex;
+      #|        align-items: center;
+      #|        justify-content: center;
       #|        overflow: hidden;
-      #|        background: var(--panel);
       #|      }
+      #|
+      #|      .window {
+      #|        width: 100vw;
+      #|        height: 100vh; /* Fills most of the height */
+      #|        background: var(--panel);
+      #|        border-radius: 16px;
+      #|        box-shadow: var(--shadow);
+      #|        display: flex;
+      #|        flex-direction: column;
+      #|        overflow: hidden;
+      #|        border: 1px solid var(--border);
+      #|      }
+      #|
       #|      .titlebar {
-      #|        height: 44px;
+      #|        height: 50px;
       #|        display: flex;
       #|        align-items: center;
       #|        justify-content: space-between;
-      #|        padding: 0 10px 0 14px;
-      #|        border-bottom: 1px solid var(--line);
-      #|        background: linear-gradient(180deg, #fdfefe, #f6f8fb);
+      #|        padding: 0 20px;
+      #|        background: #ffffff;
+      #|        border-bottom: 1px solid var(--border);
+      #|        user-select: none;
+      #|        -webkit-user-select: none;
+      #|        cursor: default;
       #|      }
+      #|
       #|      .title {
-      #|        font-size: 13px;
+      #|        font-size: 14px;
       #|        font-weight: 600;
+      #|        color: var(--text);
+      #|        letter-spacing: 0.5px;
       #|      }
+      #|
       #|      .actions {
       #|        display: flex;
-      #|        gap: 8px;
+      #|        gap: 10px;
       #|      }
+      #|
       #|      .button {
-      #|        border: 1px solid var(--line);
-      #|        border-radius: 8px;
-      #|        height: 28px;
-      #|        padding: 0 11px;
-      #|        background: #fff;
-      #|        color: var(--muted);
-      #|      }
-      #|      .button:hover {
-      #|        border-color: #bcc7da;
-      #|      }
-      #|      .button.primary {
-      #|        color: white;
-      #|        background: var(--accent);
-      #|        border-color: var(--accent);
-      #|      }
-      #|      .content {
-      #|        padding: 26px;
-      #|      }
-      #|      h1 {
-      #|        margin: 0 0 8px 0;
-      #|        font-size: 24px;
-      #|      }
-      #|      p {
-      #|        margin: 0;
-      #|        color: var(--muted);
-      #|        line-height: 1.6;
-      #|      }
-      #|      code {
-      #|        padding: 2px 7px;
+      #|        border: none;
       #|        border-radius: 6px;
-      #|        border: 1px solid var(--line);
-      #|        background: #f8fafc;
+      #|        height: 32px;
+      #|        padding: 0 16px;
+      #|        font-size: 13px;
+      #|        font-weight: 500;
+      #|        cursor: pointer;
+      #|        transition: all 0.2s ease;
+      #|        background: transparent;
+      #|        color: var(--muted);
+      #|      }
+      #|
+      #|      .button:hover {
+      #|        background: #f0f2f5;
+      #|        color: var(--text);
+      #|      }
+      #|
+      #|      .button.primary {
+      #|        background: var(--accent);
+      #|        color: white;
+      #|      }
+      #|
+      #|      .button.primary:hover {
+      #|        background: var(--accent-hover);
+      #|        transform: translateY(-1px);
+      #|        box-shadow: 0 4px 12px rgba(23, 105, 255, 0.3);
+      #|      }
+      #|
+      #|      .content {
+      #|        flex: 1;
+      #|        padding: 40px;
+      #|        display: flex;
+      #|        flex-direction: column;
+      #|        justify-content: center;
+      #|        align-items: center;
+      #|        text-align: center;
+      #|        overflow-y: auto;
+      #|      }
+      #|
+      #|      h1 {
+      #|        font-size: 32px;
+      #|        font-weight: 700;
+      #|        margin-bottom: 16px;
+      #|        color: var(--text);
+      #|      }
+      #|
+      #|      p {
+      #|        font-size: 16px;
+      #|        line-height: 1.6;
+      #|        color: var(--muted);
+      #|        max-width: 600px;
+      #|      }
+      #|
+      #|      code {
+      #|        padding: 4px 10px;
+      #|        border-radius: 6px;
+      #|        background: #f0f2f5;
+      #|        color: #d63384;
+      #|        font-family: "SF Mono", "Consolas", monospace;
+      #|        font-size: 0.9em;
+      #|        border: 1px solid #e1e4e8;
       #|      }
       #|    </style>
       #|  </head>
@@ -98,16 +150,16 @@ fn main {
       #|        </div>
       #|      </div>
       #|      <div class="content">
-      #|        <h1>Electron-style custom title bar</h1>
+      #|        <h1>Custom Title Bar</h1>
       #|        <p>
-      #|          This window is started with <code>frameless=true</code>. Drag the top bar area
-      #|          marked by <code>.lepus-drag</code>; interactive controls stay clickable with
-      #|          <code>.lepus-no-drag</code>.
+      #|          This window is started with <code>frameless=true</code>. 
+      #|          Drag the top bar area marked by <code>.lepus-drag</code>; 
+      #|          interactive controls stay clickable with <code>.lepus-no-drag</code>.
       #|        </p>
       #|      </div>
       #|    </div>
       #|  </body>
-      #|</html>,
+      #|</html>
     ),
   ).run()
 }

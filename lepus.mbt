@@ -148,16 +148,12 @@ pub fn App::run(self : App, window_index? : Int = 0) -> Unit {
     abort("App::run window_index out of range")
   }
   let config = self.windows[window_index]
-  let effective_debug = if config.devtools && config.debug <= 0 {
-    1
-  } else {
-    config.debug
-  }
   let window = @webview.Window::new(
     title=config.title,
     width=config.width,
     height=config.height,
-    debug=effective_debug,
+    debug=config.debug,
+    devtools=config.devtools,
     frameless=config.frameless,
     resizable=config.resizable,
     always_on_top=config.always_on_top,
