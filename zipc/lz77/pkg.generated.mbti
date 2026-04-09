@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/lz77"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn decode(Array[LZ77Token]) -> Bytes raise
+
+pub fn decode_from_bytes(Bytes) -> Bytes raise
+
+pub fn default_config() -> LZ77Config
+
+pub fn encode(Bytes, LZ77Config) -> Array[LZ77Token]
+
+pub fn encode_default(Bytes) -> Array[LZ77Token]
+
+pub fn encode_to_bytes(Bytes, LZ77Config) -> Bytes
+
+pub fn get_compression_stats(Int, Array[LZ77Token]) -> (Int, Int, Double)
+
+pub fn hash3(Byte, Byte, Byte) -> Int
+
+pub fn new_decoder_state() -> DecoderState
+
+pub fn new_encoder_state(LZ77Config) -> EncoderState
+
+pub fn validate_tokens(Array[LZ77Token]) -> Bool
+
+// Errors
+
+// Types and methods
+type DecoderState derive(@debug.Debug)
+
+type EncoderState derive(@debug.Debug)
+
+pub(all) struct LZ77Config {
+  window_size : Int
+  max_match_length : Int
+  min_match_length : Int
+  max_distance : Int
+} derive(Eq, @debug.Debug)
+
+pub enum LZ77Token {
+  Literal(Byte)
+  Reference(Int, Int)
+} derive(Eq, ToJson, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

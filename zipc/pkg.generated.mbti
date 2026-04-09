@@ -1,0 +1,198 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc"
+
+import {
+  "lepus-apps/lepus/zipc/deflate",
+}
+
+// Values
+pub fn add(Member, Archive) -> Archive
+
+pub fn bytes_from_ints(Array[Int]) -> Bytes
+
+pub fn compare_string_vs_bytes_write_u32() -> String
+
+pub fn concat_bytes(Array[Bytes]) -> Bytes
+
+pub fn create_unicode_path_field(String, Int) -> ExtraField
+
+pub fn create_unix_timestamp_field(Int, Int?, Int?) -> ExtraField
+
+pub fn current_unix_timestamp() -> Int
+
+pub fn deflate_of_binary_string(String, @deflate.Level) -> @deflate.Result[File, String]
+
+pub fn deflate_of_bytes(Bytes, @deflate.Level) -> @deflate.Result[File, String]
+
+pub fn dos_datetime_components(Int, Int) -> (Int, Int, Int, Int, Int, Int)
+
+pub fn dos_datetime_to_unix(Int, Int) -> Int
+
+pub let dos_epoch : Int
+
+pub fn empty() -> Archive
+
+pub fn extra_fields_size(Array[ExtraField]) -> Int
+
+pub fn file_can_extract(File) -> Bool
+
+pub fn file_compressed_bytes(File) -> Bytes
+
+pub fn file_compressed_size(File) -> Int
+
+pub fn file_compression(File) -> Compression
+
+pub fn file_decompressed_size(File) -> Int
+
+pub fn file_to_bytes(File) -> Bytes raise
+
+pub fn find(String, Archive) -> Member?
+
+pub fn find_extra_field(Array[ExtraField], UInt16) -> ExtraField?
+
+pub fn format_dos_datetime(Int, Int) -> String
+
+pub let info_zip_unix_id : UInt16
+
+pub fn is_empty(Archive) -> Bool
+
+pub fn make_dos_datetime(Int, Int, Int, Int, Int, Int) -> (Int, Int)
+
+pub let max_file_size : Int
+
+pub let max_members : Int
+
+pub let max_path_length : Int
+
+pub fn mem(String, Archive) -> Bool
+
+pub fn member_count(Archive) -> Int
+
+pub fn member_kind(Member) -> MemberKind
+
+pub fn member_make(String, MemberKind) -> @deflate.Result[Member, String]
+
+pub fn member_mode(Member) -> Int
+
+pub fn member_mtime(Member) -> Int
+
+pub fn member_path(Member) -> String
+
+pub let ntfs_extra_field_id : UInt16
+
+pub fn of_binary(Bytes) -> @deflate.Result[Archive, String]
+
+pub fn of_bytes(Bytes) -> @deflate.Result[Archive, String]
+
+pub fn parse_extra_fields(String) -> Array[ExtraField]
+
+pub fn parse_unicode_path_field(ExtraField) -> (StringView, UInt)?
+
+pub fn parse_unix_timestamp_field(ExtraField) -> (UInt, UInt?, UInt?)?
+
+pub fn read_u16_be_bytes(Bytes, Int) -> Int
+
+pub fn read_u16_le_bytes(Bytes, Int) -> Int
+
+pub fn read_u16_le_extra(String, Int) -> UInt16
+
+pub fn read_u32_be_bytes(Bytes, Int) -> Int
+
+pub fn read_u32_le_bytes(Bytes, Int) -> Int
+
+pub fn read_u32_le_extra(StringView, Int) -> UInt
+
+pub fn remove(String, Archive) -> Archive
+
+pub fn remove_extra_field(Array[ExtraField], UInt16) -> Array[ExtraField]
+
+pub fn serialize_extra_fields(Array[ExtraField]) -> StringView
+
+pub fn set_extra_field(Array[ExtraField], ExtraField) -> Array[ExtraField]
+
+pub fn stored_of_binary_string(String) -> File raise
+
+pub fn stored_of_bytes(Bytes) -> File raise
+
+pub fn string_has_magic(StringView) -> Bool
+
+pub fn to_binary_string(Archive) -> @deflate.Result[StringView, String]
+
+pub fn to_bytes(Archive) -> @deflate.Result[Bytes, String]
+
+pub let unicode_comment_id : UInt16
+
+pub let unicode_path_id : UInt16
+
+pub let unix_extra_field_id : UInt16
+
+pub fn unix_to_dos_datetime(Int) -> (Int, Int)
+
+pub fn validate_extra_field(ExtraField) -> Bool
+
+pub fn write_u16_be_bytes(Int) -> Bytes
+
+pub fn write_u16_le_bytes(Int) -> Bytes
+
+pub fn write_u16_le_extra(UInt16) -> String
+
+pub fn write_u32_be_bytes(Int) -> Bytes
+
+pub fn write_u32_le_bytes(Int) -> Bytes
+
+pub fn write_u32_le_extra(Int) -> String
+
+pub let zip64_extra_field_id : UInt16
+
+// Errors
+
+// Types and methods
+pub struct Archive {
+  members : Map[String, Member]
+}
+
+pub enum Compression {
+  Stored
+  Deflate
+  Other(Int)
+}
+
+pub struct ExtraField {
+  header_id : UInt16
+  data_size : Int
+  data : StringView
+}
+
+pub struct File {
+  compression : Compression
+  start : Int
+  compressed_size : Int
+  compressed_bytes : Bytes
+  decompressed_size : Int
+  decompressed_crc32 : Int64
+  version_made_by : Int
+  version_needed_to_extract : Int
+  gp_flags : Int
+}
+
+pub struct Member {
+  path : String
+  mode : Int
+  mtime : Int
+  kind : MemberKind
+}
+
+pub enum MemberKind {
+  Dir
+  File(File)
+}
+
+// Type aliases
+pub type Fpath = String
+
+pub type Mode = Int
+
+pub type Ptime = Int
+
+// Traits
+

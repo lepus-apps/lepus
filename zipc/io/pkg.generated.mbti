@@ -1,0 +1,202 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/io"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn copy(&Writer, &Reader) -> (Int64, IOError?)
+
+pub fn copy_buffer(&Writer, &Reader, Slice[Byte]?) -> (Int64, IOError?)
+
+pub fn copy_json(&ByteReader) -> (Json, Int64, IOError?)
+
+pub fn copy_n(&Writer, &Reader, Int64) -> (Int64, IOError?)
+
+pub fn copy_size(&Writer, &ByteReader, Int64) -> (Int64, IOError?)
+
+pub fn copy_until(&Writer, &ByteReader, Byte) -> (Int64, IOError?)
+
+pub let discard : Discard
+
+pub let eof : IOError
+
+pub let err_invalid_write : IOError
+
+pub let err_no_progress : IOError
+
+pub let err_offset : IOError
+
+pub let err_short_buffer : IOError
+
+pub let err_short_write : IOError
+
+pub let err_unexpected_eof : IOError
+
+pub let err_whence : IOError
+
+pub fn read_all(&Reader) -> (Slice[Byte], IOError?)
+
+pub fn read_full(&Reader, Slice[Byte]) -> (Int, IOError?)
+
+// Errors
+pub(all) suberror IOError {
+  IOError(String)
+} derive(Eq, @debug.Debug)
+pub impl Show for IOError
+
+// Types and methods
+type Buffer
+pub fn Buffer::from_bytes(Bytes) -> Self
+pub fn Buffer::from_slice(Slice[Byte]) -> Self
+pub fn Buffer::from_string(String) -> Self
+pub fn Buffer::length(Self) -> Int
+pub fn Buffer::new(size_hint? : Int) -> Self
+pub fn Buffer::op_get(Self, Int) -> Byte
+pub fn Buffer::read_from(Self, &Reader) -> (Int64, IOError?)
+pub fn Buffer::reset(Self, size_hint? : Int) -> Unit
+pub fn Buffer::substring(Self, start? : Int, end? : Int) -> String
+pub fn Buffer::to_bytes(Self) -> Bytes
+pub fn Buffer::to_slice(Self) -> Slice[Byte]
+pub fn Buffer::write_byte(Self, Byte) -> (Int, IOError?)
+pub fn Buffer::write_bytes(Self, Bytes) -> (Int, IOError?)
+pub fn Buffer::write_string(Self, String) -> (Int, IOError?)
+pub impl ByteReader for Buffer
+pub impl Reader for Buffer
+pub impl Writer for Buffer
+pub impl Eq for Buffer
+pub impl Show for Buffer
+
+type Discard
+pub fn Discard::read_from(Self, &Reader) -> (Int64, IOError?)
+pub impl Reader for Discard
+pub impl Writer for Discard
+
+type LimitedReader
+pub fn LimitedReader::new(&Reader, Int64) -> Self
+pub impl Reader for LimitedReader
+
+type NopCloser
+pub fn NopCloser::new(&Reader) -> Self
+pub impl Closer for NopCloser
+pub impl ReadCloser for NopCloser
+pub impl Reader for NopCloser
+
+type OffsetWriter
+pub fn OffsetWriter::new(&WriterAt, Int64) -> Self
+pub fn OffsetWriter::seek(Self, Int64, Whence) -> (Int64, IOError?)
+pub fn OffsetWriter::write(Self, Slice[Byte]) -> (Int, IOError?)
+pub fn OffsetWriter::write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+
+type SectionReader
+pub fn SectionReader::new(&ReaderAt, Int64, Int64) -> Self
+pub fn SectionReader::outer(Self) -> (&ReaderAt, Int64, Int64)
+pub fn SectionReader::read(Self, Slice[Byte]) -> (Int, IOError?)
+pub fn SectionReader::read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+pub fn SectionReader::seek(Self, Int64, Whence) -> (Int64, IOError?)
+
+type Slice[T]
+pub fn[T] Slice::append(Self[T], Self[T]) -> Self[T]
+pub fn[T] Slice::as_array_view(Self[T]) -> ArrayView[T]
+pub fn[T] Slice::cap(Self[T]) -> Int
+pub fn[T] Slice::each(Self[T], (T) -> Unit) -> Unit
+pub fn[A, B] Slice::fold(Self[A], init~ : B, (B, A) -> B) -> B
+pub fn[A, B] Slice::foldi(Self[A], init~ : B, (Int, B, A) -> B) -> B
+pub fn[A] Slice::iter(Self[A]) -> Iter[A]
+pub fn[A] Slice::iter2(Self[A]) -> Iter2[Int, A]
+pub fn[T] Slice::length(Self[T]) -> Int
+pub fn[T] Slice::new(Array[T], start? : Int, end? : Int) -> Self[T]
+pub fn[T] Slice::op_as_view(Self[T], start? : Int, end? : Int) -> Self[T]
+pub fn[T] Slice::op_get(Self[T], Int) -> T
+pub fn[T] Slice::op_set(Self[T], Int, T) -> Unit
+pub fn[T] Slice::push(Self[T], T) -> Self[T]
+pub fn[A, B] Slice::rev_fold(Self[A], init~ : B, (B, A) -> B) -> B
+pub fn[A, B] Slice::rev_foldi(Self[A], init~ : B, (Int, B, A) -> B) -> B
+pub fn[T] Slice::rev_inplace(Self[T]) -> Unit
+pub fn[T] Slice::swap(Self[T], Int, Int) -> Unit
+pub fn Slice::to_bytes(Self[Byte]) -> Bytes
+pub impl[T : Eq] Eq for Slice[T]
+pub impl[X : Show] Show for Slice[X]
+
+type TeeReader
+pub fn TeeReader::new(&Reader, &Writer) -> Self
+pub impl Reader for TeeReader
+
+pub(all) enum Whence {
+  SeekStart
+  SeekCurrent
+  SeekEnd
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait ByteReader {
+  read_byte(Self) -> (Byte, IOError?)
+}
+
+pub(open) trait ByteScanner : ByteReader {
+  unread_byte(Self) -> IOError?
+}
+
+pub(open) trait ByteWriter {
+  write_byte(Self, Byte) -> IOError?
+}
+
+pub(open) trait Closer {
+  close(Self) -> IOError?
+}
+
+pub(open) trait ReadCloser : Reader + Closer {
+}
+
+pub(open) trait ReadSeekCloser : Reader + Seeker + Closer {
+}
+
+pub(open) trait ReadSeeker : Reader + Seeker {
+}
+
+pub(open) trait ReadWriteCloser : Reader + Writer + Closer {
+}
+
+pub(open) trait ReadWriteSeeker : Reader + Writer + Seeker {
+}
+
+pub(open) trait ReadWriter : Reader + Writer {
+}
+
+pub(open) trait Reader {
+  read(Self, Slice[Byte]) -> (Int, IOError?)
+}
+
+pub(open) trait ReaderAt {
+  read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+}
+
+pub(open) trait ReaderFrom {
+  read_from(Self, &Reader) -> (Int64, IOError?)
+}
+
+pub(open) trait Seeker {
+  seek(Self, Int64, Whence) -> (Int64, IOError?)
+}
+
+pub(open) trait WriteCloser : Writer + Closer {
+}
+
+pub(open) trait WriteSeeker : Writer + Seeker {
+}
+
+pub(open) trait Writer {
+  write(Self, Slice[Byte]) -> (Int, IOError?)
+}
+
+pub(open) trait WriterAt {
+  write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+}
+
+pub(open) trait WriterTo {
+  write_to(Self, &Writer) -> (Int64, IOError?)
+}
+

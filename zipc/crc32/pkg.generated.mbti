@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/crc32"
+
+// Values
+pub fn bytes(Bytes) -> Crc32
+
+// Errors
+
+// Types and methods
+pub(all) struct Crc32(Int64) derive(Eq)
+#deprecated
+pub fn Crc32::inner(Self) -> Int64
+pub impl Show for Crc32
+
+// Type aliases
+
+// Traits
+

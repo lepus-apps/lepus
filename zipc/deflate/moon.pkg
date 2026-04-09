@@ -1,0 +1,13 @@
+import {
+  "lepus-apps/lepus/zipc/crc32",
+  "lepus-apps/lepus/zipc/adler32",
+  "lepus-apps/lepus/zipc/huffman",
+  "lepus-apps/lepus/zipc/flate",
+  "lepus-apps/lepus/zipc/io",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/buffer",
+}
+
+options(
+  "is-main": false,
+)

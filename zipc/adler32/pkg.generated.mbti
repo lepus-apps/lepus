@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/adler32"
+
+// Values
+pub fn bytes(Bytes) -> Adler32
+
+// Errors
+
+// Types and methods
+pub(all) struct Adler32(Int64) derive(Eq)
+#deprecated
+pub fn Adler32::inner(Self) -> Int64
+pub impl Show for Adler32
+
+// Type aliases
+
+// Traits
+

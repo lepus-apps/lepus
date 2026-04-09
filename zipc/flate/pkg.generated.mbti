@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/flate"
+
+import {
+  "lepus-apps/lepus/zipc/io",
+}
+
+// Values
+pub let ioeof : @io.IOError
+
+pub let writer_closed_error : @io.IOError
+
+// Errors
+
+// Types and methods
+type Decompressor
+pub fn Decompressor::make_reader(Self, &Reader) -> Unit
+pub fn Decompressor::reset(Self, &Reader, @io.Slice[Byte]) -> Unit
+pub impl @io.Closer for Decompressor
+pub impl @io.ReadCloser for Decompressor
+pub impl @io.Reader for Decompressor
+
+type DictWriter
+pub impl @io.Writer for DictWriter
+
+type Writer
+pub fn Writer::new(&@io.Writer) -> Self
+pub fn Writer::new_dict(&@io.Writer, @io.Slice[Byte]) -> Self
+pub impl @io.Closer for Writer
+pub impl @io.WriteCloser for Writer
+pub impl @io.Writer for Writer
+
+// Type aliases
+
+// Traits
+pub(open) trait Reader {
+  read(Self, @io.Slice[Byte]) -> (Int, @io.IOError?)
+  read_byte(Self) -> (Byte, @io.IOError?)
+}
+pub impl Reader for @io.Buffer
+pub fn &Reader::new(Self) -> Decompressor
+pub fn &Reader::new_dict(Self, @io.Slice[Byte]) -> Decompressor
+pub impl @io.ByteReader for &Reader
+pub impl @io.Reader for &Reader
+

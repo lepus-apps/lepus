@@ -1,0 +1,68 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/huffman"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn block_type_to_btype(BlockType) -> Int
+
+pub fn btype_to_block_type(Int) -> BlockType?
+
+pub fn build_fixed_distance_tree() -> HuffmanNode?
+
+pub fn build_fixed_literal_tree() -> HuffmanNode?
+
+pub fn create_fixed_distance_tree() -> HuffmanNode
+
+pub fn create_fixed_huffman_tree() -> HuffmanNode
+
+pub fn decode_symbol(BitReader, HuffmanNode) -> Int?
+
+pub fn decompress_dynamic_huffman_block(BitReader) -> Bytes raise
+
+pub fn decompress_fixed_huffman_block_bytes(Bytes, Int) -> (Bytes, Int) raise
+
+pub fn decompress_huffman_data(BitReader, HuffmanNode, HuffmanNode) -> Bytes raise
+
+pub fn dynamic_huffman_block_type() -> BlockType
+
+pub fn fixed_huffman_block_type() -> BlockType
+
+pub fn get_distance_from_code(BitReader, Int) -> Int?
+
+pub fn get_length_from_code(BitReader, Int) -> Int?
+
+pub fn new_bit_reader(Bytes) -> BitReader
+
+pub fn uncompressed_block_type() -> BlockType
+
+// Errors
+
+// Types and methods
+pub struct BitReader {
+  data : Bytes
+  mut bit_offset : Int
+} derive(@debug.Debug)
+pub fn BitReader::align_to_byte(Self) -> Unit
+pub fn BitReader::is_at_end(Self) -> Bool
+pub fn BitReader::read_bits(Self, Int) -> Int
+pub fn BitReader::read_byte(Self) -> Int
+pub fn BitReader::read_u16_le(Self) -> Int
+
+pub enum BlockType {
+  Uncompressed
+  FixedHuffman
+  DynamicHuffman
+} derive(Eq, @debug.Debug)
+
+pub enum HuffmanNode {
+  Leaf(Int)
+  Branch(HuffmanNode, HuffmanNode)
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

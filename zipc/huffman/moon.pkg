@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
+  "moonbitlang/core/buffer",
+}
+
+options(
+  is_main: false,
+  test_import: [ ],
+)

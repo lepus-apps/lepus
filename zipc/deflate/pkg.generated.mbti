@@ -1,0 +1,94 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/zipc/deflate"
+
+import {
+  "lepus-apps/lepus/zipc/adler32",
+  "lepus-apps/lepus/zipc/crc32",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn deflate_compress(Bytes, Level) -> DeflateData
+
+pub fn deflate_decompress(DeflateData) -> Bytes raise
+
+pub fn deflate_decompress_bytes(Bytes, Int) -> Bytes raise
+
+pub fn deflate_decompress_raw_bytes(Bytes, Int) -> Bytes raise
+
+pub fn deflate_of_bytes(Bytes, Level) -> Bytes
+
+pub fn[T, E] err(E) -> Result[T, E]
+
+pub fn gzip_compress_bytes(Bytes, Level, String?, String?, Int) -> GzipData
+
+pub fn gzip_decompress_bytes(GzipData) -> Bytes raise
+
+pub fn gzip_extract_metadata_bytes(Bytes) -> Result[GzipData, String]
+
+pub fn gzip_of_bytes(Bytes, Level, String?, String?) -> Bytes
+
+pub fn gzip_to_bytes(Bytes) -> Bytes raise
+
+pub fn level_best() -> Level
+
+pub fn level_default() -> Level
+
+pub fn level_fast() -> Level
+
+pub fn level_none() -> Level
+
+pub fn[T, E] ok(T) -> Result[T, E]
+
+pub fn[T, E] unwrap(Result[T, E]) -> T
+
+pub fn[T, E] unwrap_or(Result[T, E], T) -> T
+
+pub fn zlib_compress_bytes(Bytes, Level) -> ZlibData
+
+pub fn zlib_decompress_bytes(ZlibData) -> Bytes raise
+
+pub fn zlib_of_bytes(Bytes, Level) -> Bytes
+
+pub fn zlib_to_bytes(Bytes, Int) -> Bytes raise
+
+// Errors
+
+// Types and methods
+pub struct DeflateData {
+  compressed_bytes : Bytes
+  original_size : Int
+  adler32_checksum : @adler32.Adler32
+}
+
+pub struct GzipData {
+  compressed_bytes : Bytes
+  original_size : Int
+  crc32_checksum : @crc32.Crc32
+  filename : String?
+  comment : String?
+  modification_time : Int
+}
+
+pub enum Level {
+  None
+  Fast
+  Default
+  Best
+} derive(@debug.Debug)
+
+pub enum Result[T, E] {
+  Ok(T)
+  Err(E)
+}
+
+pub struct ZlibData {
+  compressed_bytes : Bytes
+  original_size : Int
+  adler32_checksum : @adler32.Adler32
+}
+
+// Type aliases
+
+// Traits
+

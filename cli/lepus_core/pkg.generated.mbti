@@ -72,8 +72,6 @@ pub async fn run_dev(DevConfig) -> Int
 
 pub fn run_doctor(DoctorConfig) -> Int
 
-pub fn run_init(InitConfig) -> Int
-
 pub async fn run_moon_command(String, Array[String], extra_env? : Map[String, String]) -> Int
 
 pub fn write_text_file(String, String) -> Bool
