@@ -21,10 +21,8 @@ pub struct DevConfig {
 ///|
 pub struct BuildConfig {
   cwd : String
-  config_path : String?
-  frontend_dir : String?
-  out_dir : String?
-  embed_assets : Bool
+  dist_dir : String?
+  output_dir : String?
   verbose : Int
 }
 
@@ -73,10 +71,8 @@ pub fn parse_build_config(
 ) -> BuildConfig {
   {
     cwd: root_cwd(root),
-    config_path: first_value(root, "config"),
-    frontend_dir: first_value(sub, "frontend-dir"),
-    out_dir: first_value(sub, "out-dir"),
-    embed_assets: sub.flags.get_or_default("embed-assets", false),
+    dist_dir: first_value(sub, "dist-dir"),
+    output_dir: first_value(sub, "output-dir"),
     verbose: verbosity(root),
   }
 }

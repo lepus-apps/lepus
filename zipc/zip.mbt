@@ -67,48 +67,47 @@ pub let max_path_length : Int = 65535
 // Archive operations
 
 ///|
-pub fn empty() -> Archive {
+pub fn Archive::new() -> Archive {
   { members: Map::new() }
 }
 
 ///|
-pub fn is_empty(archive : Archive) -> Bool {
-  archive.members.length() == 0
+pub fn Archive::is_empty(self : Archive) -> Bool {
+  self.members.length() == 0
 }
 
 ///|
-pub fn member_count(archive : Archive) -> Int {
-  archive.members.length()
+pub fn Archive::member_count(self : Archive) -> Int {
+  self.members.length()
 }
 
 ///|
-pub fn add(mem : Member, archive : Archive) -> Archive {
-  let new_members = archive.members
+pub fn Archive::add(self : Archive, mem : Member) -> Archive {
+  let new_members = self.members
   new_members[mem.path] = mem
   { members: new_members }
 }
 
 ///|
-pub fn find(path : Fpath, archive : Archive) -> Member? {
-  archive.members.get(path)
+pub fn Archive::find(self : Archive, path : Fpath) -> Member? {
+  self.members.get(path)
 }
 
 ///|
-pub fn mem(path : Fpath, archive : Archive) -> Bool {
-  archive.members.contains(path)
+pub fn Archive::mem(self : Archive, path : Fpath) -> Bool {
+  self.members.contains(path)
 }
 
 ///|
-pub fn remove(path : Fpath, archive : Archive) -> Archive {
-  let new_members = archive.members
-  new_members.remove(path)
-  { members: new_members }
+pub fn Archive::remove(self : Archive, path : Fpath) -> Archive {
+  self.members.remove(path)
+  self
 }
 
 // File operations
 
 ///|
-pub fn stored_of_binary_string(s : String) -> File raise {
+pub fn File::from_string(s : String) -> File raise {
   let data = @utf8.encode(s)
   let len = data.length()
   if len > max_file_size {
@@ -137,7 +136,7 @@ pub fn stored_of_binary_string(s : String) -> File raise {
 // Create stored file from bytes (more efficient for binary data)
 
 ///|
-pub fn stored_of_bytes(data : Bytes) -> File raise {
+pub fn File::from_bytes(data : Bytes) -> File raise {
   let len = data.length()
   if len > max_file_size {
     fail(
@@ -227,27 +226,27 @@ pub fn deflate_of_bytes(
 }
 
 ///|
-pub fn file_compression(file : File) -> Compression {
-  file.compression
+pub fn File::compression(self : File) -> Compression {
+  self.compression
 }
 
 ///|
-pub fn file_compressed_size(file : File) -> Int {
-  file.compressed_size
+pub fn File::compressed_size(self : File) -> Int {
+  self.compressed_size
 }
 
 ///|
-pub fn file_decompressed_size(file : File) -> Int {
-  file.decompressed_size
+pub fn File::decompressed_size(self : File) -> Int {
+  self.decompressed_size
 }
 
 ///|
-pub fn file_compressed_bytes(file : File) -> Bytes {
-  file.compressed_bytes
+pub fn File::compressed_bytes(self : File) -> Bytes {
+  self.compressed_bytes
 }
 
 ///|
-pub fn file_can_extract(file : File) -> Bool {
+pub fn File::can_extract(file : File) -> Bool {
   match file.compression {
     Compression::Stored => true
     Compression::Deflate => true // Would need actual deflate implementation
@@ -259,7 +258,7 @@ pub fn file_can_extract(file : File) -> Bool {
 
 ///|
 pub fn file_to_bytes(file : File) -> Bytes raise {
-  if !file_can_extract(file) {
+  if !file.can_extract() {
     fail("Unsupported compression format")
   }
   match file.compression {
@@ -343,15 +342,13 @@ pub fn member_kind(mem : Member) -> MemberKind {
 pub fn to_binary_string(
   archive : Archive,
 ) -> @deflate.Result[StringView, String] {
-  if member_count(archive) > max_members {
+  let count = archive.member_count()
+  if count > max_members {
     return @deflate.err(
-      "Archive has too many members (" +
-      member_count(archive).to_string() +
-      "), max is " +
-      max_members.to_string(),
+      "Archive has too many members (\{count}), max is \{max_members}",
     )
   }
-  if is_empty(archive) {
+  if archive.is_empty() {
     // Empty ZIP file: just EOCD record
     let eocd = "PK\u{05}\u{06}" + String::make(18, '\u{00}')
     @deflate.ok(eocd)
@@ -364,10 +361,10 @@ pub fn to_binary_string(
 // Convert archive to bytes (more efficient for binary data)
 
 ///|
-pub fn to_bytes(archive : Archive) -> @deflate.Result[Bytes, String] {
+pub fn Archive::to_bytes(self : Archive) -> @deflate.Result[Bytes, String] {
   // Use the existing string-based implementation and convert to bytes
   // In a full implementation, this would work directly with bytes throughout
-  match to_binary_string(archive) {
+  match to_binary_string(self) {
     @deflate.Ok(zip_string) => @deflate.ok(@utf8.encode(zip_string))
     @deflate.Err(error) => @deflate.err(error)
   }
@@ -641,7 +638,7 @@ pub fn of_binary(data : Bytes) -> @deflate.Result[Archive, String] {
       let cd_offset = read_u32_le_bytes(data, eocd_offset + 16)
       if cd_entries == 0 {
         // Empty archive
-        @deflate.ok(empty())
+        @deflate.ok(Archive::new())
       } else {
         // Parse central directory entries
         parse_central_directory_bytes(data, cd_offset, cd_entries)
@@ -665,12 +662,12 @@ fn parse_central_directory_bytes(
   cd_offset : Int,
   entry_count : Int,
 ) -> @deflate.Result[Archive, String] {
-  let mut archive = empty()
+  let mut archive = Archive::new()
   let mut offset = cd_offset
   for i = 0; i < entry_count; i = i + 1 {
     match parse_central_directory_entry_bytes(data, offset) {
       @deflate.Ok((mem, next_offset)) => {
-        archive = add(mem, archive)
+        archive = archive.add(mem)
         offset = next_offset
       }
       @deflate.Err(error) =>
