@@ -2,7 +2,7 @@
 package "lepus-apps/lepus/plugins/lepus_plugin_support"
 
 // Values
-pub fn example_html(String, String) -> String
+pub fn example_html(String, String, content? : String) -> String
 
 // Errors
 

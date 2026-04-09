@@ -5,8 +5,6 @@ pub enum TitleBarStyle {
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
-
-///|
 pub struct WindowConfig {
   title : String
   width : Int
@@ -19,7 +17,7 @@ pub struct WindowConfig {
   transparent : Bool
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
-  traffic_light_position? : (Int, Int) = (-1, -1)
+  traffic_light_position : (Int, Int)
   html : String?
   url : String?
 } derive(Debug, Eq, ToJson, FromJson, Hash)

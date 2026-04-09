@@ -13,20 +13,44 @@ import {
 
 // Types and methods
 pub struct App {
+  windows : Array[WindowConfig]
+  plugins : Array[@webview.Plugin]
+}
+pub fn App::add_window(Self, WindowConfig) -> Unit
+pub fn App::new(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
+pub fn App::run(Self, window_index? : Int) -> Unit
+pub fn App::window_count(Self) -> Int
+pub fn App::with_windows(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
+
+pub enum TitleBarStyle {
+  Default
+  Hidden
+} derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct Window {
   config : WindowConfig
   plugins : Array[@webview.Plugin]
 }
-pub fn App::new(title? : String, width? : Int, height? : Int, debug? : Int, html? : String, url? : String, plugins? : Array[@webview.Plugin]) -> Self
-pub fn App::run(Self) -> Unit
+pub fn Window::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), html? : String, url? : String, plugins? : Array[@webview.Plugin]) -> Self
+pub fn Window::run(Self) -> Unit
 
 pub struct WindowConfig {
   title : String
   width : Int
   height : Int
   debug : Int
+  devtools : Bool
+  frameless : Bool
+  resizable : Bool
+  always_on_top : Bool
+  transparent : Bool
+  title_bar_style : TitleBarStyle
+  title_bar_overlay : Bool
+  traffic_light_position : (Int, Int)
   html : String?
   url : String?
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowConfig::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), html? : String, url? : String) -> Self
 
 // Type aliases
 
