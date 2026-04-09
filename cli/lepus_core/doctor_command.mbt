@@ -6,7 +6,7 @@ priv struct DoctorCheck {
 }
 
 ///|
-pub fn run_doctor(config : DoctorConfig) -> Int {
+pub async fn run_doctor(config : DoctorConfig) -> Int {
   let checks = collect_doctor_checks(config)
   if config.json {
     print_doctor_json(checks)
@@ -21,9 +21,9 @@ pub fn run_doctor(config : DoctorConfig) -> Int {
 }
 
 ///|
-fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
+async fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
   let moon_ok = has_command("moon")
-  let module_ok = path_exists(config.cwd + "/moon.mod.json")
+  let module_ok = @fs.exists(config.cwd + "/moon.mod.json")
   let config_ok = has_lepus_config(config)
   let webview_ok = has_webview_runtime()
   let platform = get_platform()
@@ -65,12 +65,12 @@ fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
 }
 
 ///|
-fn has_lepus_config(config : DoctorConfig) -> Bool {
+async fn has_lepus_config(config : DoctorConfig) -> Bool {
   match config.config_path {
-    Some(path) => path_exists(path)
+    Some(path) => @fs.exists(path)
     None => {
       for path in default_config_paths(config.cwd) {
-        if path_exists(path) {
+        if @fs.exists(path) {
           return true
         }
       }
@@ -80,12 +80,12 @@ fn has_lepus_config(config : DoctorConfig) -> Bool {
 }
 
 ///|
-fn config_path_message(config : DoctorConfig) -> String {
+async fn config_path_message(config : DoctorConfig) -> String {
   match config.config_path {
     Some(path) => "config found at " + path
     None => {
       for path in default_config_paths(config.cwd) {
-        if path_exists(path) {
+        if @fs.exists(path) {
           return "config found at " + path
         }
       }

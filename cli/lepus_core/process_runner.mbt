@@ -14,7 +14,7 @@ pub async fn ensure_npm_ready(frontend_dir : String) -> Int {
     println("Missing npm executable: " + npm)
     return 1
   }
-  if is_directory(join_path(frontend_dir, "node_modules")) {
+  if @fs.kind(join_path(frontend_dir, "node_modules")) is Directory {
     return 0
   }
   println("Installing frontend dependencies with npm...")

@@ -1,7 +1,7 @@
 ///|
 pub async fn run_dev(config : DevConfig) -> Int {
   let frontend_dir = resolve_path(config.cwd, config.frontend_dir)
-  if !path_exists(join_path(frontend_dir, "package.json")) {
+  if !@fs.exists(join_path(frontend_dir, "package.json")) {
     return run_moon_command(config.cwd, [
       "run", "--target", "native", "main.mbt",
     ])
