@@ -1,22 +1,5 @@
 ///|
 pub fn root_command() -> @argparse.Command {
-  let init = @argparse.Command(
-    "init",
-    about="Create a new Lepus application.",
-    flags=[@argparse.FlagArg("force", long="force")],
-    options=[
-      @argparse.OptionArg("template", long="template", default_values=["basic"]),
-      @argparse.OptionArg("frontend", long="frontend", default_values=[
-        "vanilla", "vite",
-      ]),
-    ],
-    positionals=[
-      @argparse.PositionArg(
-        "name",
-        num_args=@argparse.ValueRange(lower=0, upper=1),
-      ),
-    ],
-  )
   let dev = @argparse.Command(
     "dev",
     about="Run the Lepus development workflow.",
@@ -44,7 +27,7 @@ pub fn root_command() -> @argparse.Command {
     "lepus",
     about="Lepus desktop application toolkit.",
     version="0.1.0",
-    subcommands=[init, dev, build, doctor],
+    subcommands=[dev, build, doctor],
     flags=[
       @argparse.FlagArg(
         "verbose",
