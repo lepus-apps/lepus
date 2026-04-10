@@ -18,8 +18,6 @@ pub fn deflate_decompress_raw_bytes(Bytes, Int) -> Bytes raise
 
 pub fn deflate_of_bytes(Bytes, Level) -> Bytes
 
-pub fn[T, E] err(E) -> Result[T, E]
-
 pub fn gzip_compress_bytes(Bytes, Level, String?, String?, Int) -> GzipData
 
 pub fn gzip_decompress_bytes(GzipData) -> Bytes raise
@@ -29,20 +27,6 @@ pub fn gzip_extract_metadata_bytes(Bytes) -> Result[GzipData, String]
 pub fn gzip_of_bytes(Bytes, Level, String?, String?) -> Bytes
 
 pub fn gzip_to_bytes(Bytes) -> Bytes raise
-
-pub fn level_best() -> Level
-
-pub fn level_default() -> Level
-
-pub fn level_fast() -> Level
-
-pub fn level_none() -> Level
-
-pub fn[T, E] ok(T) -> Result[T, E]
-
-pub fn[T, E] unwrap(Result[T, E]) -> T
-
-pub fn[T, E] unwrap_or(Result[T, E], T) -> T
 
 pub fn zlib_compress_bytes(Bytes, Level) -> ZlibData
 
@@ -70,17 +54,12 @@ pub struct GzipData {
   modification_time : Int
 }
 
-pub enum Level {
+pub(all) enum Level {
   None
   Fast
   Default
   Best
 } derive(@debug.Debug)
-
-pub enum Result[T, E] {
-  Ok(T)
-  Err(E)
-}
 
 pub struct ZlibData {
   compressed_bytes : Bytes

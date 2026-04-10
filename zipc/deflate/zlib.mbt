@@ -13,7 +13,7 @@ pub struct ZlibData {
 // Compress data using zlib format (deflate + headers + checksum)
 
 ///|
-pub fn zlib_compress_bytes(data : Bytes, level : Level) -> ZlibData {
+pub fn zlib_compress_bytes(data : Bytes, level : Level) -> ZlibData raise {
   // Calculate Adler-32 of original data
   let adler = @adler32.bytes(data)
 
@@ -90,7 +90,7 @@ pub fn zlib_decompress_bytes(zlib_data : ZlibData) -> Bytes raise {
   let deflate_bytes = data[deflate_start:deflate_end].to_bytes()
 
   // Extract Adler-32 checksum (last 4 bytes, big-endian)
-  let expected_adler = read_u32_be_bytes(data, deflate_end).to_int64()
+  let expected_adler = @adler32.Adler32(read_u32_be_bytes(data, deflate_end).to_int64())
 
   // Decompress deflate data
   let deflate_data : DeflateData = {
@@ -145,7 +145,7 @@ fn read_u32_be_bytes(data : Bytes, offset : Int) -> Int {
 // Bytes-based zlib functions (more efficient for binary data)
 
 ///|
-pub fn zlib_of_bytes(data : Bytes, level : Level) -> Bytes {
+pub fn zlib_of_bytes(data : Bytes, level : Level) -> Bytes raise {
   // Use the modern bytes-based implementation directly
   let zlib_data = zlib_compress_bytes(data, level)
   zlib_data.compressed_bytes
@@ -160,7 +160,7 @@ pub fn zlib_to_bytes(
   let zlib_data : ZlibData = {
     compressed_bytes: compressed_data,
     original_size,
-    adler32_checksum: 0L, // Will be read from data
+    adler32_checksum: @adler32.Adler32(0L), // Will be read from data
   }
   zlib_decompress_bytes(zlib_data)
 }

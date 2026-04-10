@@ -33,7 +33,7 @@ pub fn read_u32_le_bytes(data : Bytes, offset : Int) -> Int {
 pub fn write_u16_le_bytes(value : Int) -> Bytes {
   let b0 = (value & 0xff).to_byte()
   let b1 = ((value >> 8) & 0xff).to_byte()
-  Bytes::from_array([b0, b1])
+  [b0, b1]
 }
 
 // Write 32-bit little-endian integer to bytes
@@ -44,7 +44,7 @@ pub fn write_u32_le_bytes(value : Int) -> Bytes {
   let b1 = ((value >> 8) & 0xff).to_byte()
   let b2 = ((value >> 16) & 0xff).to_byte()
   let b3 = ((value >> 24) & 0xff).to_byte()
-  Bytes::from_array([b0, b1, b2, b3])
+  [b0, b1, b2, b3]
 }
 
 // Read 16-bit big-endian integer from bytes
@@ -79,7 +79,7 @@ pub fn read_u32_be_bytes(data : Bytes, offset : Int) -> Int {
 pub fn write_u16_be_bytes(value : Int) -> Bytes {
   let b0 = ((value >> 8) & 0xff).to_byte()
   let b1 = (value & 0xff).to_byte()
-  Bytes::from_array([b0, b1])
+  [b0, b1]
 }
 
 // Write 32-bit big-endian integer to bytes
@@ -90,14 +90,14 @@ pub fn write_u32_be_bytes(value : Int) -> Bytes {
   let b1 = ((value >> 16) & 0xff).to_byte()
   let b2 = ((value >> 8) & 0xff).to_byte()
   let b3 = (value & 0xff).to_byte()
-  Bytes::from_array([b0, b1, b2, b3])
+  [b0, b1, b2, b3]
 }
 
 // Concatenate multiple bytes
 
 ///|
 pub fn concat_bytes(parts : Array[Bytes]) -> Bytes {
-  let mut result = Bytes::from_array([])
+  let mut result : Bytes = []
   for part in parts {
     result = result + part
   }
@@ -108,8 +108,7 @@ pub fn concat_bytes(parts : Array[Bytes]) -> Bytes {
 
 ///|
 pub fn bytes_from_ints(values : Array[Int]) -> Bytes {
-  let byte_array = values.map(fn(x) { x.to_byte() })
-  Bytes::from_array(byte_array)
+  values.map(x => x.to_byte()) |> Bytes::from_array
 }
 
 // Performance comparison functions for demonstration

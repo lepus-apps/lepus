@@ -39,77 +39,75 @@ pub fn gzip_compress_bytes(
   filename : String?,
   comment : String?,
   modification_time : Int,
-) -> GzipData {
+) -> GzipData raise {
   // Calculate CRC-32 of original data
   let crc = @crc32.bytes(data)
 
   // Compress using deflate
-  match deflate_compress(data, level) {
-    deflate_data => {
-      // Build gzip header
-      let mut header = Bytes::from_array([])
+  let deflate_data = deflate_compress(data, level)
 
-      // Magic number (2 bytes): 0x1f, 0x8b
-      header = header + Bytes::from_array([0x1f, 0x8b])
+  // Build gzip header
+  let mut header = Bytes::from_array([])
 
-      // Compression method (1 byte): 8 for deflate
-      header = header + Bytes::from_array([0x08])
+  // Magic number (2 bytes): 0x1f, 0x8b
+  header = header + Bytes::from_array([0x1f, 0x8b])
 
-      // Flags (1 byte)
-      let mut flags = 0
-      match filename {
-        Some(_) => flags = flags | fname_flag
-        None => ()
-      }
-      match comment {
-        Some(_) => flags = flags | fcomment_flag
-        None => ()
-      }
-      header = header + Bytes::from_array([flags.to_byte()])
+  // Compression method (1 byte): 8 for deflate
+  header = header + Bytes::from_array([0x08])
 
-      // Modification time (4 bytes, little-endian)
-      header = header + write_u32_le_bytes(modification_time)
+  // Flags (1 byte)
+  let mut flags = 0
+  match filename {
+    Some(_) => flags = flags | fname_flag
+    None => ()
+  }
+  match comment {
+    Some(_) => flags = flags | fcomment_flag
+    None => ()
+  }
+  header = header + Bytes::from_array([flags.to_byte()])
 
-      // Extra flags (1 byte)
-      let extra_flags = match level {
-        Level::Best => 2 // Maximum compression
-        Level::Fast => 4 // Fastest compression
-        _ => 0 // Default
-      }
-      header = header + Bytes::from_array([extra_flags.to_byte()])
+  // Modification time (4 bytes, little-endian)
+  header = header + write_u32_le_bytes(modification_time)
 
-      // Operating system (1 byte): 255 for unknown
-      header = header + Bytes::from_array([0xff])
+  // Extra flags (1 byte)
+  let extra_flags = match level {
+    Level::Best => 2 // Maximum compression
+    Level::Fast => 4 // Fastest compression
+    _ => 0 // Default
+  }
+  header = header + Bytes::from_array([extra_flags.to_byte()])
 
-      // Optional filename (null-terminated)
-      match filename {
-        Some(name) =>
-          header = header + @utf8.encode(name) + Bytes::from_array([0x00])
-        None => ()
-      }
+  // Operating system (1 byte): 255 for unknown
+  header = header + Bytes::from_array([0xff])
 
-      // Optional comment (null-terminated)
-      match comment {
-        Some(comm) =>
-          header = header + @utf8.encode(comm) + Bytes::from_array([0x00])
-        None => ()
-      }
+  // Optional filename (null-terminated)
+  match filename {
+    Some(name) =>
+      header = header + @utf8.encode(name) + Bytes::from_array([0x00])
+    None => ()
+  }
 
-      // Build trailer: CRC-32 (4 bytes) + original size (4 bytes), both little-endian
-      let trailer = write_u32_le_bytes(crc.0.to_int()) +
-        write_u32_le_bytes(data.length())
+  // Optional comment (null-terminated)
+  match comment {
+    Some(comm) =>
+      header = header + @utf8.encode(comm) + Bytes::from_array([0x00])
+    None => ()
+  }
 
-      // Combine header + deflate data + trailer
-      let gzip_bytes = header + deflate_data.compressed_bytes + trailer
-      {
-        compressed_bytes: gzip_bytes,
-        original_size: data.length(),
-        crc32_checksum: crc,
-        filename,
-        comment,
-        modification_time,
-      }
-    }
+  // Build trailer: CRC-32 (4 bytes) + original size (4 bytes), both little-endian
+  let trailer = write_u32_le_bytes(crc.0.to_int()) +
+    write_u32_le_bytes(data.length())
+
+  // Combine header + deflate data + trailer
+  let gzip_bytes = header + deflate_data.compressed_bytes + trailer
+  {
+    compressed_bytes: gzip_bytes,
+    original_size: data.length(),
+    crc32_checksum: crc,
+    filename,
+    comment,
+    modification_time,
   }
 }
 
@@ -200,18 +198,18 @@ pub fn gzip_decompress_bytes(gzip_data : GzipData) -> Bytes raise {
   let deflate_bytes = data[offset:deflate_end].to_bytes()
 
   // Extract trailer: CRC-32 and original size
-  let expected_crc = read_u32_le_bytes(data, deflate_end).to_int64()
+  let expected_crc = @crc32.Crc32(read_u32_le_bytes(data, deflate_end).to_int64())
   let expected_size = read_u32_le_bytes(data, deflate_end + 4)
 
   // Decompress deflate data
   let _deflate_data : DeflateData = {
     compressed_bytes: deflate_bytes,
     original_size: expected_size,
-    adler32_checksum: 0L, // Gzip uses CRC-32, not Adler-32
+    adler32_checksum: @adler32.Adler32(0L), // Gzip uses CRC-32, not Adler-32
   }
 
   // Use bytes-based deflate decompression to avoid String conversion corruption
-  let decompressed_bytes = decompress_deflate_blocks_bytes(deflate_bytes)
+  let decompressed_bytes = deflate_decompress_bytes(deflate_bytes, expected_size)
   // Verify size
   if decompressed_bytes.length() != expected_size {
     fail(
@@ -275,11 +273,10 @@ pub fn gzip_of_bytes(
   level : Level,
   filename : String?,
   comment : String?,
-) -> Bytes {
+) -> Bytes raise {
   // Use the modern bytes-based implementation directly
-  match gzip_compress_bytes(data, level, filename, comment, 0) {
-    gzip_data => gzip_data.compressed_bytes
-  }
+  let gzip_data = gzip_compress_bytes(data, level, filename, comment, 0)
+  gzip_data.compressed_bytes
 }
 
 ///|
@@ -364,7 +361,7 @@ pub fn gzip_extract_metadata_bytes(
 
   // Read trailer
   let trailer_offset = compressed_data.length() - 8
-  let crc = read_u32_le_bytes(compressed_data, trailer_offset).to_int64()
+  let crc = @crc32.Crc32(read_u32_le_bytes(compressed_data, trailer_offset).to_int64())
   let original_size = read_u32_le_bytes(compressed_data, trailer_offset + 4)
   Ok({
     compressed_bytes: compressed_data,

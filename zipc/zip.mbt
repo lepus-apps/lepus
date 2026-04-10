@@ -10,9 +10,6 @@ pub enum Compression {
 }
 
 ///|
-pub type Fpath = String
-
-///|
 pub type Mode = Int
 
 ///|
@@ -32,14 +29,14 @@ pub struct File {
 }
 
 ///|
-pub enum MemberKind {
+pub(all) enum MemberKind {
   Dir
   File(File)
 }
 
 ///|
 pub struct Member {
-  path : Fpath
+  path : String
   mode : Mode
   mtime : Ptime
   kind : MemberKind
@@ -53,16 +50,16 @@ pub struct Archive {
 // Constants
 
 ///|
-pub let dos_epoch : Ptime = 315532800 // 1980-01-01 00:00:00 UTC
+pub const DOS_EPOCH : Ptime = 315532800 // 1980-01-01 00:00:00 UTC
 
 ///|
-pub let max_file_size : Int = 2147483647 // Use max int instead of 4GB
+pub const MAX_FILE_SIZE : Int = 2147483647 // Use max int instead of 4GB
 
 ///|
-pub let max_members : Int = 65535 // ZIP32 limit
+pub const MAX_MEMBERS : Int = 65535 // ZIP32 limit
 
 ///|
-pub let max_path_length : Int = 65535
+pub const MAX_PATH_LENGTH : Int = 65535
 
 // Archive operations
 
@@ -82,24 +79,22 @@ pub fn Archive::member_count(self : Archive) -> Int {
 }
 
 ///|
-pub fn Archive::add(self : Archive, mem : Member) -> Archive {
-  let new_members = self.members
-  new_members[mem.path] = mem
-  { members: new_members }
+pub fn Archive::add(self : Archive, mem : Member) -> Unit {
+  self.members[mem.path] = mem
 }
 
 ///|
-pub fn Archive::find(self : Archive, path : Fpath) -> Member? {
+pub fn Archive::find(self : Archive, path : String) -> Member? {
   self.members.get(path)
 }
 
 ///|
-pub fn Archive::mem(self : Archive, path : Fpath) -> Bool {
+pub fn Archive::mem(self : Archive, path : String) -> Bool {
   self.members.contains(path)
 }
 
 ///|
-pub fn Archive::remove(self : Archive, path : Fpath) -> Archive {
+pub fn Archive::remove(self : Archive, path : String) -> Archive {
   self.members.remove(path)
   self
 }
@@ -110,10 +105,10 @@ pub fn Archive::remove(self : Archive, path : Fpath) -> Archive {
 pub fn File::from_string(s : String) -> File raise {
   let data = @utf8.encode(s)
   let len = data.length()
-  if len > max_file_size {
+  if len > MAX_FILE_SIZE {
     fail(
       "File size exceeds maximum allowed (" +
-      max_file_size.to_string() +
+      MAX_FILE_SIZE.to_string() +
       " bytes)",
     )
   }
@@ -138,10 +133,10 @@ pub fn File::from_string(s : String) -> File raise {
 ///|
 pub fn File::from_bytes(data : Bytes) -> File raise {
   let len = data.length()
-  if len > max_file_size {
+  if len > MAX_FILE_SIZE {
     fail(
       "File size exceeds maximum allowed (" +
-      max_file_size.to_string() +
+      MAX_FILE_SIZE.to_string() +
       " bytes)",
     )
   }
@@ -163,16 +158,16 @@ pub fn File::from_bytes(data : Bytes) -> File raise {
 // Create deflate-compressed file
 
 ///|
-pub fn deflate_of_binary_string(
+pub fn File::deflate_of_binary_string(
   s : String,
   level : @deflate.Level,
-) -> @deflate.Result[File, String] {
+) -> File raise {
   let data = @utf8.encode(s)
   let len = data.length()
-  if len > max_file_size {
-    return @deflate.err(
+  if len > MAX_FILE_SIZE {
+    fail(
       "File size exceeds maximum allowed (" +
-      max_file_size.to_string() +
+      MAX_FILE_SIZE.to_string() +
       " bytes)",
     )
   }
@@ -180,7 +175,7 @@ pub fn deflate_of_binary_string(
   // Compress using deflate
   let compressed_data = @deflate.deflate_of_bytes(data, level)
   let crc = @crc32.bytes(data)
-  @deflate.ok({
+  {
     compression: Compression::Deflate,
     start: 0,
     compressed_size: compressed_data.length(),
@@ -190,21 +185,18 @@ pub fn deflate_of_binary_string(
     version_made_by: 0x314, // UNIX, ZIP 2.0
     version_needed_to_extract: 20, // ZIP 2.0
     gp_flags: 0x800, // UTF-8 filename
-  })
+  }
 }
 
 // Create deflate-compressed file from bytes (more efficient for binary data)
 
 ///|
-pub fn deflate_of_bytes(
-  data : Bytes,
-  level : @deflate.Level,
-) -> @deflate.Result[File, String] {
+pub fn deflate_of_bytes(data : Bytes, level : @deflate.Level) -> File raise {
   let len = data.length()
-  if len > max_file_size {
-    return @deflate.err(
+  if len > MAX_FILE_SIZE {
+    fail(
       "File size exceeds maximum allowed (" +
-      max_file_size.to_string() +
+      MAX_FILE_SIZE.to_string() +
       " bytes)",
     )
   }
@@ -212,7 +204,7 @@ pub fn deflate_of_bytes(
   // Compress using deflate directly on bytes (more efficient)
   let compressed_data = @deflate.deflate_of_bytes(data, level)
   let crc = @crc32.bytes(data)
-  @deflate.ok({
+  {
     compression: Compression::Deflate,
     start: 0,
     compressed_size: compressed_data.length(),
@@ -222,7 +214,7 @@ pub fn deflate_of_bytes(
     version_made_by: 0x314, // UNIX, ZIP 2.0
     version_needed_to_extract: 20, // ZIP 2.0
     gp_flags: 0x800, // UTF-8 filename
-  })
+  }
 }
 
 ///|
@@ -257,22 +249,22 @@ pub fn File::can_extract(file : File) -> Bool {
 // Extract file content as bytes (more efficient for binary data)
 
 ///|
-pub fn file_to_bytes(file : File) -> Bytes raise {
-  if !file.can_extract() {
+pub fn File::to_bytes(self : File) -> Bytes raise {
+  if !self.can_extract() {
     fail("Unsupported compression format")
   }
-  match file.compression {
+  match self.compression {
     Compression::Stored => {
-      let data_view = file.compressed_bytes[file.start:file.start +
-        file.compressed_size]
+      let data_view = self.compressed_bytes[self.start:self.start +
+        self.compressed_size]
       // Convert view back to bytes
       data_view.to_bytes()
     }
     Compression::Deflate =>
       // Use bytes-based decompression for better performance
       @deflate.deflate_decompress_bytes(
-        file.compressed_bytes,
-        file.decompressed_size,
+        self.compressed_bytes,
+        self.decompressed_size,
       )
     _ => fail("Unsupported compression format")
   }
@@ -281,14 +273,11 @@ pub fn file_to_bytes(file : File) -> Bytes raise {
 // Member operations
 
 ///|
-pub fn member_make(
-  path : Fpath,
-  kind : MemberKind,
-) -> @deflate.Result[Member, String] {
-  if path.length() > max_path_length {
-    return @deflate.err(
+pub fn Member::make(path : String, kind : MemberKind) -> Member raise {
+  if path.length() > MAX_PATH_LENGTH {
+    fail(
       "Path length exceeds maximum allowed (" +
-      max_path_length.to_string() +
+      MAX_PATH_LENGTH.to_string() +
       " bytes)",
     )
   }
@@ -308,258 +297,230 @@ pub fn member_make(
     MemberKind::Dir => 0o755
     MemberKind::File(_) => 0o644
   }
-  @deflate.ok({
+  {
     path: final_path,
-    mtime: dos_epoch, // Default mtime
+    mtime: DOS_EPOCH, // Default mtime
     mode: default_mode,
     kind,
-  })
+  }
 }
 
 ///|
-pub fn member_path(mem : Member) -> Fpath {
-  mem.path
+pub fn Member::path(self : Member) -> String {
+  self.path
 }
 
 ///|
-pub fn member_mode(mem : Member) -> Mode {
-  mem.mode
+pub fn Member::mode(self : Member) -> Mode {
+  self.mode
 }
 
 ///|
-pub fn member_mtime(mem : Member) -> Ptime {
-  mem.mtime
+pub fn Member::mtime(self : Member) -> Ptime {
+  self.mtime
 }
 
 ///|
-pub fn member_kind(mem : Member) -> MemberKind {
-  mem.kind
+pub fn Member::kind(self : Member) -> MemberKind {
+  self.kind
 }
 
 // Archive encoding/decoding
 
 ///|
-pub fn to_binary_string(
-  archive : Archive,
-) -> @deflate.Result[StringView, String] {
-  let count = archive.member_count()
-  if count > max_members {
-    return @deflate.err(
-      "Archive has too many members (\{count}), max is \{max_members}",
-    )
-  }
-  if archive.is_empty() {
-    // Empty ZIP file: just EOCD record
-    let eocd = "PK\u{05}\u{06}" + String::make(18, '\u{00}')
-    @deflate.ok(eocd)
-  } else {
-    // Build complete ZIP file
-    build_zip_file(archive)
-  }
+pub fn Archive::to_binary_string(self : Archive) -> StringView raise {
+  @utf8.decode_lossy(self.to_bytes())
 }
 
-// Convert archive to bytes (more efficient for binary data)
+// Convert archive to bytes
 
 ///|
-pub fn Archive::to_bytes(self : Archive) -> @deflate.Result[Bytes, String] {
-  // Use the existing string-based implementation and convert to bytes
-  // In a full implementation, this would work directly with bytes throughout
-  match to_binary_string(self) {
-    @deflate.Ok(zip_string) => @deflate.ok(@utf8.encode(zip_string))
-    @deflate.Err(error) => @deflate.err(error)
+pub fn Archive::to_bytes(self : Archive) -> Bytes raise {
+  let count = self.member_count()
+  if count > MAX_MEMBERS {
+    fail("Archive has too many members ({count}), max is {MAX_MEMBERS}")
+  }
+  if self.is_empty() {
+    // Empty ZIP file: just EOCD record (22 bytes)
+    write_eocd_bytes(0, 0, 0)
+  } else {
+    self.build_zip_bytes()
   }
 }
 
 // Build a complete ZIP file with local headers, central directory, and EOCD
 
 ///|
-fn build_zip_file(archive : Archive) -> @deflate.Result[StringView, String] {
-  let mut zip_data : StringView = ""
-  let mut central_directory = ""
+fn Archive::build_zip_bytes(self : Archive) -> Bytes {
   let local_header_offsets : Array[Int] = []
   let member_list : Array[Member] = []
+  let parts : Array[Bytes] = []
 
   // Collect all members
-  archive.members.each(fn(_, mem) { member_list.push(mem) })
+  self.members.each(fn(_, mem) { member_list.push(mem) })
 
   // Write local file headers and data
+  let mut current_offset = 0
   for mem in member_list {
-    let local_header_offset = zip_data.length()
-    local_header_offsets.push(local_header_offset)
-    match write_local_file_header(mem) {
-      @deflate.Ok(local_header_data) => zip_data = zip_data + local_header_data
-      @deflate.Err(error) =>
-        return @deflate.err("Failed to write local header: " + error)
-    }
+    local_header_offsets.push(current_offset)
+    let local_header_data = write_local_file_header_bytes(mem)
+    current_offset += local_header_data.length()
+    parts.push(local_header_data)
   }
 
   // Write central directory
-  let central_directory_offset = zip_data.length()
+  let central_directory_offset = current_offset
+  let cd_parts : Array[Bytes] = []
   for i = 0; i < member_list.length(); i = i + 1 {
     let mem = member_list[i]
     let local_offset = local_header_offsets[i]
-    match write_central_directory_entry(mem, local_offset) {
-      @deflate.Ok(cd_entry) => central_directory = central_directory + cd_entry
-      @deflate.Err(error) =>
-        return @deflate.err("Failed to write central directory entry: " + error)
-    }
+    let cd_entry = write_central_directory_entry_bytes(mem, local_offset)
+    current_offset += cd_entry.length()
+    cd_parts.push(cd_entry)
   }
+
+  let cd_size = current_offset - central_directory_offset
 
   // Write end of central directory record
-  let eocd = write_eocd_record(
+  let eocd = write_eocd_bytes(
     member_list.length(),
-    central_directory.length(),
+    cd_size,
     central_directory_offset,
   )
-  let complete_zip = zip_data + central_directory + eocd
-  @deflate.ok(complete_zip)
+
+  // Concatenate all parts
+  let all_parts = parts + cd_parts + [eocd]
+  concat_bytes(all_parts)
 }
 
-// Write local file header
+// Write local file header as Bytes
 
 ///|
-fn write_local_file_header(mem : Member) -> @deflate.Result[StringView, String] {
-  let path = mem.path
-  let path_bytes = path // Assuming UTF-8 encoding
+fn write_local_file_header_bytes(mem : Member) -> Bytes {
+  let path_bytes = @utf8.encode(mem.path)
+  let path_len = path_bytes.length()
   match mem.kind {
     MemberKind::Dir => {
-      // Directory entry
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
-      let header = write_u32_le(local_file_header_signature) + // Signature
-        write_u16_le(20) + // Version needed
-        write_u16_le(0x800) + // GP flags (UTF-8)
-        write_u16_le(0) + // Compression method (stored)
-        write_u16_le(dos_time) + // Last mod time
-        write_u16_le(dos_date) + // Last mod date
-        write_u32_le(0) + // CRC-32
-        write_u32_le(0) + // Compressed size
-        write_u32_le(0) + // Uncompressed size
-        write_u16_le(path_bytes.length()) + // Filename length
-        write_u16_le(0) // Extra field length
-      @deflate.ok(header + path_bytes)
+      concat_bytes([
+        write_u32_le_bytes(local_file_header_signature),
+        write_u16_le_bytes(20), // Version needed
+        write_u16_le_bytes(0x800), // GP flags (UTF-8)
+        write_u16_le_bytes(0), // Compression method (stored)
+        write_u16_le_bytes(dos_time),
+        write_u16_le_bytes(dos_date),
+        write_u32_le_bytes(0), // CRC-32
+        write_u32_le_bytes(0), // Compressed size
+        write_u32_le_bytes(0), // Uncompressed size
+        write_u16_le_bytes(path_len),
+        write_u16_le_bytes(0), // Extra field length
+        path_bytes,
+      ])
     }
     MemberKind::File(file) => {
-      // File entry
       let compression_method = match file.compression {
         Compression::Stored => 0
         Compression::Deflate => 8
-        Compression::Other(comp_method) => comp_method
+        Compression::Other(m) => m
       }
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
-      let header : StringView = write_u32_le(local_file_header_signature) + // Signature
-        write_u16_le(file.version_needed_to_extract) + // Version needed
-        write_u16_le(file.gp_flags) + // GP flags
-        write_u16_le(compression_method) + // Compression method
-        write_u16_le(dos_time) + // Last mod time
-        write_u16_le(dos_date) + // Last mod date
-        write_u32_le(file.decompressed_crc32.to_int()) + // CRC-32
-        write_u32_le(file.compressed_size) + // Compressed size
-        write_u32_le(file.decompressed_size) + // Uncompressed size
-        write_u16_le(path_bytes.length()) + // Filename length
-        write_u16_le(0) // Extra field length
-      let payload = @utf8.decode_lossy(file.compressed_bytes)
-      @deflate.ok(header + path_bytes + payload)
+      concat_bytes([
+        write_u32_le_bytes(local_file_header_signature),
+        write_u16_le_bytes(file.version_needed_to_extract),
+        write_u16_le_bytes(file.gp_flags),
+        write_u16_le_bytes(compression_method),
+        write_u16_le_bytes(dos_time),
+        write_u16_le_bytes(dos_date),
+        write_u32_le_bytes(file.decompressed_crc32.to_int()),
+        write_u32_le_bytes(file.compressed_size),
+        write_u32_le_bytes(file.decompressed_size),
+        write_u16_le_bytes(path_len),
+        write_u16_le_bytes(0), // Extra field length
+        path_bytes,
+        file.compressed_bytes,
+      ])
     }
   }
 }
 
-// Write central directory entry
+// Write central directory entry as Bytes
 
 ///|
-fn write_central_directory_entry(
+fn write_central_directory_entry_bytes(
   mem : Member,
   local_header_offset : Int,
-) -> @deflate.Result[String, String] {
-  let path = mem.path
-  let path_bytes = path
+) -> Bytes {
+  let path_bytes = @utf8.encode(mem.path)
+  let path_len = path_bytes.length()
   match mem.kind {
     MemberKind::Dir => {
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
-      let entry = write_u32_le(central_directory_signature) + // Signature
-        write_u16_le(0x314) + // Version made by (Unix, ZIP 2.0)
-        write_u16_le(20) + // Version needed
-        write_u16_le(0x800) + // GP flags (UTF-8)
-        write_u16_le(0) + // Compression method
-        write_u16_le(dos_time) + // Last mod time
-        write_u16_le(dos_date) + // Last mod date
-        write_u32_le(0) + // CRC-32
-        write_u32_le(0) + // Compressed size
-        write_u32_le(0) + // Uncompressed size
-        write_u16_le(path_bytes.length()) + // Filename length
-        write_u16_le(0) + // Extra field length
-        write_u16_le(0) + // File comment length
-        write_u16_le(0) + // Disk number start
-        write_u16_le(0) + // Internal file attrs
-        write_u32_le((mem.mode << 16) | 0x10) + // External file attrs (directory)
-        write_u32_le(local_header_offset) // Local header offset
-      @deflate.ok(entry + path_bytes)
+      concat_bytes([
+        write_u32_le_bytes(central_directory_signature),
+        write_u16_le_bytes(0x314), // Version made by (Unix, ZIP 2.0)
+        write_u16_le_bytes(20), // Version needed
+        write_u16_le_bytes(0x800), // GP flags (UTF-8)
+        write_u16_le_bytes(0), // Compression method
+        write_u16_le_bytes(dos_time),
+        write_u16_le_bytes(dos_date),
+        write_u32_le_bytes(0), // CRC-32
+        write_u32_le_bytes(0), // Compressed size
+        write_u32_le_bytes(0), // Uncompressed size
+        write_u16_le_bytes(path_len),
+        write_u16_le_bytes(0), // Extra field length
+        write_u16_le_bytes(0), // File comment length
+        write_u16_le_bytes(0), // Disk number start
+        write_u16_le_bytes(0), // Internal file attrs
+        write_u32_le_bytes((mem.mode << 16) | 0x10), // External file attrs (directory)
+        write_u32_le_bytes(local_header_offset),
+        path_bytes,
+      ])
     }
     MemberKind::File(file) => {
       let compression_method = match file.compression {
         Compression::Stored => 0
         Compression::Deflate => 8
-        Compression::Other(comp_method) => comp_method
+        Compression::Other(m) => m
       }
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
-      let entry = write_u32_le(central_directory_signature) + // Signature
-        write_u16_le(file.version_made_by) + // Version made by
-        write_u16_le(file.version_needed_to_extract) + // Version needed
-        write_u16_le(file.gp_flags) + // GP flags
-        write_u16_le(compression_method) + // Compression method
-        write_u16_le(dos_time) + // Last mod time
-        write_u16_le(dos_date) + // Last mod date
-        write_u32_le(file.decompressed_crc32.to_int()) + // CRC-32
-        write_u32_le(file.compressed_size) + // Compressed size
-        write_u32_le(file.decompressed_size) + // Uncompressed size
-        write_u16_le(path_bytes.length()) + // Filename length
-        write_u16_le(0) + // Extra field length
-        write_u16_le(0) + // File comment length
-        write_u16_le(0) + // Disk number start
-        write_u16_le(0) + // Internal file attrs
-        write_u32_le(mem.mode << 16) + // External file attrs
-        write_u32_le(local_header_offset) // Local header offset
-      @deflate.ok(entry + path_bytes)
+      concat_bytes([
+        write_u32_le_bytes(central_directory_signature),
+        write_u16_le_bytes(file.version_made_by),
+        write_u16_le_bytes(file.version_needed_to_extract),
+        write_u16_le_bytes(file.gp_flags),
+        write_u16_le_bytes(compression_method),
+        write_u16_le_bytes(dos_time),
+        write_u16_le_bytes(dos_date),
+        write_u32_le_bytes(file.decompressed_crc32.to_int()),
+        write_u32_le_bytes(file.compressed_size),
+        write_u32_le_bytes(file.decompressed_size),
+        write_u16_le_bytes(path_len),
+        write_u16_le_bytes(0), // Extra field length
+        write_u16_le_bytes(0), // File comment length
+        write_u16_le_bytes(0), // Disk number start
+        write_u16_le_bytes(0), // Internal file attrs
+        write_u32_le_bytes(mem.mode << 16), // External file attrs
+        write_u32_le_bytes(local_header_offset),
+        path_bytes,
+      ])
     }
   }
 }
 
-// Write end of central directory record
+// Write end of central directory record as Bytes
 
 ///|
-fn write_eocd_record(
-  entry_count : Int,
-  cd_size : Int,
-  cd_offset : Int,
-) -> String {
-  write_u32_le(end_of_central_directory_signature) + // Signature
-  write_u16_le(0) + // Disk number
-  write_u16_le(0) + // Disk with central directory
-  write_u16_le(entry_count) + // Entries on this disk
-  write_u16_le(entry_count) + // Total entries
-  write_u32_le(cd_size) + // Central directory size
-  write_u32_le(cd_offset) + // Central directory offset
-  write_u16_le(0) // Comment length
-}
-
-// Binary parsing utilities
-
-///|
-fn write_u16_le(value : Int) -> String {
-  let b0 = value & 0xff
-  let b1 = (value >> 8) & 0xff
-  b0.unsafe_to_char().to_string() + b1.unsafe_to_char().to_string()
-}
-
-///|
-fn write_u32_le(value : Int) -> String {
-  let b0 = value & 0xff
-  let b1 = (value >> 8) & 0xff
-  let b2 = (value >> 16) & 0xff
-  let b3 = (value >> 24) & 0xff
-  b0.unsafe_to_char().to_string() +
-  b1.unsafe_to_char().to_string() +
-  b2.unsafe_to_char().to_string() +
-  b3.unsafe_to_char().to_string()
+fn write_eocd_bytes(entry_count : Int, cd_size : Int, cd_offset : Int) -> Bytes {
+  concat_bytes([
+    write_u32_le_bytes(end_of_central_directory_signature),
+    write_u16_le_bytes(0), // Disk number
+    write_u16_le_bytes(0), // Disk with central directory
+    write_u16_le_bytes(entry_count), // Entries on this disk
+    write_u16_le_bytes(entry_count), // Total entries
+    write_u32_le_bytes(cd_size), // Central directory size
+    write_u32_le_bytes(cd_offset), // Central directory offset
+    write_u16_le_bytes(0), // Comment length
+  ])
 }
 
 // ZIP file format constants
@@ -618,19 +579,19 @@ fn find_eocd_bytes(data : Bytes) -> Int? {
 // Parse ZIP file
 
 ///|
-pub fn of_binary(data : Bytes) -> @deflate.Result[Archive, String] {
+pub fn of_binary(data : Bytes) -> Archive raise {
   if data.length() < 22 {
-    return @deflate.err("File too small to be a valid ZIP archive")
+    fail("File too small to be a valid ZIP archive")
   }
 
   // Check for ZIP magic bytes
   if !bytes_has_magic(data) {
-    return @deflate.err("Not a valid ZIP archive - missing magic bytes")
+    fail("Not a valid ZIP archive - missing magic bytes")
   }
 
   // Find end of central directory record
   match find_eocd_bytes(data) {
-    None => @deflate.err("Could not find end of central directory record")
+    None => fail("Could not find end of central directory record")
     Some(eocd_offset) => {
       // Parse EOCD record
       let cd_entries = read_u16_le_bytes(data, eocd_offset + 10)
@@ -638,7 +599,7 @@ pub fn of_binary(data : Bytes) -> @deflate.Result[Archive, String] {
       let cd_offset = read_u32_le_bytes(data, eocd_offset + 16)
       if cd_entries == 0 {
         // Empty archive
-        @deflate.ok(Archive::new())
+        Archive::new()
       } else {
         // Parse central directory entries
         parse_central_directory_bytes(data, cd_offset, cd_entries)
@@ -650,7 +611,7 @@ pub fn of_binary(data : Bytes) -> @deflate.Result[Archive, String] {
 // Parse archive from bytes (more efficient for binary data)
 
 ///|
-pub fn of_bytes(data : Bytes) -> @deflate.Result[Archive, String] {
+pub fn of_bytes(data : Bytes) -> Archive raise {
   of_binary(data)
 }
 
@@ -661,25 +622,15 @@ fn parse_central_directory_bytes(
   data : Bytes,
   cd_offset : Int,
   entry_count : Int,
-) -> @deflate.Result[Archive, String] {
-  let mut archive = Archive::new()
+) -> Archive raise {
+  let archive = Archive::new()
   let mut offset = cd_offset
   for i = 0; i < entry_count; i = i + 1 {
-    match parse_central_directory_entry_bytes(data, offset) {
-      @deflate.Ok((mem, next_offset)) => {
-        archive = archive.add(mem)
-        offset = next_offset
-      }
-      @deflate.Err(error) =>
-        return @deflate.err(
-          "Failed to parse central directory entry " +
-          i.to_string() +
-          ": " +
-          error,
-        )
-    }
+    let (mem, next_offset) = parse_central_directory_entry_bytes(data, offset)
+    archive.add(mem)
+    offset = next_offset
   }
-  @deflate.ok(archive)
+  archive
 }
 
 // Parse a single central directory entry
@@ -688,13 +639,13 @@ fn parse_central_directory_bytes(
 fn parse_central_directory_entry_bytes(
   data : Bytes,
   offset : Int,
-) -> @deflate.Result[(Member, Int), String] {
+) -> (Member, Int) raise {
   if offset + 46 > data.length() {
-    return @deflate.err("Central directory entry extends beyond file")
+    fail("Central directory entry extends beyond file")
   }
   let signature = read_u32_le_bytes(data, offset)
   if signature != central_directory_signature {
-    return @deflate.err("Invalid central directory entry signature")
+    fail("Invalid central directory entry signature")
   }
   let version_made_by = read_u16_le_bytes(data, offset + 4)
   let version_needed = read_u16_le_bytes(data, offset + 6)
@@ -714,7 +665,7 @@ fn parse_central_directory_entry_bytes(
   // Read filename
   let filename_start = offset + 46
   if filename_start + filename_length > data.length() {
-    return @deflate.err("Filename extends beyond file")
+    fail("Filename extends beyond file")
   }
   let filename_bytes = data[filename_start:filename_start + filename_length]
   let filename = @utf8.decode_lossy(filename_bytes)
@@ -727,50 +678,45 @@ fn parse_central_directory_entry_bytes(
   }
 
   // Read file data from local header
-  match read_file_data_bytes(data, local_header_offset, compressed_size) {
-    @deflate.Ok(file_data) => {
-      // Create file object
-      let file = {
-        compression,
-        start: 0,
-        compressed_size,
-        compressed_bytes: file_data,
-        decompressed_size: uncompressed_size,
-        decompressed_crc32: crc32.to_int64(),
-        version_made_by,
-        version_needed_to_extract: version_needed,
-        gp_flags,
-      }
+  let file_data = read_file_data_bytes(
+    data, local_header_offset, compressed_size,
+  )
 
-      // Determine if it's a directory
-      let is_directory = filename.strip_suffix("/") is Some(_) ||
-        (external_file_attrs & 0x10) != 0
-      let kind = if is_directory {
-        MemberKind::Dir
-      } else {
-        MemberKind::File(file)
-      }
-
-      // Create member
-      let mem = {
-        path: filename,
-        mode: if is_directory {
-          0o755
-        } else {
-          0o644
-        },
-        mtime: dos_datetime_to_unix(_last_mod_time, _last_mod_date),
-        kind,
-      }
-      let next_offset = offset +
-        46 +
-        filename_length +
-        extra_field_length +
-        file_comment_length
-      @deflate.ok((mem, next_offset))
-    }
-    @deflate.Err(error) => @deflate.err("Failed to read file data: " + error)
+  // Create file object
+  let file = {
+    compression,
+    start: 0,
+    compressed_size,
+    compressed_bytes: file_data,
+    decompressed_size: uncompressed_size,
+    decompressed_crc32: crc32.to_int64(),
+    version_made_by,
+    version_needed_to_extract: version_needed,
+    gp_flags,
   }
+
+  // Determine if it's a directory
+  let is_directory = filename.strip_suffix("/") is Some(_) ||
+    (external_file_attrs & 0x10) != 0
+  let kind = if is_directory { MemberKind::Dir } else { MemberKind::File(file) }
+
+  // Create member
+  let mem = {
+    path: filename,
+    mode: if is_directory {
+      0o755
+    } else {
+      0o644
+    },
+    mtime: dos_datetime_to_unix(_last_mod_time, _last_mod_date),
+    kind,
+  }
+  let next_offset = offset +
+    46 +
+    filename_length +
+    extra_field_length +
+    file_comment_length
+  (mem, next_offset)
 }
 
 // Read file data from local header
@@ -780,13 +726,13 @@ fn read_file_data_bytes(
   data : Bytes,
   local_header_offset : Int,
   compressed_size : Int,
-) -> @deflate.Result[Bytes, String] {
+) -> Bytes raise {
   if local_header_offset + 30 > data.length() {
-    return @deflate.err("Local header extends beyond file")
+    fail("Local header extends beyond file")
   }
   let signature = read_u32_le_bytes(data, local_header_offset)
   if signature != local_file_header_signature {
-    return @deflate.err("Invalid local file header signature")
+    fail("Invalid local file header signature")
   }
   let filename_length = read_u16_le_bytes(data, local_header_offset + 26)
   let extra_field_length = read_u16_le_bytes(data, local_header_offset + 28)
@@ -795,8 +741,8 @@ fn read_file_data_bytes(
     filename_length +
     extra_field_length
   if file_data_offset + compressed_size > data.length() {
-    return @deflate.err("File data extends beyond archive")
+    fail("File data extends beyond archive")
   }
   let file_data = data[file_data_offset:file_data_offset + compressed_size]
-  @deflate.ok(file_data.to_bytes())
+  file_data.to_bytes()
 }

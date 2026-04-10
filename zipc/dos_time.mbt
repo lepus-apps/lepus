@@ -19,11 +19,11 @@ pub fn unix_to_dos_datetime(unix_timestamp : Int) -> (Int, Int) {
   // This is a simplified conversion - a full implementation would handle
   // leap years, time zones, etc. more accurately
 
-  if unix_timestamp <= dos_epoch {
+  if unix_timestamp <= DOS_EPOCH {
     // Before DOS epoch, use minimum DOS date/time (1980-01-01 00:00:00)
     return (0, 0x0021) // Time: 00:00:00, Date: 1980-01-01
   }
-  let seconds_since_dos_epoch = unix_timestamp - dos_epoch
+  let seconds_since_dos_epoch = unix_timestamp - DOS_EPOCH
   let days_since_dos_epoch = seconds_since_dos_epoch / 86400
   let seconds_in_day = seconds_since_dos_epoch % 86400
 
@@ -85,7 +85,7 @@ pub fn dos_datetime_to_unix(dos_time : Int, dos_date : Int) -> Int {
     hours > 23 ||
     minutes > 59 ||
     seconds > 59 {
-    return dos_epoch // Return DOS epoch for invalid dates
+    return DOS_EPOCH // Return DOS epoch for invalid dates
   }
 
   // Calculate days since DOS epoch
@@ -100,7 +100,7 @@ pub fn dos_datetime_to_unix(dos_time : Int, dos_date : Int) -> Int {
   days = days + month_day_to_day_of_year(month, day, is_leap_year(year)) - 1
 
   // Calculate total seconds
-  dos_epoch + days * 86400 + hours * 3600 + minutes * 60 + seconds
+  DOS_EPOCH + days * 86400 + hours * 3600 + minutes * 60 + seconds
 }
 
 // Check if a year is a leap year

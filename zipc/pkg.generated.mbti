@@ -6,7 +6,13 @@ import {
 }
 
 // Values
-pub fn add(Member, Archive) -> Archive
+pub const DOS_EPOCH : Int = 315532800
+
+pub const MAX_FILE_SIZE : Int = 2147483647
+
+pub const MAX_MEMBERS : Int = 65535
+
+pub const MAX_PATH_LENGTH : Int = 65535
 
 pub fn bytes_from_ints(Array[Int]) -> Bytes
 
@@ -20,33 +26,13 @@ pub fn create_unix_timestamp_field(Int, Int?, Int?) -> ExtraField
 
 pub fn current_unix_timestamp() -> Int
 
-pub fn deflate_of_binary_string(String, @deflate.Level) -> @deflate.Result[File, String]
-
-pub fn deflate_of_bytes(Bytes, @deflate.Level) -> @deflate.Result[File, String]
+pub fn deflate_of_bytes(Bytes, @deflate.Level) -> File raise
 
 pub fn dos_datetime_components(Int, Int) -> (Int, Int, Int, Int, Int, Int)
 
 pub fn dos_datetime_to_unix(Int, Int) -> Int
 
-pub let dos_epoch : Int
-
-pub fn empty() -> Archive
-
 pub fn extra_fields_size(Array[ExtraField]) -> Int
-
-pub fn file_can_extract(File) -> Bool
-
-pub fn file_compressed_bytes(File) -> Bytes
-
-pub fn file_compressed_size(File) -> Int
-
-pub fn file_compression(File) -> Compression
-
-pub fn file_decompressed_size(File) -> Int
-
-pub fn file_to_bytes(File) -> Bytes raise
-
-pub fn find(String, Archive) -> Member?
 
 pub fn find_extra_field(Array[ExtraField], UInt16) -> ExtraField?
 
@@ -54,35 +40,13 @@ pub fn format_dos_datetime(Int, Int) -> String
 
 pub let info_zip_unix_id : UInt16
 
-pub fn is_empty(Archive) -> Bool
-
 pub fn make_dos_datetime(Int, Int, Int, Int, Int, Int) -> (Int, Int)
-
-pub let max_file_size : Int
-
-pub let max_members : Int
-
-pub let max_path_length : Int
-
-pub fn mem(String, Archive) -> Bool
-
-pub fn member_count(Archive) -> Int
-
-pub fn member_kind(Member) -> MemberKind
-
-pub fn member_make(String, MemberKind) -> @deflate.Result[Member, String]
-
-pub fn member_mode(Member) -> Int
-
-pub fn member_mtime(Member) -> Int
-
-pub fn member_path(Member) -> String
 
 pub let ntfs_extra_field_id : UInt16
 
-pub fn of_binary(Bytes) -> @deflate.Result[Archive, String]
+pub fn of_binary(Bytes) -> Archive raise
 
-pub fn of_bytes(Bytes) -> @deflate.Result[Archive, String]
+pub fn of_bytes(Bytes) -> Archive raise
 
 pub fn parse_extra_fields(String) -> Array[ExtraField]
 
@@ -102,23 +66,13 @@ pub fn read_u32_le_bytes(Bytes, Int) -> Int
 
 pub fn read_u32_le_extra(StringView, Int) -> UInt
 
-pub fn remove(String, Archive) -> Archive
-
 pub fn remove_extra_field(Array[ExtraField], UInt16) -> Array[ExtraField]
 
 pub fn serialize_extra_fields(Array[ExtraField]) -> StringView
 
 pub fn set_extra_field(Array[ExtraField], ExtraField) -> Array[ExtraField]
 
-pub fn stored_of_binary_string(String) -> File raise
-
-pub fn stored_of_bytes(Bytes) -> File raise
-
 pub fn string_has_magic(StringView) -> Bool
-
-pub fn to_binary_string(Archive) -> @deflate.Result[StringView, String]
-
-pub fn to_bytes(Archive) -> @deflate.Result[Bytes, String]
 
 pub let unicode_comment_id : UInt16
 
@@ -150,6 +104,15 @@ pub let zip64_extra_field_id : UInt16
 pub struct Archive {
   members : Map[String, Member]
 }
+pub fn Archive::add(Self, Member) -> Unit
+pub fn Archive::find(Self, String) -> Member?
+pub fn Archive::is_empty(Self) -> Bool
+pub fn Archive::mem(Self, String) -> Bool
+pub fn Archive::member_count(Self) -> Int
+pub fn Archive::new() -> Self
+pub fn Archive::remove(Self, String) -> Self
+pub fn Archive::to_binary_string(Self) -> StringView raise
+pub fn Archive::to_bytes(Self) -> Bytes raise
 
 pub enum Compression {
   Stored
@@ -174,6 +137,15 @@ pub struct File {
   version_needed_to_extract : Int
   gp_flags : Int
 }
+pub fn File::can_extract(Self) -> Bool
+pub fn File::compressed_bytes(Self) -> Bytes
+pub fn File::compressed_size(Self) -> Int
+pub fn File::compression(Self) -> Compression
+pub fn File::decompressed_size(Self) -> Int
+pub fn File::deflate_of_binary_string(String, @deflate.Level) -> Self raise
+pub fn File::from_bytes(Bytes) -> Self raise
+pub fn File::from_string(String) -> Self raise
+pub fn File::to_bytes(Self) -> Bytes raise
 
 pub struct Member {
   path : String
@@ -181,15 +153,18 @@ pub struct Member {
   mtime : Int
   kind : MemberKind
 }
+pub fn Member::kind(Self) -> MemberKind
+pub fn Member::make(String, MemberKind) -> Self raise
+pub fn Member::mode(Self) -> Int
+pub fn Member::mtime(Self) -> Int
+pub fn Member::path(Self) -> String
 
-pub enum MemberKind {
+pub(all) enum MemberKind {
   Dir
   File(File)
 }
 
 // Type aliases
-pub type Fpath = String
-
 pub type Mode = Int
 
 pub type Ptime = Int

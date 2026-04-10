@@ -41,7 +41,7 @@ test "dos time component extraction" {
 test "dos time edge cases" {
   // Test DOS epoch (1980-01-01 00:00:00)
   let (dos_time_epoch, dos_date_epoch) = @zipc.unix_to_dos_datetime(
-    @zipc.dos_epoch,
+    @zipc.DOS_EPOCH,
   )
   let (year, month, day, hour, minute, second) = @zipc.dos_datetime_components(
     dos_time_epoch, dos_date_epoch,
@@ -54,7 +54,7 @@ test "dos time edge cases" {
   inspect(second, content="0")
 
   // Test before DOS epoch
-  let before_epoch = @zipc.dos_epoch - 86400 // One day before
+  let before_epoch = @zipc.DOS_EPOCH - 86400 // One day before
   let (dos_time_before, dos_date_before) = @zipc.unix_to_dos_datetime(
     before_epoch,
   )
@@ -177,11 +177,11 @@ test "dos time invalid date handling" {
   let invalid_unix = @zipc.dos_datetime_to_unix(0xffff, 0xffff) // Invalid values
 
   // Should return DOS epoch for invalid dates
-  inspect(invalid_unix, content=@zipc.dos_epoch.to_string())
+  inspect(invalid_unix, content=@zipc.DOS_EPOCH.to_string())
 
   // Test zero values
   let zero_unix = @zipc.dos_datetime_to_unix(0, 0)
-  inspect(zero_unix, content=@zipc.dos_epoch.to_string())
+  inspect(zero_unix, content=@zipc.DOS_EPOCH.to_string())
 }
 
 ///|
