@@ -36,11 +36,18 @@ pub async fn run_build(config : BuildConfig) -> Int {
   if @fs.exists(dist_dir) {
     let archive = @zipc.Archive::new()
     walk(archive, dist_dir, dist_dir)
+    let _build_dir = resolve_path(config.cwd, Some("_build"))
+    if !@fs.exists(_build_dir) {
+      @fs.mkdir(_build_dir, permission=0o755)
+    }
+
     @fs.write_file(
-      resolve_path(config.cwd, Some("dist.zip")),
+      resolve_path(config.cwd, Some("_build/dist.zip")),
       archive.to_bytes(),
       create=0o644,
     )
+
+    
   }
   0
 }
