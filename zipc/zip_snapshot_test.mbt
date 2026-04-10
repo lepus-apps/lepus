@@ -19,7 +19,7 @@ test "empty archive encoding" {
   inspect(zip_data.length(), content="22")
 
   // Test roundtrip
-  let decoded = @zipc.of_binary(zip_data)
+  let decoded = @zipc.Archive::from_bytes(zip_data)
   inspect(decoded.is_empty(), content="true")
   inspect(decoded.member_count(), content="0")
   ignore(decoded)
@@ -29,7 +29,7 @@ test "empty archive encoding" {
 test "error handling basic" {
   // Test invalid ZIP data - should raise error
   try {
-    ignore(@zipc.of_binary(@utf8.encode("Not a ZIP file")))
+    ignore(@zipc.Archive::from_bytes(@utf8.encode("Not a ZIP file")))
     fail("Should have failed on invalid ZIP data")
   } catch {
     error =>
@@ -43,7 +43,7 @@ test "error handling basic" {
 
   // Test empty data - should raise error
   try {
-    ignore(@zipc.of_binary(Bytes::from_array([])))
+    ignore(@zipc.Archive::from_bytes(Bytes::from_array([])))
     fail("Should have failed on empty data")
   } catch {
     error =>

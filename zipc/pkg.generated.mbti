@@ -44,10 +44,6 @@ pub fn make_dos_datetime(Int, Int, Int, Int, Int, Int) -> (Int, Int)
 
 pub let ntfs_extra_field_id : UInt16
 
-pub fn of_binary(Bytes) -> Archive raise
-
-pub fn of_bytes(Bytes) -> Archive raise
-
 pub fn parse_extra_fields(String) -> Array[ExtraField]
 
 pub fn parse_unicode_path_field(ExtraField) -> (StringView, UInt)?
@@ -101,11 +97,12 @@ pub let zip64_extra_field_id : UInt16
 // Errors
 
 // Types and methods
-pub struct Archive {
+pub(all) struct Archive {
   members : Map[String, Member]
 }
 pub fn Archive::add(Self, Member) -> Unit
 pub fn Archive::find(Self, String) -> Member?
+pub fn Archive::from_bytes(Bytes) -> Self raise
 pub fn Archive::is_empty(Self) -> Bool
 pub fn Archive::mem(Self, String) -> Bool
 pub fn Archive::member_count(Self) -> Int

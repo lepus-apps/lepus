@@ -65,6 +65,18 @@ pub fn Source::html(html : String) -> Source {
 }
 
 ///|
+pub fn Source::zip(zip : Bytes) -> Source raise {
+  let archive = @zipc.Archive::from_bytes(zip)
+  let files = []
+  archive.members.each((name, m) => {
+    if m.kind is File(file) {
+      files.push(MemoryFile::from_bytes(name, file.to_bytes()))
+    }
+  })
+  Memory(MemorySource::new(files))
+}
+
+///|
 pub fn WindowConfig::new(
   title? : String = "Lepus App",
   width? : Int = 800,

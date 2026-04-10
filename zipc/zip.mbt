@@ -43,7 +43,7 @@ pub struct Member {
 }
 
 ///|
-pub struct Archive {
+pub(all) struct Archive {
   members : Map[String, Member]
 }
 
@@ -576,10 +576,9 @@ fn find_eocd_bytes(data : Bytes) -> Int? {
   None
 }
 
-// Parse ZIP file
-
 ///|
-pub fn of_binary(data : Bytes) -> Archive raise {
+/// Parse ZIP file
+pub fn Archive::from_bytes(data : Bytes) -> Archive raise {
   if data.length() < 22 {
     fail("File too small to be a valid ZIP archive")
   }
@@ -608,16 +607,8 @@ pub fn of_binary(data : Bytes) -> Archive raise {
   }
 }
 
-// Parse archive from bytes (more efficient for binary data)
-
 ///|
-pub fn of_bytes(data : Bytes) -> Archive raise {
-  of_binary(data)
-}
-
-// Parse central directory entries
-
-///|
+/// Parse central directory entries
 fn parse_central_directory_bytes(
   data : Bytes,
   cd_offset : Int,

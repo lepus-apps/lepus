@@ -41,6 +41,7 @@ pub(all) enum Source {
   Memory(MemorySource)
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
 pub fn Source::html(String) -> Self
+pub fn Source::zip(Bytes) -> Self raise
 
 pub enum TitleBarStyle {
   Default
