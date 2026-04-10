@@ -5,6 +5,25 @@ pub enum TitleBarStyle {
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
+pub struct MemoryFile {
+  path : String
+  content : Bytes
+} derive(Debug, Eq, ToJson, FromJson, Hash)
+
+///|
+pub struct MemorySource {
+  entry : String
+  files : Array[MemoryFile]
+} derive(Debug, Eq, ToJson, FromJson, Hash)
+
+///|
+pub(all) enum Source {
+  Url(String)
+  Local(String)
+  Memory(MemorySource)
+} derive(Debug, Eq, ToJson, FromJson, Hash)
+
+///|
 pub struct WindowConfig {
   title : String
   width : Int
@@ -18,9 +37,32 @@ pub struct WindowConfig {
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
   traffic_light_position : (Int, Int)
-  html : String?
-  url : String?
+  source : Source?
 } derive(Debug, Eq, ToJson, FromJson, Hash)
+
+///|
+pub fn MemoryFile::from_bytes(path : String, content : Bytes) -> MemoryFile {
+  { path, content }
+}
+
+///|
+pub fn MemoryFile::from_string(path : String, content : String) -> MemoryFile {
+  let content = @utf8.encode(content)
+  { path, content }
+}
+
+///|
+pub fn MemorySource::new(
+  files : Array[MemoryFile],
+  entry? : String = "index.html",
+) -> MemorySource {
+  { entry, files }
+}
+
+///|
+pub fn Source::html(html : String) -> Source {
+  Memory(MemorySource::new([MemoryFile::from_string("index.html", html)]))
+}
 
 ///|
 pub fn WindowConfig::new(
@@ -36,8 +78,7 @@ pub fn WindowConfig::new(
   title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
-  html? : String,
-  url? : String,
+  source? : Source,
 ) -> WindowConfig {
   {
     title,
@@ -52,9 +93,24 @@ pub fn WindowConfig::new(
     title_bar_style,
     title_bar_overlay,
     traffic_light_position,
-    html,
-    url,
+    source,
   }
+}
+
+///|
+pub fn WindowConfig::set_source(
+  self : WindowConfig,
+  source : Source,
+) -> WindowConfig {
+  { ..self, source: Some(source) }
+}
+
+///|
+pub fn WindowConfig::navigate(
+  self : WindowConfig,
+  url : String,
+) -> WindowConfig {
+  self.set_source(Source::Url(url))
 }
 
 ///|
@@ -83,8 +139,7 @@ pub fn Window::new(
   title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
-  html? : String,
-  url? : String,
+  source? : Source,
   plugins? : Array[@webview.Plugin] = [],
 ) -> Window {
   {
@@ -101,11 +156,20 @@ pub fn Window::new(
       title_bar_style,
       title_bar_overlay,
       traffic_light_position,
-      html,
-      url,
+      source,
     },
     plugins,
   }
+}
+
+///|
+pub fn Window::set_source(self : Window, source : Source) -> Window {
+  { ..self, config: self.config.set_source(source) }
+}
+
+///|
+pub fn Window::navigate(self : Window, url : String) -> Window {
+  self.set_source(Source::Url(url))
 }
 
 ///|
@@ -165,11 +229,165 @@ pub fn App::run(self : App, window_index? : Int = 0) -> Unit {
     title_bar_overlay=config.title_bar_overlay,
     traffic_light_position=config.traffic_light_position,
   )
-  match config {
-    { url: Some(url), .. } => window.navigate(url)
-    { html: Some(html), .. } => window.set_html(html)
-    _ => ()
+  guard config.source is Some(source) else {
+    abort("WindowConfig::source is required")
   }
+  window.navigate(resolve_source_blocking(source))
   self.plugins.each(plugin => window.install(plugin))
   window.run()
+}
+
+///|
+async fn resolve_source(source : Source) -> String {
+  match source {
+    Url(url) => url
+    Local(path) => resolve_local_fs(path)
+    Memory(source) => resolve_memory_source(source)
+  }
+}
+
+///|
+fn resolve_source_blocking(source : Source) -> String {
+  let mut resolved = ""
+  @async.run_async_main(() => resolved = resolve_source(source))
+  resolved
+}
+
+///|
+async fn resolve_local_fs(path : String) -> String {
+  let fs_path = if path.has_prefix("file://") {
+    file_url_to_path(path)
+  } else {
+    path
+  }
+  let normalized = fs_path.replace_all(old="\\", new="/")
+  let entry_path = if is_html_path(normalized) {
+    normalized
+  } else {
+    join_path(normalized, "index.html")
+  }
+  guard @fs.exists(entry_path) else {
+    abort("LocalFs source does not exist: " + entry_path)
+  }
+  guard @fs.kind(entry_path) == @fs.FileKind::Regular else {
+    abort("LocalFs source is not a regular file: " + entry_path)
+  }
+  guard @fs.can_read(entry_path) else {
+    abort("LocalFs source is not readable: " + entry_path)
+  }
+  to_file_url(@fs.realpath(entry_path))
+}
+
+///|
+async fn resolve_memory_source(source : MemorySource) -> String {
+  guard source.files.length() > 0 else {
+    abort("MemoryFs source requires at least one file")
+  }
+  let entry = sanitize_memory_relative_path(source.entry)
+  let root = @fs.realpath(@fs.tmpdir(prefix="lepus-source"))
+  let mut has_entry = false
+  for file in source.files {
+    let relative_path = sanitize_memory_relative_path(file.path)
+    if relative_path == entry {
+      has_entry = true
+    }
+    let file_path = join_path(root, relative_path)
+    match parent_dir(file_path) {
+      Some(parent) =>
+        if !@fs.exists(parent) {
+          @fs.mkdir(parent, permission=0o700, recursive=true)
+        }
+      None => ()
+    }
+    @fs.write_file(file_path, file.content, create=0o644)
+  }
+  guard has_entry else { abort("MemoryFs entry file not found: " + entry) }
+  to_file_url(join_path(root, entry))
+}
+
+///|
+fn to_file_url(path : String) -> String {
+  let normalized = path.replace_all(old="\\", new="/")
+  if normalized.has_prefix("/") {
+    "file://" + normalized
+  } else {
+    "file:///" + normalized
+  }
+}
+
+///|
+fn join_path(base : String, leaf : String) -> String {
+  let base = base.trim_end(chars="/\\").to_string()
+  let leaf = leaf.trim_start(chars="/\\").to_string()
+  if base.is_empty() {
+    leaf
+  } else if leaf.is_empty() {
+    base
+  } else {
+    base + "/" + leaf
+  }
+}
+
+///|
+fn is_html_path(path : String) -> Bool {
+  path.has_suffix(".html") ||
+  path.has_suffix(".htm") ||
+  path.has_suffix(".xhtml")
+}
+
+///|
+fn file_url_to_path(url : String) -> String {
+  guard url.has_prefix("file://") else { url }
+  let path = url[7:].to_string()
+  if path.is_empty() {
+    "/"
+  } else {
+    path
+  }
+}
+
+///|
+fn sanitize_memory_relative_path(path : String) -> String {
+  let normalized = path.replace_all(old="\\", new="/")
+  let trimmed = normalized.trim_start(chars="/").trim_end(chars="/").to_string()
+  guard !trimmed.is_empty() else { abort("MemoryFs path cannot be empty") }
+  guard trimmed != ".." &&
+    !trimmed.has_prefix("../") &&
+    !trimmed.has_suffix("/..") &&
+    !trimmed.contains("/../") &&
+    trimmed != "." &&
+    !trimmed.has_prefix("./") &&
+    !trimmed.has_suffix("/.") &&
+    !trimmed.contains("/./") else {
+    abort("MemoryFs path cannot use '.' or '..': " + path)
+  }
+  trimmed
+}
+
+///|
+fn parent_dir(path : String) -> String? {
+  let path = path.trim_end(chars="/\\").to_string()
+  guard !path.is_empty() else { None }
+  match path.rev_find("/") {
+    Some(index) => {
+      let parent = path[:index].trim_end(chars="/\\").to_string()
+      if parent.is_empty() {
+        None
+      } else {
+        Some(parent)
+      }
+    }
+    None =>
+      match path.rev_find("\\") {
+        Some(index) => {
+          let parent = path[:index].trim_end(chars="/\\").to_string()
+          if parent.is_empty() {
+            None
+          } else {
+            Some(parent)
+          }
+        }
+        None => None
+      }
+  }
 }

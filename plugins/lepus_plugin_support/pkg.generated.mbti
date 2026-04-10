@@ -1,8 +1,12 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "lepus-apps/lepus/plugins/lepus_plugin_support"
 
+import {
+  "lepus-apps/lepus",
+}
+
 // Values
-pub fn example_html(String, String, content? : String) -> String
+pub fn example_html(String, String, content? : String) -> @lepus.Source
 
 // Errors
 

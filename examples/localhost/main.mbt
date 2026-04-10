@@ -2,7 +2,7 @@
 fn main {
   @lepus.Window::new(
     title="Lepus Localhost Plugin",
-    html=@lepus_plugin_support.example_html(
+    source=@lepus_plugin_support.example_html(
       "localhost", "Localhost Plugin Example",
     ),
     plugins=[@lepus_plugin_localhost.plugin()],

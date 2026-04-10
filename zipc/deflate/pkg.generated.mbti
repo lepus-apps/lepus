@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn deflate_compress(Bytes, Level) -> DeflateData
+pub fn deflate_compress(Bytes, Level) -> DeflateData raise
 
 pub fn deflate_decompress(DeflateData) -> Bytes raise
 
@@ -16,23 +16,23 @@ pub fn deflate_decompress_bytes(Bytes, Int) -> Bytes raise
 
 pub fn deflate_decompress_raw_bytes(Bytes, Int) -> Bytes raise
 
-pub fn deflate_of_bytes(Bytes, Level) -> Bytes
+pub fn deflate_of_bytes(Bytes, Level) -> Bytes raise
 
-pub fn gzip_compress_bytes(Bytes, Level, String?, String?, Int) -> GzipData
+pub fn gzip_compress_bytes(Bytes, Level, String?, String?, Int) -> GzipData raise
 
 pub fn gzip_decompress_bytes(GzipData) -> Bytes raise
 
 pub fn gzip_extract_metadata_bytes(Bytes) -> Result[GzipData, String]
 
-pub fn gzip_of_bytes(Bytes, Level, String?, String?) -> Bytes
+pub fn gzip_of_bytes(Bytes, Level, String?, String?) -> Bytes raise
 
 pub fn gzip_to_bytes(Bytes) -> Bytes raise
 
-pub fn zlib_compress_bytes(Bytes, Level) -> ZlibData
+pub fn zlib_compress_bytes(Bytes, Level) -> ZlibData raise
 
 pub fn zlib_decompress_bytes(ZlibData) -> Bytes raise
 
-pub fn zlib_of_bytes(Bytes, Level) -> Bytes
+pub fn zlib_of_bytes(Bytes, Level) -> Bytes raise
 
 pub fn zlib_to_bytes(Bytes, Int) -> Bytes raise
 

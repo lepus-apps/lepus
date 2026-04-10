@@ -29,11 +29,7 @@ pub fn deflate_compress(data : Bytes, _level : Level) -> DeflateData raise {
   }
   let compressed_bytes = buf.to_bytes()
   let adler = @adler32.bytes(data)
-  {
-    compressed_bytes,
-    original_size: data.length(),
-    adler32_checksum: adler,
-  }
+  { compressed_bytes, original_size: data.length(), adler32_checksum: adler }
 }
 
 // Decompress deflate data

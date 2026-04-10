@@ -2,7 +2,7 @@
 fn main {
   @lepus.Window::new(
     title="Lepus Shell Plugin",
-    html=@lepus_plugin_support.example_html(
+    source=@lepus_plugin_support.example_html(
       "shell",
       "Shell Plugin Example",
       content=(
@@ -45,7 +45,7 @@ fn main {
         #|    if (!decoded.ok) {
         #|      outputEl.innerHTML = [
         #|        "Request:",
-        #|        JSON.stringify(request, null, 2),
+        #|        JSON.stringify(request, null, 2)),
         #|        "",
         #|        "Error:",
         #|        String(decoded.error),

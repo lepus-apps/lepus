@@ -2,7 +2,7 @@
 fn main {
   @lepus.Window::new(
     title="Lepus Http Plugin",
-    html=@lepus_plugin_support.example_html(
+    source=@lepus_plugin_support.example_html(
       "http",
       "Http Plugin Example",
       content=(
@@ -62,7 +62,7 @@ fn main {
         #|      title,
         #|      "",
         #|      "Request:",
-        #|      JSON.stringify(request, null, 2),
+        #|      JSON.stringify(request, null, 2)),
         #|      "",
         #|      "Reply:",
         #|      JSON.stringify(reply, null, 2),

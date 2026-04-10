@@ -292,5 +292,3 @@ fn Compressor::write(self : Compressor, b : Slice[Byte]) -> (Int, IOError?) {
   }
   (n, None)
 }
-
-

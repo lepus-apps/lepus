@@ -198,7 +198,9 @@ pub fn gzip_decompress_bytes(gzip_data : GzipData) -> Bytes raise {
   let deflate_bytes = data[offset:deflate_end].to_bytes()
 
   // Extract trailer: CRC-32 and original size
-  let expected_crc = @crc32.Crc32(read_u32_le_bytes(data, deflate_end).to_int64())
+  let expected_crc = @crc32.Crc32(
+    read_u32_le_bytes(data, deflate_end).to_int64(),
+  )
   let expected_size = read_u32_le_bytes(data, deflate_end + 4)
 
   // Decompress deflate data
@@ -209,7 +211,9 @@ pub fn gzip_decompress_bytes(gzip_data : GzipData) -> Bytes raise {
   }
 
   // Use bytes-based deflate decompression to avoid String conversion corruption
-  let decompressed_bytes = deflate_decompress_bytes(deflate_bytes, expected_size)
+  let decompressed_bytes = deflate_decompress_bytes(
+    deflate_bytes, expected_size,
+  )
   // Verify size
   if decompressed_bytes.length() != expected_size {
     fail(
@@ -361,7 +365,9 @@ pub fn gzip_extract_metadata_bytes(
 
   // Read trailer
   let trailer_offset = compressed_data.length() - 8
-  let crc = @crc32.Crc32(read_u32_le_bytes(compressed_data, trailer_offset).to_int64())
+  let crc = @crc32.Crc32(
+    read_u32_le_bytes(compressed_data, trailer_offset).to_int64(),
+  )
   let original_size = read_u32_le_bytes(compressed_data, trailer_offset + 4)
   Ok({
     compressed_bytes: compressed_data,

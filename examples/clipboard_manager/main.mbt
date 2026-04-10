@@ -2,7 +2,7 @@
 fn main {
   @lepus.Window::new(
     title="Lepus Clipboard Manager Plugin",
-    html=@lepus_plugin_support.example_html(
+    source=@lepus_plugin_support.example_html(
       "clipboard_manager",
       "Clipboard Manager Plugin Example",
       content=(

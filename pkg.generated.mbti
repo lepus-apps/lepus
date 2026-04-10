@@ -22,6 +22,26 @@ pub fn App::run(Self, window_index? : Int) -> Unit
 pub fn App::window_count(Self) -> Int
 pub fn App::with_windows(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
 
+pub struct MemoryFile {
+  path : String
+  content : Bytes
+} derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn MemoryFile::from_bytes(String, Bytes) -> Self
+pub fn MemoryFile::from_string(String, String) -> Self
+
+pub struct MemorySource {
+  entry : String
+  files : Array[MemoryFile]
+} derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn MemorySource::new(Array[MemoryFile], entry? : String) -> Self
+
+pub(all) enum Source {
+  Url(String)
+  Local(String)
+  Memory(MemorySource)
+} derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn Source::html(String) -> Self
+
 pub enum TitleBarStyle {
   Default
   Hidden
@@ -31,8 +51,10 @@ pub struct Window {
   config : WindowConfig
   plugins : Array[@webview.Plugin]
 }
-pub fn Window::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), html? : String, url? : String, plugins? : Array[@webview.Plugin]) -> Self
+pub fn Window::navigate(Self, String) -> Self
+pub fn Window::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source, plugins? : Array[@webview.Plugin]) -> Self
 pub fn Window::run(Self) -> Unit
+pub fn Window::set_source(Self, Source) -> Self
 
 pub struct WindowConfig {
   title : String
@@ -47,10 +69,11 @@ pub struct WindowConfig {
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
   traffic_light_position : (Int, Int)
-  html : String?
-  url : String?
+  source : Source?
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
-pub fn WindowConfig::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), html? : String, url? : String) -> Self
+pub fn WindowConfig::navigate(Self, String) -> Self
+pub fn WindowConfig::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source) -> Self
+pub fn WindowConfig::set_source(Self, Source) -> Self
 
 // Type aliases
 
