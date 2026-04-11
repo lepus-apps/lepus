@@ -3,14 +3,31 @@ package "lepus-apps/lepus/plugins/lepus_plugin_biometric"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn authenticate(BiometricAuthRequest) -> BiometricAuthReply
+
+pub fn authenticate_native(String) -> Result[Bool, String]
+
+pub fn is_available() -> Bool
+
 pub fn plugin() -> @webview.Plugin
 
 // Errors
 
 // Types and methods
+pub struct BiometricAuthReply {
+  available : Bool
+  success : Bool
+  reason : String
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct BiometricAuthRequest {
+  reason : String?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

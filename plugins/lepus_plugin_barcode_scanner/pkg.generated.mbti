@@ -3,14 +3,29 @@ package "lepus-apps/lepus/plugins/lepus_plugin_barcode_scanner"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
 pub fn plugin() -> @webview.Plugin
 
+pub fn scan(String) -> ScanResult
+
 // Errors
 
 // Types and methods
+pub enum BarcodeFormat {
+  Unknown
+  Ean13
+  QrLike
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct ScanResult {
+  value : String
+  format : BarcodeFormat
+  valid : Bool
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

@@ -3,14 +3,26 @@ package "lepus-apps/lepus/plugins/lepus_plugin_notification"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
 pub fn plugin() -> @webview.Plugin
 
+pub fn send_notification(String, String) -> Result[Unit, String]
+
 // Errors
 
 // Types and methods
+pub struct NotifyReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct NotifyRequest {
+  title : String
+  body : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

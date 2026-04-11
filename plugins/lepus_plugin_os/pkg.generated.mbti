@@ -3,14 +3,23 @@ package "lepus-apps/lepus/plugins/lepus_plugin_os"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn arch_name() -> String
+
+pub fn os_name() -> String
+
 pub fn plugin() -> @webview.Plugin
 
 // Errors
 
 // Types and methods
+pub struct OsInfo {
+  os : String
+  arch : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

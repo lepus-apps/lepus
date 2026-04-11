@@ -3,14 +3,29 @@ package "lepus-apps/lepus/plugins/lepus_plugin_updater"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn check_update(UpdateCheckRequest) -> UpdateCheckReply
+
+pub fn compare_versions(String, String) -> Int
+
 pub fn plugin() -> @webview.Plugin
 
 // Errors
 
 // Types and methods
+pub struct UpdateCheckReply {
+  has_update : Bool
+  current : String
+  latest : String
+} derive(ToJson, @json.FromJson)
+
+pub struct UpdateCheckRequest {
+  current : String
+  latest : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

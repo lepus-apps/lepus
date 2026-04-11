@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_persisted_scope"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,16 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct ScopeGetRequest {
+  scope : String
+  key : String
+} derive(ToJson, @json.FromJson)
+
+pub struct ScopeSetRequest {
+  scope : String
+  key : String
+  value : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

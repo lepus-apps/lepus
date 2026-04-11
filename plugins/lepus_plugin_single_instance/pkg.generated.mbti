@@ -3,14 +3,29 @@ package "lepus-apps/lepus/plugins/lepus_plugin_single_instance"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn acquire(String) -> Bool
+
+pub fn last_error() -> String
+
 pub fn plugin() -> @webview.Plugin
+
+pub fn release() -> Unit
 
 // Errors
 
 // Types and methods
+pub struct SingleInstanceAcquireReply {
+  acquired : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct SingleInstanceAcquireRequest {
+  app_id : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

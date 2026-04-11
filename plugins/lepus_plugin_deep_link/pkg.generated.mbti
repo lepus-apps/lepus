@@ -3,14 +3,32 @@ package "lepus-apps/lepus/plugins/lepus_plugin_deep_link"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn build(DeepLinkBuildRequest) -> String
+
+pub fn parse(String) -> DeepLinkParts
+
 pub fn plugin() -> @webview.Plugin
 
 // Errors
 
 // Types and methods
+pub struct DeepLinkBuildRequest {
+  scheme : String
+  host : String?
+  path : String?
+  query : Map[String, String]?
+} derive(ToJson, @json.FromJson)
+
+pub struct DeepLinkParts {
+  scheme : String
+  host : String?
+  path : String
+  query : Map[String, String]
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

@@ -152,7 +152,7 @@ fn main {
         #|      </div>
         #|      <div class="content">
         #|        <h1>Custom Title Bar</h1>
-        #|        <p>
+        #|        <p> 
         #|          This window is started with <code>frameless=true</code>. 
         #|          Drag the top bar area marked by <code>.lepus-drag</code>; 
         #|          interactive controls stay clickable with <code>.lepus-no-drag</code>.

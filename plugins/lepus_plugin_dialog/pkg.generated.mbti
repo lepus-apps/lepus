@@ -3,6 +3,8 @@ package "lepus-apps/lepus/plugins/lepus_plugin_dialog"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +13,37 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct ConfirmReply {
+  ok : Bool
+  accepted : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ConfirmRequest {
+  title : String?
+  message : String
+  default_ok : Bool?
+} derive(ToJson, @json.FromJson)
+
+pub enum DialogLevel {
+  Info
+  Warning
+  Error
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct DialogReply {
+  shown : Bool
+  title : String
+  message : String
+  level : DialogLevel
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct DialogRequest {
+  title : String?
+  message : String
+  level : DialogLevel?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

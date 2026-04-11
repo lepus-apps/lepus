@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_fs"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,76 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct FsBoolReply {
+  ok : Bool
+  value : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsListReply {
+  ok : Bool
+  entries : Array[String]
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsMkdirRequest {
+  path : String
+  recursive : Bool?
+  permission : Int?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsPathRequest {
+  path : String
+} derive(ToJson, @json.FromJson)
+
+pub struct FsReadReply {
+  ok : Bool
+  content : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsReaddirRequest {
+  path : String
+  include_hidden : Bool?
+  include_special : Bool?
+  sort : Bool?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsRemoveRequest {
+  path : String
+  recursive : Bool?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsStatReply {
+  ok : Bool
+  exists : Bool
+  kind : String?
+  can_read : Bool?
+  can_write : Bool?
+  can_execute : Bool?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsStringReply {
+  ok : Bool
+  value : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsTmpdirRequest {
+  prefix : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct FsWriteRequest {
+  path : String
+  content : String
+  append : Bool?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

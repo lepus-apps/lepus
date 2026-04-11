@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_stronghold"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,10 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct SecretSetRequest {
+  key : String
+  value : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

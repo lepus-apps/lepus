@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_upload"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,21 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct UploadDeleteReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct UploadSaveReply {
+  ok : Bool
+  path : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct UploadSaveRequest {
+  filename : String
+  content : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

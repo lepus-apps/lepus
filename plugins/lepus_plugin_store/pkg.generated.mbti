@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_store"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,14 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct StoreDump {
+  entries : Map[String, String]
+} derive(ToJson, @json.FromJson)
+
+pub struct StoreSetRequest {
+  key : String
+  value : String
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

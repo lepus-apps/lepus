@@ -3,14 +3,28 @@ package "lepus-apps/lepus/plugins/lepus_plugin_haptics"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
 pub fn plugin() -> @webview.Plugin
 
+pub fn pulse_native(Int) -> Result[Unit, String]
+
 // Errors
 
 // Types and methods
+pub struct HapticPulseReply {
+  ok : Bool
+  pattern : String
+  intensity : Int
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct HapticPulseRequest {
+  pattern : String
+  intensity : Int?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

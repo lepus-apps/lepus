@@ -3,14 +3,27 @@ package "lepus-apps/lepus/plugins/lepus_plugin_opener"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn is_supported() -> Bool
+
+pub fn open_target(String) -> Unit raise OpenerError
+
 pub fn plugin() -> @webview.Plugin
 
 // Errors
+pub(all) suberror OpenerError {
+  OpenerError(String)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
+pub struct OpenReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

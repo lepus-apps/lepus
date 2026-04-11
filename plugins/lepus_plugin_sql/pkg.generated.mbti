@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_sql"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,30 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct ConnectionReply {
+  id : Int
+  db : String
+} derive(ToJson, @json.FromJson)
+
+pub struct ExecuteReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct ExecuteRequest {
+  conn_id : Int
+  sql : String
+} derive(ToJson, @json.FromJson)
+
+pub struct LoadRequest {
+  db : String
+} derive(ToJson, @json.FromJson)
+
+pub struct SelectReply {
+  ok : Bool
+  rows : Array[String]
+  error : String?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

@@ -3,14 +3,36 @@ package "lepus-apps/lepus/plugins/lepus_plugin_autostart"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
+pub fn disable(String) -> Result[Unit, String]
+
+pub fn enable(String, String, String) -> Result[Unit, String]
+
+pub fn get_status() -> AutostartStatusReply
+
 pub fn plugin() -> @webview.Plugin
+
+pub fn set_enabled(Bool) -> AutostartStatusReply
+
+pub fn status(String) -> Result[Bool, String]
 
 // Errors
 
 // Types and methods
+pub struct AutostartConfig {
+  app_id : String
+  exec_path : String
+  args : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct AutostartStatusReply {
+  ok : Bool
+  enabled : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

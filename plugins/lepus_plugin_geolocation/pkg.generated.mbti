@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_geolocation"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,11 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct GeoPosition {
+  latitude : Double
+  longitude : Double
+  accuracy : Double
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 

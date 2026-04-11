@@ -3,6 +3,7 @@ package "lepus-apps/lepus/plugins/lepus_plugin_nfc"
 
 import {
   "lepus-apps/webview",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -11,6 +12,20 @@ pub fn plugin() -> @webview.Plugin
 // Errors
 
 // Types and methods
+pub struct NfcDecodeRequest {
+  hex : String
+} derive(ToJson, @json.FromJson)
+
+pub struct NfcEncodeRequest {
+  text : String
+} derive(ToJson, @json.FromJson)
+
+pub struct NfcFrame {
+  ok : Bool
+  hex : String
+  text : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 
