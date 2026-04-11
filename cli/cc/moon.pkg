@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/x/sys",
   "moonbitlang/async",
   "moonbitlang/async/process",
@@ -11,4 +12,5 @@ options(
   "bin-name": "cc",
   "bin-target": "native",
   "is-main": true,
+  "native-stub": [ "target_stub.c" ],
 )
