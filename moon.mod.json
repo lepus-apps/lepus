@@ -1,6 +1,6 @@
 {
   "name": "lepus-apps/lepus",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "deps": {
     "lepus-apps/webview": "0.1.11",
     "moonbitlang/x": "0.4.43",
