@@ -1,11 +1,19 @@
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdio.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
+#else
+#include <unistd.h>
+#endif
 
 #include "moonbit.h"
 
@@ -26,13 +34,21 @@ MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_env_get(moonbit_bytes_t name) {
 
 MOONBIT_FFI_EXPORT int lepus_command_exists(moonbit_bytes_t command) {
   char buffer[1024];
+#if defined(_WIN32)
+  snprintf(buffer, sizeof(buffer), "where \"%s\" >NUL 2>&1", (const char *)command);
+#else
   snprintf(buffer, sizeof(buffer), "command -v '%s' >/dev/null 2>&1", (const char *)command);
+#endif
   return system(buffer) == 0;
 }
 
 MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_current_dir(void) {
   char buffer[PATH_MAX];
+#if defined(_WIN32)
+  if (_getcwd(buffer, sizeof(buffer)) == NULL) {
+#else
   if (getcwd(buffer, sizeof(buffer)) == NULL) {
+#endif
     return lepus_copy_string("");
   }
   return lepus_copy_string(buffer);
