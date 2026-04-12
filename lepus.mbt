@@ -327,7 +327,7 @@ async fn resolve_memory_source(source : MemorySource) -> ResolvedSource {
 ///|
 #cfg(platform="windows")
 fn memory_source_mapping_name() -> String {
-  "lepus.localhost"
+  "lepus"
 }
 
 ///|
@@ -339,7 +339,7 @@ fn memory_source_mapping_name() -> String {
 ///|
 #cfg(platform="windows")
 fn memory_source_entry_url(entry : String) -> String {
-  "http://lepus.localhost/" + entry
+  "http://lepus/" + entry
 }
 
 ///|
