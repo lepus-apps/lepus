@@ -1,5 +1,5 @@
 ///|
-fn main {
+async fn main {
   @lepus.Window::new(
     title="Lepus Custom Window",
     width=980,

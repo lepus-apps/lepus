@@ -6,6 +6,7 @@ package "lepus-apps/lepus/cli/cc"
 // Errors
 
 // Types and methods
+type SystemTarget
 
 // Type aliases
 

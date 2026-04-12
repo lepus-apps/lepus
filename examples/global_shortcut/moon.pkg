@@ -1,5 +1,6 @@
 import {
   "lepus-apps/lepus",
+  "moonbitlang/async",
   "lepus-apps/lepus/plugins/lepus_plugin_global_shortcut",
   "lepus-apps/lepus/plugins/lepus_plugin_support",
 }

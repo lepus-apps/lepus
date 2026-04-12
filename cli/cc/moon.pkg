@@ -4,6 +4,7 @@ import {
   "moonbitlang/x/sys",
   "moonbitlang/async",
   "moonbitlang/async/process",
+  "moonbitlang/async/pipe" @pipe,
 }
 
 supported_targets = "+native"

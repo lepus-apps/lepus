@@ -76,7 +76,7 @@ Minimal app:
 
 ```moonbit nocheck
 ///|
-fn main {
+async fn main {
   let main_window = @lepus.WindowConfig::new(
     title="Hello Lepus",
     html=(
@@ -92,7 +92,7 @@ Plugin-enabled app:
 
 ```moonbit nocheck
 ///|
-fn main {
+async fn main {
   let main_window = @lepus.WindowConfig::new(
     title="Dialog Example",
     html=@lepus_plugin_support.example_html("dialog", "Dialog Plugin Example"),
@@ -105,7 +105,7 @@ Window customization example:
 
 ```moonbit nocheck
 ///|
-fn main {
+async fn main {
   let window = @lepus.WindowConfig::new(
     title="Custom Window",
     frameless=true,

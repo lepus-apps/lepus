@@ -1,5 +1,6 @@
 import {
   "lepus-apps/lepus",
+  "moonbitlang/async",
 }
 
 supported_targets = "+native"

@@ -41,6 +41,12 @@ pub struct WindowConfig {
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
+priv struct ResolvedSource {
+  url : String
+  custom_protocols : Array[(String, String)]
+}
+
+///|
 pub fn MemoryFile::from_bytes(path : String, content : Bytes) -> MemoryFile {
   { path, content }
 }
@@ -185,7 +191,7 @@ pub fn Window::navigate(self : Window, url : String) -> Window {
 }
 
 ///|
-pub fn Window::run(self : Window) -> Unit {
+pub async fn Window::run(self : Window) -> Unit {
   App::new([self.config], plugins=self.plugins).run()
 }
 
@@ -219,7 +225,7 @@ pub fn App::window_count(self : App) -> Int {
 }
 
 ///|
-pub fn App::run(self : App, window_index? : Int = 0) -> Unit {
+pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
   guard window_index >= 0 && window_index < self.windows.length() else {
     abort("App::run window_index out of range")
   }
@@ -244,29 +250,27 @@ pub fn App::run(self : App, window_index? : Int = 0) -> Unit {
   guard config.source is Some(source) else {
     abort("WindowConfig::source is required")
   }
-  window.navigate(resolve_source_blocking(source))
+  let resolved = resolve_source(source)
+  resolved.custom_protocols.each(mapping => {
+    let (scheme, root_dir) = mapping
+    window.set_custom_protocol(scheme, root_dir)
+  })
+  window.navigate(resolved.url)
   self.plugins.each(plugin => window.install(plugin))
   window.run()
 }
 
 ///|
-async fn resolve_source(source : Source) -> String {
+async fn resolve_source(source : Source) -> ResolvedSource {
   match source {
-    Url(url) => url
+    Url(url) => { url, custom_protocols: [] }
     Local(path) => resolve_local_fs(path)
     Memory(source) => resolve_memory_source(source)
   }
 }
 
 ///|
-fn resolve_source_blocking(source : Source) -> String {
-  let mut resolved = ""
-  @async.run_async_main(() => resolved = resolve_source(source))
-  resolved
-}
-
-///|
-async fn resolve_local_fs(path : String) -> String {
+async fn resolve_local_fs(path : String) -> ResolvedSource {
   let fs_path = if path.has_prefix("file://") {
     file_url_to_path(path)
   } else {
@@ -287,11 +291,11 @@ async fn resolve_local_fs(path : String) -> String {
   guard @fs.can_read(entry_path) else {
     abort("LocalFs source is not readable: " + entry_path)
   }
-  to_file_url(@fs.realpath(entry_path))
+  { url: to_file_url(@fs.realpath(entry_path)), custom_protocols: [] }
 }
 
 ///|
-async fn resolve_memory_source(source : MemorySource) -> String {
+async fn resolve_memory_source(source : MemorySource) -> ResolvedSource {
   guard source.files.length() > 0 else {
     abort("MemoryFs source requires at least one file")
   }
@@ -314,7 +318,34 @@ async fn resolve_memory_source(source : MemorySource) -> String {
     @fs.write_file(file_path, file.content, create=0o644)
   }
   guard has_entry else { abort("MemoryFs entry file not found: " + entry) }
-  to_file_url(join_path(root, entry))
+  {
+    url: memory_source_entry_url(entry),
+    custom_protocols: [(memory_source_mapping_name(), root)],
+  }
+}
+
+///|
+#cfg(platform="windows")
+fn memory_source_mapping_name() -> String {
+  "lepus.localhost"
+}
+
+///|
+#cfg(not(platform="windows"))
+fn memory_source_mapping_name() -> String {
+  "lepus"
+}
+
+///|
+#cfg(platform="windows")
+fn memory_source_entry_url(entry : String) -> String {
+  "http://lepus.localhost/" + entry
+}
+
+///|
+#cfg(not(platform="windows"))
+fn memory_source_entry_url(entry : String) -> String {
+  "lepus://localhost/" + entry
 }
 
 ///|

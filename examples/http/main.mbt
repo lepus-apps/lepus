@@ -1,5 +1,5 @@
 ///|
-fn main {
+async fn main {
   @lepus.Window::new(
     title="Lepus Http Plugin",
     source=@lepus_plugin_support.example_html(
