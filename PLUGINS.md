@@ -21,6 +21,7 @@ Implemented as register-style Lepus plugins with examples:
 - http: browser fetch example
 - localhost: placeholder plugin, explicit unsupported error
 - log: browser console logging example
+- menu: native macOS app menu builder (create/append/predefined/check/events)
 - nfc: browser capability example
 - notification: browser notification example
 - opener: browser window.open example

@@ -1,0 +1,122 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/plugins/lepus_plugin_menu"
+
+import {
+  "lepus-apps/webview",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn plugin() -> @webview.Plugin
+
+// Errors
+
+// Types and methods
+pub struct MenuAcceleratorRequest {
+  id : String
+  accelerator : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuBuildRequest {
+  root_id : String
+  clear_existing : Bool?
+  set_as_app_menu : Bool?
+  menus : Array[MenuCreateRequest]
+  submenus : Array[MenuSubmenuCreateRequest]
+  items : Array[MenuItemCreateRequest]
+  check_items : Array[MenuCheckItemCreateRequest]
+  predefined_items : Array[MenuPredefinedCreateRequest]
+  links : Array[MenuLinkRequest]
+  inserts : Array[MenuInsertRequest]
+  toggles : Array[MenuToggleRequest]
+  checks : Array[MenuCheckToggleRequest]
+  texts : Array[MenuTextRequest]
+  accelerators : Array[MenuAcceleratorRequest]
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuCheckItemCreateRequest {
+  id : String
+  text : String
+  enabled : Bool?
+  checked : Bool?
+  accelerator : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuCheckToggleRequest {
+  id : String
+  checked : Bool
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuCreateRequest {
+  id : String
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuDeleteRequest {
+  id : String
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuEventsReply {
+  ok : Bool
+  events : Array[String]
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuIdReply {
+  ok : Bool
+  id : String?
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuInsertRequest {
+  parent_id : String
+  child_id : String
+  position : Int
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuItemCreateRequest {
+  id : String
+  text : String
+  enabled : Bool?
+  accelerator : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuLinkRequest {
+  parent_id : String
+  child_id : String
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuPredefinedCreateRequest {
+  id : String
+  kind : String
+  text : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuReply {
+  ok : Bool
+  error : String?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuSetAppMenuRequest {
+  id : String
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuSubmenuCreateRequest {
+  id : String
+  title : String
+  enabled : Bool?
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuTextRequest {
+  id : String
+  text : String
+} derive(ToJson, @json.FromJson)
+
+pub struct MenuToggleRequest {
+  id : String
+  enabled : Bool
+} derive(ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

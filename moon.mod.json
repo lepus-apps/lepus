@@ -1,8 +1,8 @@
 {
   "name": "lepus-apps/lepus",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "deps": {
-    "lepus-apps/webview": "0.1.11",
+    "lepus-apps/webview": "0.1.13",
     "moonbitlang/x": "0.4.43",
     "moonbitlang/async": "0.17.1",
     "moonbitlang/parser": "0.2.5"

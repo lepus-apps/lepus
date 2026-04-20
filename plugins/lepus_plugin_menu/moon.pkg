@@ -1,0 +1,12 @@
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "lepus-apps/webview",
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "menu_native.c" ],
+  targets: { "plugin.mbt": [ "native" ] },
+)
