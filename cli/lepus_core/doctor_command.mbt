@@ -58,7 +58,7 @@ async fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
     { name: "webview", ok: webview_ok, detail: webview_message() },
     {
       name: "platform",
-      ok: platform == "macos" || platform == "linux",
+      ok: is_supported_platform(platform),
       detail: "platform=" + platform,
     },
   ]
@@ -150,4 +150,13 @@ fn print_doctor_json(checks : Array[DoctorCheck]) -> Unit {
     items.push({ "name": check.name, "ok": check.ok, "detail": check.detail })
   }
   println(items.to_json().stringify())
+}
+
+///|
+fn is_supported_platform(platform : String) -> Bool {
+  platform == "macos" ||
+  platform == "linux" ||
+  platform == "windows" ||
+  platform == "android" ||
+  platform == "ios"
 }

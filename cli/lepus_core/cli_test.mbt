@@ -39,3 +39,22 @@ test "init config accepts vite frontend" {
     _ => panic()
   }
 }
+
+///|
+test "build config accepts mobile target aliases" {
+  let matches = root_command().parse(
+    argv=["build", "--target", "android", "--frontend-dir", "dist", "--out-dir", "out"],
+    env={},
+  ) catch {
+    _ => panic()
+  }
+  match matches.subcommand {
+    Some(("build", sub)) => {
+      let config = parse_build_config(matches, sub)
+      assert_eq(config.target, "android")
+      assert_eq(config.dist_dir, Some("dist"))
+      assert_eq(config.output_dir, Some("out"))
+    }
+    _ => panic()
+  }
+}

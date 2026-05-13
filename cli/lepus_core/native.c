@@ -15,6 +15,10 @@
 #include <unistd.h>
 #endif
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 #include "moonbit.h"
 
 static moonbit_bytes_t lepus_copy_string(const char *value) {
@@ -55,8 +59,14 @@ MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_current_dir(void) {
 }
 
 MOONBIT_FFI_EXPORT moonbit_bytes_t lepus_platform_name(void) {
-#if defined(__APPLE__)
+#if defined(__ANDROID__)
+  return lepus_copy_string("android");
+#elif defined(__APPLE__)
+#if TARGET_OS_IPHONE
+  return lepus_copy_string("ios");
+#else
   return lepus_copy_string("macos");
+#endif
 #elif defined(__linux__)
   return lepus_copy_string("linux");
 #elif defined(_WIN32)

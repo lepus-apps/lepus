@@ -1,11 +1,11 @@
 # Lepus
 
-Lepus is a desktop application toolkit for MoonBit.
+Lepus is a desktop and mobile application toolkit for MoonBit.
 
 It provides:
 
 - a native MoonBit application host
-- a WebView-based rendering runtime
+- a WebView-based desktop rendering runtime and mobile host packaging workflow
 - a plugin system for exposing platform features to frontend code
 - a MoonBit CLI for scaffolding and local workflows
 
@@ -164,3 +164,22 @@ moon run --target native cli/lepus -- --help
 ## License
 
 [Apache License 2.0](LICENSE)
+
+## Mobile host packaging
+
+Lepus can prepare assets and host adapter files for Android and iOS in the same
+spirit as zero-native's mobile examples: the mobile application owns the
+platform WebView (`WKWebView` on iOS or Android WebView) and links/calls into the
+MoonBit native library through a small C ABI.
+
+Build a mobile package from a frontend `dist` directory:
+
+```sh
+moon run --target native cli/lepus -- build --target ios --dist-dir dist --output-dir _build
+moon run --target native cli/lepus -- build --target android --dist-dir dist --output-dir _build
+```
+
+The command writes `_build/dist.zip` plus `_build/ios/` or `_build/android/`
+metadata, a `lepus_mobile.h` header, a `lepus_mobile.c` adapter stub, and host
+README notes. Copy those files into your Xcode or Android Studio host project
+next to the MoonBit-produced static library.

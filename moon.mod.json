@@ -14,9 +14,12 @@
     "webview",
     "desktop",
     "app",
-    "framework"
+    "framework",
+    "mobile",
+    "android",
+    "ios"
   ],
-  "description": "A modern desktop application framework based on web technologies.",
+  "description": "A modern desktop and mobile application framework based on web technologies.",
   "source": ".",
   "preferred-target": "native"
 }
