@@ -10,6 +10,7 @@ pub async fn run_cli() -> Int {
   match matches.subcommand {
     Some(subcommand) =>
       match subcommand {
+        ("init", sub) => run_init(parse_init_config(matches, sub))
         ("doctor", sub) => run_doctor(parse_doctor_config(matches, sub))
         ("dev", sub) => run_dev(parse_dev_config(matches, sub))
         ("build", sub) => run_build(parse_build_config(matches, sub))

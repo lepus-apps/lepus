@@ -14,8 +14,21 @@ pub fn root_command() -> @argparse.Command {
     about="Build the Lepus application.",
     flags=[@argparse.FlagArg("embed-assets", long="embed-assets")],
     options=[
+      @argparse.OptionArg("dist-dir", long="dist-dir"),
+      @argparse.OptionArg("output-dir", long="output-dir"),
+      @argparse.OptionArg("target", long="target"),
       @argparse.OptionArg("frontend-dir", long="frontend-dir"),
       @argparse.OptionArg("out-dir", long="out-dir"),
+    ],
+  )
+  let init = @argparse.Command(
+    "init",
+    about="Create a new Lepus application.",
+    positionals=[@argparse.PositionArg("name")],
+    flags=[@argparse.FlagArg("force", long="force")],
+    options=[
+      @argparse.OptionArg("template", long="template"),
+      @argparse.OptionArg("frontend", long="frontend"),
     ],
   )
   let doctor = @argparse.Command(
@@ -25,9 +38,9 @@ pub fn root_command() -> @argparse.Command {
   )
   @argparse.Command(
     "lepus",
-    about="Lepus desktop application toolkit.",
+    about="Lepus desktop and mobile application toolkit.",
     version="0.1.0",
-    subcommands=[dev, build, doctor],
+    subcommands=[init, dev, build, doctor],
     flags=[
       @argparse.FlagArg(
         "verbose",

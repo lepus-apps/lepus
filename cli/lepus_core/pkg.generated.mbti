@@ -52,6 +52,8 @@ pub async fn run_dev(DevConfig) -> Int
 
 pub async fn run_doctor(DoctorConfig) -> Int
 
+pub async fn run_init(InitConfig) -> Int
+
 pub async fn run_moon_command(String, Array[String], extra_env? : Map[String, String]) -> Int
 
 // Errors
@@ -61,6 +63,7 @@ pub struct BuildConfig {
   cwd : String
   dist_dir : String?
   output_dir : String?
+  target : String
   verbose : Int
 }
 

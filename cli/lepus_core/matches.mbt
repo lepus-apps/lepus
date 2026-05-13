@@ -23,6 +23,7 @@ pub struct BuildConfig {
   cwd : String
   dist_dir : String?
   output_dir : String?
+  target : String
   verbose : Int
 }
 
@@ -71,8 +72,9 @@ pub fn parse_build_config(
 ) -> BuildConfig {
   {
     cwd: root_cwd(root),
-    dist_dir: first_value(sub, "dist-dir"),
-    output_dir: first_value(sub, "output-dir"),
+    dist_dir: first_present(first_value(sub, "dist-dir"), first_value(sub, "frontend-dir")),
+    output_dir: first_present(first_value(sub, "output-dir"), first_value(sub, "out-dir")),
+    target: first_value(sub, "target").unwrap_or("desktop"),
     verbose: verbosity(root),
   }
 }
@@ -118,5 +120,13 @@ fn parse_int_option(value : String?) -> Int? {
         value => Some(value)
       }
     None => None
+  }
+}
+
+///|
+fn first_present(primary : String?, fallback : String?) -> String? {
+  match primary {
+    Some(_) => primary
+    None => fallback
   }
 }
