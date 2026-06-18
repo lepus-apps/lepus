@@ -131,17 +131,17 @@ fn insert_code(
   bit_index : Int,
 ) -> HuffmanNode {
   if bit_index == length {
-    return HuffmanNode::Leaf(symbol)
+    return Leaf(symbol)
   }
   let bit = (code >> bit_index) & 1
   let (left, right) = match node {
-    Some(HuffmanNode::Branch(l, r)) => (l, r)
-    Some(HuffmanNode::Leaf(_)) => (HuffmanNode::Leaf(-1), HuffmanNode::Leaf(-1))
-    None => (HuffmanNode::Leaf(-1), HuffmanNode::Leaf(-1))
+    Some(Branch(l, r)) => (l, r)
+    Some(Leaf(_)) => (Leaf(-1), Leaf(-1))
+    None => (Leaf(-1), Leaf(-1))
   }
   if bit == 0 {
     let new_left = insert_code(Some(left), code, length, symbol, bit_index + 1)
-    HuffmanNode::Branch(new_left, right)
+    Branch(new_left, right)
   } else {
     let new_right = insert_code(
       Some(right),
@@ -150,7 +150,7 @@ fn insert_code(
       symbol,
       bit_index + 1,
     )
-    HuffmanNode::Branch(left, new_right)
+    Branch(left, new_right)
   }
 }
 
@@ -183,7 +183,7 @@ fn build_fixed_literal_huffman_tree() -> HuffmanNode {
   // For now, create a minimal tree that works with our test cases
   let end_of_block = HuffmanNode::Leaf(256) // End of block
   let literal_branch = build_literal_subtree()
-  HuffmanNode::Branch(end_of_block, literal_branch)
+  Branch(end_of_block, literal_branch)
 }
 
 // Build subtree for literals
@@ -197,7 +197,7 @@ fn build_literal_subtree() -> HuffmanNode {
 
   // Build a simple binary tree structure
   let left_branch = HuffmanNode::Branch(literal_65, literal_72)
-  HuffmanNode::Branch(left_branch, literal_101)
+  Branch(left_branch, literal_101)
 }
 
 // Create RFC 1951 Fixed distance tree
@@ -225,7 +225,7 @@ fn build_fixed_distance_huffman_tree() -> HuffmanNode {
   // Build a simple tree structure
   let left_branch = HuffmanNode::Branch(distance_0, distance_1)
   let right_branch = HuffmanNode::Branch(distance_2, distance_4)
-  HuffmanNode::Branch(left_branch, right_branch)
+  Branch(left_branch, right_branch)
 }
 
 // Decode a symbol from the bit stream using a Huffman tree
@@ -237,13 +237,13 @@ pub fn decode_symbol(reader : BitReader, tree : HuffmanNode) -> Int? {
   // Traverse the tree following bits from the stream
   while true {
     match current {
-      HuffmanNode::Leaf(symbol) =>
+      Leaf(symbol) =>
         if symbol >= 0 {
           return Some(symbol)
         } else {
           return None // Invalid symbol
         }
-      HuffmanNode::Branch(left, right) => {
+      Branch(left, right) => {
         if reader.is_at_end() {
           return None // Premature end of data
         }
@@ -341,7 +341,7 @@ pub fn decompress_fixed_huffman_block_bytes(
 
   // Create bit reader starting from the offset
   let remaining_length = compressed.length() - offset
-  let block_data = @buffer.new()
+  let block_data = Buffer()
   for i = 0; i < remaining_length; i = i + 1 {
     block_data.write_byte(compressed[offset + i])
   }
@@ -370,7 +370,7 @@ pub fn decompress_fixed_huffman_block_bytes(
       } else {
         remaining_bytes
       }
-      let fallback = @buffer.new()
+      let fallback = Buffer()
       for i = 0; i < bytes_to_copy; i = i + 1 {
         fallback.write_byte(compressed[offset + i])
       }
@@ -506,7 +506,7 @@ pub fn decompress_huffman_data(
   literal_tree : HuffmanNode,
   distance_tree : HuffmanNode,
 ) -> Bytes raise {
-  let output = @buffer.new()
+  let output = Buffer()
   let mut symbols_decoded = 0
   let max_symbols = 1000000
   while symbols_decoded < max_symbols {

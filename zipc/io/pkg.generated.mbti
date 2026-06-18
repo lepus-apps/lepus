@@ -133,19 +133,19 @@ pub(all) enum Whence {
 
 // Traits
 pub(open) trait ByteReader {
-  read_byte(Self) -> (Byte, IOError?)
+  fn read_byte(Self) -> (Byte, IOError?)
 }
 
 pub(open) trait ByteScanner : ByteReader {
-  unread_byte(Self) -> IOError?
+  fn unread_byte(Self) -> IOError?
 }
 
 pub(open) trait ByteWriter {
-  write_byte(Self, Byte) -> IOError?
+  fn write_byte(Self, Byte) -> IOError?
 }
 
 pub(open) trait Closer {
-  close(Self) -> IOError?
+  fn close(Self) -> IOError?
 }
 
 pub(open) trait ReadCloser : Reader + Closer {
@@ -167,19 +167,19 @@ pub(open) trait ReadWriter : Reader + Writer {
 }
 
 pub(open) trait Reader {
-  read(Self, Slice[Byte]) -> (Int, IOError?)
+  fn read(Self, Slice[Byte]) -> (Int, IOError?)
 }
 
 pub(open) trait ReaderAt {
-  read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+  fn read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
 }
 
 pub(open) trait ReaderFrom {
-  read_from(Self, &Reader) -> (Int64, IOError?)
+  fn read_from(Self, &Reader) -> (Int64, IOError?)
 }
 
 pub(open) trait Seeker {
-  seek(Self, Int64, Whence) -> (Int64, IOError?)
+  fn seek(Self, Int64, Whence) -> (Int64, IOError?)
 }
 
 pub(open) trait WriteCloser : Writer + Closer {
@@ -189,14 +189,14 @@ pub(open) trait WriteSeeker : Writer + Seeker {
 }
 
 pub(open) trait Writer {
-  write(Self, Slice[Byte]) -> (Int, IOError?)
+  fn write(Self, Slice[Byte]) -> (Int, IOError?)
 }
 
 pub(open) trait WriterAt {
-  write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+  fn write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
 }
 
 pub(open) trait WriterTo {
-  write_to(Self, &Writer) -> (Int64, IOError?)
+  fn write_to(Self, &Writer) -> (Int64, IOError?)
 }
 

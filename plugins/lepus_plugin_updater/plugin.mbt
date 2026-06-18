@@ -42,8 +42,8 @@ fn parse_version_parts(version : String) -> Array[Int] {
       out.push(parse_part(rest))
       break
     }
-    out.push(parse_part(rest[:idx].to_string()))
-    rest = rest[idx + 1:].to_string()
+    out.push(parse_part(rest[:idx].to_owned()))
+    rest = rest[idx + 1:].to_owned()
   }
   out
 }

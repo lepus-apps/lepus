@@ -32,7 +32,7 @@ pub(all) suberror IOError {
 } derive(Debug, Eq)
 
 ///|
-pub impl Show for IOError with output(self, logger) {
+pub impl Show for IOError with fn output(self, logger) {
   match self {
     IOError(e) => logger.write_string(e)
   }
@@ -107,7 +107,7 @@ pub let err_no_progress : IOError = IOError(
 ///
 /// Implementations must not retain p.
 pub(open) trait Reader {
-  read(Self, Slice[Byte]) -> (Int, IOError?)
+  fn read(Self, Slice[Byte]) -> (Int, IOError?)
 }
 
 ///|
@@ -121,7 +121,7 @@ pub(open) trait Reader {
 ///
 /// Implementations must not retain p.
 pub(open) trait Writer {
-  write(Self, Slice[Byte]) -> (Int, IOError?)
+  fn write(Self, Slice[Byte]) -> (Int, IOError?)
 }
 
 ///|
@@ -130,7 +130,7 @@ pub(open) trait Writer {
 /// The behavior of Close after the first call is undefined.
 /// Specific implementations may document their own behavior.
 pub(open) trait Closer {
-  close(Self) -> IOError?
+  fn close(Self) -> IOError?
 }
 
 ///|
@@ -150,7 +150,7 @@ pub(open) trait Closer {
 /// the size of the underlying object the behavior of subsequent I/O operations
 /// is implementation-dependent.
 pub(open) trait Seeker {
-  seek(Self, Int64, Whence) -> (Int64, IOError?)
+  fn seek(Self, Int64, Whence) -> (Int64, IOError?)
 }
 
 ///|
@@ -195,7 +195,7 @@ pub(open) trait ReadWriteSeeker: Reader + Writer + Seeker {}
 ///
 /// The [copy] function uses [ReaderFrom] if available.
 pub(open) trait ReaderFrom {
-  read_from(Self, &Reader) -> (Int64, IOError?)
+  fn read_from(Self, &Reader) -> (Int64, IOError?)
 }
 
 ///|
@@ -207,7 +207,7 @@ pub(open) trait ReaderFrom {
 ///
 /// The copy function uses WriterTo if available.
 pub(open) trait WriterTo {
-  write_to(Self, &Writer) -> (Int64, IOError?)
+  fn write_to(Self, &Writer) -> (Int64, IOError?)
 }
 
 ///|
@@ -238,7 +238,7 @@ pub(open) trait WriterTo {
 ///
 /// Implementations must not retain p.
 pub(open) trait ReaderAt {
-  read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+  fn read_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
 }
 
 ///|
@@ -258,7 +258,7 @@ pub(open) trait ReaderAt {
 ///
 /// Implementations must not retain p.
 pub(open) trait WriterAt {
-  write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
+  fn write_at(Self, Slice[Byte], Int64) -> (Int, IOError?)
 }
 
 ///|
@@ -272,7 +272,7 @@ pub(open) trait WriterAt {
 /// processing. A [Reader] that does not implement  ByteReader
 /// can be wrapped using bufio.NewReader to add this method.
 pub(open) trait ByteReader {
-  read_byte(Self) -> (Byte, IOError?)
+  fn read_byte(Self) -> (Byte, IOError?)
 }
 
 ///|
@@ -285,13 +285,13 @@ pub(open) trait ByteReader {
 /// last-unread byte), or (in implementations that support the [Seeker] interface)
 /// seek to one byte before the current offset.
 pub(open) trait ByteScanner: ByteReader {
-  unread_byte(Self) -> IOError?
+  fn unread_byte(Self) -> IOError?
 }
 
 ///|
 /// ByteWriter is the interface that wraps the write_byte method.
 pub(open) trait ByteWriter {
-  write_byte(Self, Byte) -> IOError?
+  fn write_byte(Self, Byte) -> IOError?
 }
 
 ///|
@@ -473,7 +473,7 @@ struct LimitedReader {
 }
 
 ///|
-pub impl Reader for LimitedReader with read(self, p) {
+pub impl Reader for LimitedReader with fn read(self, p) {
   if self.n <= 0 {
     return (0, Some(eof))
   }
@@ -676,7 +676,7 @@ struct TeeReader {
 let _trait : &Reader = TeeReader::new(discard, discard)
 
 ///|
-pub impl Reader for TeeReader with read(self, p) {
+pub impl Reader for TeeReader with fn read(self, p) {
   let (n, err) = self.r.read(p)
   if n > 0 {
     let (n, err) = self.w.write(p[:n])
@@ -690,6 +690,7 @@ pub impl Reader for TeeReader with read(self, p) {
 ///|
 /// discard is a [Writer] on which all Write calls succeed
 /// without doing anything.
+#warnings("-unnecessary_annotation")
 pub let discard : Discard = Discard::{  }
 
 ///|
@@ -704,7 +705,7 @@ let _discardIsReader : &Reader = discard
 struct Discard {}
 
 ///|
-pub impl Reader for Discard with read(_self, _b) {
+pub impl Reader for Discard with fn read(_self, _b) {
   (0, Some(eof))
 }
 
@@ -712,7 +713,7 @@ pub impl Reader for Discard with read(_self, _b) {
 /// Discard implements ReaderFrom as an optimization so copy to
 /// io.Discard can avoid doing unnecessary work.
 /// let _ : &ReaderFrom = discard
-pub impl Writer for Discard with write(_self, p) {
+pub impl Writer for Discard with fn write(_self, p) {
   // possible compiler bug - this `pub` should not be needed here but buffer_test.mbt fails if missing.
   (p.length(), None)
 }
@@ -752,7 +753,7 @@ pub fn NopCloser::new(r : &Reader) -> NopCloser {
 pub impl ReadCloser for NopCloser
 
 ///|
-pub impl Reader for NopCloser with read(self, b) {
+pub impl Reader for NopCloser with fn read(self, b) {
   self.r.read(b)
 }
 
@@ -762,7 +763,7 @@ struct NopCloser {
 }
 
 ///|
-pub impl Closer for NopCloser with close(_self) {
+pub impl Closer for NopCloser with fn close(_self) {
   None
 }
 
@@ -779,7 +780,7 @@ pub impl Closer for NopCloser with close(_self) {
 
 // TODO:
 // fn write_to(self : NopCloserWriterTo, w : &Writer) -> (Int64, IOEerror?) {
-//   // return c.Reader.(WriterTo).WriteTo(w)
+//   // return c.Reader.(WriterTo)WriteTo(w)
 //   self.r.write_to(w)
 // }
 

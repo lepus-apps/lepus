@@ -30,9 +30,9 @@ fn alert_native(
   level : DialogLevel,
 ) -> Result[Unit, String] {
   let lv = match level {
-    DialogLevel::Info => 0
-    DialogLevel::Warning => 1
-    DialogLevel::Error => 2
+    Info => 0
+    Warning => 1
+    Error => 2
   }
   let rc = alert_ffi(@utf8.encode(title), @utf8.encode(message), lv)
   if rc == 0 {

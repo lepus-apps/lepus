@@ -19,7 +19,7 @@ fn split_once(text : String, needle : Char) -> (String, String?) {
   let chars = text.to_array()
   for i = 0; i < chars.length(); i = i + 1 {
     if chars[i] == needle {
-      return (text[:i].to_string(), Some(text[i + 1:].to_string()))
+      return (text[:i].to_owned(), Some(text[i + 1:].to_owned()))
     }
   }
   (text, None)
@@ -46,7 +46,7 @@ pub fn parse(url : String) -> DeepLinkParts {
   let (scheme, after_scheme) = split_once(url, ':')
   let payload = after_scheme.unwrap_or("")
   let payload1 = if payload.has_prefix("//") {
-    payload[2:].to_string()
+    payload[2:].to_owned()
   } else {
     payload
   }

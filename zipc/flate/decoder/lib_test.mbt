@@ -37,21 +37,9 @@ test "utf8" {
     },
     { name: "invalid_in_middle", input: [b'a', 0x80, b'b'], expected: ['a'] },
   ]
-  let mut failed = false
-  let mut output = ""
   for tt in tests {
     let result = @decoder.utf8(tt.input.iter()).collect()
-    if result != tt.expected {
-      output = "Test \{tt.name} failed: expected \{tt.expected}, got \{result}"
-      failed = true
-      break
-    } else {
-      // pass
-    }
+    @debug.assert_eq(result, tt.expected, msg="Test " + tt.name + " failed")
   }
-  if failed {
-    inspect(output)
-  } else {
-    "All tests passed" |> inspect(content="All tests passed")
-  }
+  "All tests passed" |> inspect(content="All tests passed")
 }

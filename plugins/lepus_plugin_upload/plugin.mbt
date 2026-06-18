@@ -49,7 +49,12 @@ async fn save_text(payload : UploadSaveRequest) -> UploadSaveReply {
     @fs.mkdir(dir, recursive=true, permission=0o755)
     let safe_name = sanitize_filename(payload.filename)
     let path = dir + "/" + safe_name
-    @fs.write_file(path, payload.content, create=0o644, truncate=true)
+    @fs.write_file(
+      path,
+      payload.content,
+      create_mode=CreateOrTruncate,
+      permission=0o644,
+    )
     { ok: true, path: Some(path), error: None }
   } catch {
     _ => { ok: false, path: None, error: Some("save upload failed") }

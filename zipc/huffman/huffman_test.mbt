@@ -5,7 +5,7 @@
 
 ///|
 test "bit_reader_basic_operations" {
-  let buffer = @buffer.new()
+  let buffer = Buffer()
   buffer.write_byte(b'H') // 0x48 = 01001000
   buffer.write_byte(b'e') // 0x65 = 01100101
   let data = buffer.to_bytes()
@@ -27,12 +27,12 @@ test "bit_reader_basic_operations" {
 ///|
 test "bit_reader_edge_cases" {
   // Test empty data
-  let empty_buffer = @buffer.new()
+  let empty_buffer = Buffer()
   let empty_reader = @huffman.new_bit_reader(empty_buffer.to_bytes())
   inspect(empty_reader.is_at_end(), content="true")
 
   // Test reading beyond data
-  let small_buffer = @buffer.new()
+  let small_buffer = Buffer()
   small_buffer.write_byte(b'A') // 0x41
   let reader = @huffman.new_bit_reader(small_buffer.to_bytes())
   let _ = reader.read_bits(8) // Read the byte
@@ -45,7 +45,7 @@ test "bit_reader_edge_cases" {
 
 ///|
 test "bit_reader_large_reads" {
-  let buffer = @buffer.new()
+  let buffer = Buffer()
   buffer.write_byte(b'A') // 0x41
   buffer.write_byte(b'B') // 0x42
   let data = buffer.to_bytes()
@@ -134,7 +134,7 @@ test "length_distance_decoding" {
 ///|
 test "length_distance_edge_cases" {
   // Use a BitReader with zero data for predictable extra bit reading
-  let zero_buffer = @buffer.new()
+  let zero_buffer = Buffer()
   for i = 0; i < 10; i = i + 1 {
     zero_buffer.write_byte(b'\x00')
   }
@@ -206,7 +206,7 @@ test "fixed_huffman_decompression_basic" {
   // Test that the decompression function exists and handles errors gracefully
   match
     ({
-      let test_buffer = @buffer.new()
+      let test_buffer = Buffer()
       test_buffer.write_byte(b'A')
       let (_, _) = @huffman.decompress_fixed_huffman_block_bytes(
         test_buffer.to_bytes(),
@@ -229,7 +229,7 @@ test "fixed_huffman_decompression_basic" {
 test "fixed_huffman_decompression_edge_cases" {
   // Test empty input - should fail gracefully
   try {
-    let empty_buffer = @buffer.new()
+    let empty_buffer = Buffer()
     let (_, _) = @huffman.decompress_fixed_huffman_block_bytes(
       empty_buffer.to_bytes(),
       0,
@@ -245,7 +245,7 @@ test "fixed_huffman_decompression_edge_cases" {
 
   // Test invalid offset - should fail gracefully
   try {
-    let test_buffer = @buffer.new()
+    let test_buffer = Buffer()
     test_buffer.write_byte(b't')
     test_buffer.write_byte(b'e')
     test_buffer.write_byte(b's')
@@ -302,7 +302,7 @@ test "block_type_conversions" {
 ///|
 test "huffman_performance_large_data" {
   // Test BitReader performance with large data
-  let large_data = @buffer.new()
+  let large_data = Buffer()
   for i = 0; i < 1000; i = i + 1 {
     large_data.write_byte((i % 256).to_byte())
   }
@@ -327,7 +327,7 @@ test "huffman_performance_large_data" {
 ///|
 test "huffman_stress_test_repeated_patterns" {
   // Test with repeated patterns
-  let pattern_data = @buffer.new()
+  let pattern_data = Buffer()
   for i = 0; i < 100; i = i + 1 {
     pattern_data.write_bytes(@utf8.encode("ABCDEFGH"))
   }
@@ -426,7 +426,7 @@ test "rfc1951_compliance_fixed_huffman" {
 test "rfc1951_length_distance_tables" {
   // Test that length and distance tables match RFC 1951
   // Use a BitReader with all zero bits for predictable extra bit reading
-  let zero_data = @buffer.new()
+  let zero_data = Buffer()
   for i = 0; i < 10; i = i + 1 {
     zero_data.write_byte(b'\x00')
   }
@@ -514,7 +514,7 @@ test "huffman_deflate_integration" {
 ///|
 test "huffman_error_handling" {
   // Test with malformed data
-  let malformed_data = @buffer.new()
+  let malformed_data = Buffer()
   for i = 0; i < 10; i = i + 1 {
     malformed_data.write_byte(b'\xFF') // All 1s
   }
@@ -538,7 +538,7 @@ test "huffman_error_handling" {
 
 ///|
 test "bit_manipulation_edge_cases" {
-  let buffer = @buffer.new()
+  let buffer = Buffer()
   buffer.write_byte(b'\x00') // 0x00 = 00000000
   buffer.write_byte(b'\xFF') // 0xFF = 11111111
   buffer.write_byte(b'\xAA') // 0xAA = 10101010

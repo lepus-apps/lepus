@@ -58,7 +58,7 @@ fn ParseContext::parse_value2(
 
 ///|
 fn ParseContext::parse_object(ctx : ParseContext) -> Json raise ParseError {
-  let map = Map::new()
+  let map = Map([])
   for ;; {
     match ctx.lex_property_name() {
       RBrace => return map.to_json()

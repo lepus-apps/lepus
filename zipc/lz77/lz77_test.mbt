@@ -5,7 +5,7 @@
 
 ///|
 test "lz77_basic_literals" {
-  let data = @buffer.new()
+  let data = Buffer()
   data.write_bytes(b"Hello")
   let input = data.to_bytes() // TODO:(upstream) change String::to_bytes
   let tokens = @lz77.encode_default(input)
@@ -23,7 +23,7 @@ test "lz77_basic_literals" {
 
 ///|
 test "lz77_simple_repetition" {
-  let data = @buffer.new()
+  let data = Buffer()
   // "AAAA" - should compress to A + reference(3,1)
   data.write_bytes(b"AAAA")
   let input = data.to_bytes()
@@ -37,7 +37,7 @@ test "lz77_simple_repetition" {
 
 ///|
 test "lz77_pattern_matching" {
-  let data = @buffer.new()
+  let data = Buffer()
   // "abcabcabc" - should find patterns
   let pattern = b"abcabcabc"
   data.write_bytes(pattern)
@@ -57,7 +57,7 @@ test "lz77_pattern_matching" {
 
 ///|
 test "lz77_empty_input" {
-  let empty_data = @buffer.new().to_bytes()
+  let empty_data = Buffer().to_bytes()
   let tokens = @lz77.encode_default(empty_data)
   let decoded = @lz77.decode(tokens)
   inspect(tokens.length(), content="0")
@@ -69,7 +69,7 @@ test "lz77_empty_input" {
 
 ///|
 test "lz77_single_byte" {
-  let data = @buffer.new()
+  let data = Buffer()
   data.write_byte(b'X')
   let input = data.to_bytes()
   let tokens = @lz77.encode_default(input)
@@ -83,7 +83,7 @@ test "lz77_single_byte" {
 
 ///|
 test "lz77_byte_format" {
-  let data = @buffer.new()
+  let data = Buffer()
   data.write_byte(b'H')
   data.write_byte(b'e')
   data.write_byte(b'l')
@@ -111,7 +111,7 @@ test "lz77_byte_format" {
 ///|
 test "lz77_token_validation" {
   // Create tokens using encode/decode to test validation
-  let data = @buffer.new()
+  let data = Buffer()
   data.write_byte(b'A')
   data.write_byte(b'B')
   data.write_byte(b'A')
@@ -127,7 +127,7 @@ test "lz77_token_validation" {
 
 ///|
 test "lz77_compression_stats" {
-  let data = @buffer.new()
+  let data = Buffer()
   // Create data with some repetition
   for i = 0; i < 10; i = i + 1 {
     data.write_byte(b'A')
@@ -147,7 +147,7 @@ test "lz77_compression_stats" {
 
 ///|
 test "lz77_large_data" {
-  let data = @buffer.new()
+  let data = Buffer()
   // Create 1KB of data with patterns
   for i = 0; i < 256; i = i + 1 {
     data.write_byte((i % 26 + 65).to_byte()) // A-Z pattern
@@ -166,7 +166,7 @@ test "lz77_large_data" {
 test "lz77_overlapping_references" {
   // Test case where reference overlaps with current position
   // Create a pattern that should result in overlapping references
-  let data = @buffer.new()
+  let data = Buffer()
   data.write_byte(b'A')
   data.write_byte(b'B')
   data.write_byte(b'A')
@@ -190,7 +190,7 @@ test "lz77_custom_config" {
     min_match_length: 4,
     max_distance: 1024,
   }
-  let data = @buffer.new()
+  let data = Buffer()
   for i = 0; i < 20; i = i + 1 {
     data.write_byte(b'X')
   }
@@ -206,7 +206,7 @@ test "lz77_custom_config" {
 ///|
 test "lz77_decoder_error_handling" {
   // Test invalid byte format
-  let invalid_data = @buffer.new()
+  let invalid_data = Buffer()
   invalid_data.write_byte(b'\xFF') // Invalid marker
   try {
     let _ = @lz77.decode_from_bytes(invalid_data.to_bytes())
@@ -232,7 +232,7 @@ test "lz77_hash_function" {
 
 ///|
 test "lz77_performance_benchmark" {
-  let data = @buffer.new()
+  let data = Buffer()
   // Create data with various patterns for realistic testing
   let patterns = ["Hello", "World", "Test", "Data", "Compression"]
   for i = 0; i < 100; i = i + 1 {

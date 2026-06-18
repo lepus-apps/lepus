@@ -38,7 +38,7 @@ pub struct ConfirmReply {
 ///|
 fn show_dialog(payload : DialogRequest) -> DialogReply {
   let title = payload.title.unwrap_or("Dialog")
-  let level = payload.level.unwrap_or(DialogLevel::Info)
+  let level = payload.level.unwrap_or(Info)
   match alert_native(title, payload.message, level) {
     Ok(_) =>
       { shown: true, title, message: payload.message, level, error: None }

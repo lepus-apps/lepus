@@ -93,7 +93,7 @@ pub fn WindowConfig::new(
   resizable? : Bool = true,
   always_on_top? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
+  title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   source? : Source,
@@ -128,7 +128,7 @@ pub fn WindowConfig::navigate(
   self : WindowConfig,
   url : String,
 ) -> WindowConfig {
-  self.set_source(Source::Url(url))
+  self.set_source(Url(url))
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn Window::new(
   resizable? : Bool = true,
   always_on_top? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = TitleBarStyle::Default,
+  title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   source? : Source,
@@ -187,7 +187,7 @@ pub fn Window::set_source(self : Window, source : Source) -> Window {
 
 ///|
 pub fn Window::navigate(self : Window, url : String) -> Window {
-  self.set_source(Source::Url(url))
+  self.set_source(Url(url))
 }
 
 ///|
@@ -241,8 +241,8 @@ pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
     always_on_top=config.always_on_top,
     transparent=config.transparent,
     title_bar_style=match config.title_bar_style {
-      TitleBarStyle::Default => @webview.TitleBarStyle::Default
-      TitleBarStyle::Hidden => @webview.TitleBarStyle::Hidden
+      Default => Default
+      Hidden => Hidden
     },
     title_bar_overlay=config.title_bar_overlay,
     traffic_light_position=config.traffic_light_position,
@@ -285,7 +285,7 @@ async fn resolve_local_fs(path : String) -> ResolvedSource {
   guard @fs.exists(entry_path) else {
     abort("LocalFs source does not exist: " + entry_path)
   }
-  guard @fs.kind(entry_path) == @fs.FileKind::Regular else {
+  guard @fs.kind(entry_path) == Regular else {
     abort("LocalFs source is not a regular file: " + entry_path)
   }
   guard @fs.can_read(entry_path) else {
@@ -315,7 +315,12 @@ async fn resolve_memory_source(source : MemorySource) -> ResolvedSource {
         }
       None => ()
     }
-    @fs.write_file(file_path, file.content, create=0o644)
+    @fs.write_file(
+      file_path,
+      file.content,
+      create_mode=CreateOrTruncate,
+      permission=0o644,
+    )
   }
   guard has_entry else { abort("MemoryFs entry file not found: " + entry) }
   {
@@ -360,8 +365,8 @@ fn to_file_url(path : String) -> String {
 
 ///|
 fn join_path(base : String, leaf : String) -> String {
-  let base = base.trim_end(chars="/\\").to_string()
-  let leaf = leaf.trim_start(chars="/\\").to_string()
+  let base = base.trim_end(chars="/\\").to_owned()
+  let leaf = leaf.trim_start(chars="/\\").to_owned()
   if base.is_empty() {
     leaf
   } else if leaf.is_empty() {
@@ -381,7 +386,7 @@ fn is_html_path(path : String) -> Bool {
 ///|
 fn file_url_to_path(url : String) -> String {
   guard url.has_prefix("file://") else { url }
-  let path = url[7:].to_string()
+  let path = url[7:].to_owned()
   if path.is_empty() {
     "/"
   } else {
@@ -392,7 +397,7 @@ fn file_url_to_path(url : String) -> String {
 ///|
 fn sanitize_memory_relative_path(path : String) -> String {
   let normalized = path.replace_all(old="\\", new="/")
-  let trimmed = normalized.trim_start(chars="/").trim_end(chars="/").to_string()
+  let trimmed = normalized.trim_start(chars="/").trim_end(chars="/").to_owned()
   guard !trimmed.is_empty() else { abort("MemoryFs path cannot be empty") }
   guard trimmed != ".." &&
     !trimmed.has_prefix("../") &&
@@ -409,11 +414,11 @@ fn sanitize_memory_relative_path(path : String) -> String {
 
 ///|
 fn parent_dir(path : String) -> String? {
-  let path = path.trim_end(chars="/\\").to_string()
+  let path = path.trim_end(chars="/\\").to_owned()
   guard !path.is_empty() else { None }
   match path.rev_find("/") {
     Some(index) => {
-      let parent = path[:index].trim_end(chars="/\\").to_string()
+      let parent = path[:index].trim_end(chars="/\\").to_owned()
       if parent.is_empty() {
         None
       } else {
@@ -423,7 +428,7 @@ fn parent_dir(path : String) -> String? {
     None =>
       match path.rev_find("\\") {
         Some(index) => {
-          let parent = path[:index].trim_end(chars="/\\").to_string()
+          let parent = path[:index].trim_end(chars="/\\").to_owned()
           if parent.is_empty() {
             None
           } else {

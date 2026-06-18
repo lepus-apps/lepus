@@ -39,7 +39,7 @@ pub fn plugin() -> @webview.Plugin {
   @webview.Plugin::new("shell", plugin => {
     plugin.command("exec", (payload : ExecParams) => {
       execute_script_with_output(
-        payload.cmd.to_string(),
+        payload.cmd.to_owned(),
         payload.args,
         payload.input_data.unwrap_or(""),
       )

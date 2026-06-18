@@ -84,14 +84,14 @@ pub struct FsStatReply {
 ///|
 fn kind_name(kind : @fs.FileKind) -> String {
   match kind {
-    @fs.FileKind::Unknown => "unknown"
-    @fs.FileKind::Regular => "regular"
-    @fs.FileKind::Directory => "directory"
-    @fs.FileKind::SymLink => "symlink"
-    @fs.FileKind::Socket => "socket"
-    @fs.FileKind::Pipe => "pipe"
-    @fs.FileKind::BlockDevice => "block_device"
-    @fs.FileKind::CharDevice => "char_device"
+    Unknown => "unknown"
+    Regular => "regular"
+    Directory => "directory"
+    SymLink => "symlink"
+    Socket => "socket"
+    Pipe => "pipe"
+    BlockDevice => "block_device"
+    CharDevice => "char_device"
   }
 }
 
@@ -112,12 +112,13 @@ async fn read_text(payload : FsPathRequest) -> FsReadReply {
 ///|
 async fn write_text(payload : FsWriteRequest) -> FsReply {
   try {
+    let append = payload.append.unwrap_or(false)
     @fs.write_file(
       payload.path,
       payload.content,
-      append=payload.append.unwrap_or(false),
-      create=0o644,
-      truncate=!payload.append.unwrap_or(false),
+      append~,
+      create_mode=if append { OpenOrCreate } else { CreateOrTruncate },
+      permission=0o644,
     )
     { ok: true, error: None }
   } catch {

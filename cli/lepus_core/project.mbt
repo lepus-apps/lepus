@@ -22,7 +22,7 @@ pub fn resolve_path(base : String, path : String?) -> String {
 
 ///|
 pub fn project_basename(project_name : String) -> String {
-  let parts = project_name.split("/").map(part => part.to_string()).to_array()
+  let parts = project_name.split("/").map(part => part.to_owned()).to_array()
   parts.last().unwrap_or(project_name)
 }
 

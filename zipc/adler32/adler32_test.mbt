@@ -85,15 +85,15 @@ test "adler32_binary_data" {
 test "bytes" {
   // Verified test against Python's zlib.adler32()
   inspect(
-    @adler32.bytes("hello world hgoho xx yy zz aa bb cc dd ee ff"),
+    @adler32.bytes(b"hello world hgoho xx yy zz aa bb cc dd ee ff"),
     content="0x545410050481025150",
   )
   inspect(
-    @adler32.bytes("hello world hgoho xx yy zz aa bb cc dd ee ff").0,
+    @adler32.bytes(b"hello world hgoho xx yy zz aa bb cc dd ee ff").0,
     content="1725042482",
   )
   inspect(
-    @adler32.bytes("hello world hgoho xx yy zz aa bb cc dd ee").0,
+    @adler32.bytes(b"hello world hgoho xx yy zz aa bb cc dd ee").0,
     content="980291142",
   )
 }

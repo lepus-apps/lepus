@@ -151,7 +151,7 @@ fn Compressor::fill_window(self : Compressor, b : Slice[Byte]) -> Unit {
 }
 
 ///|
-pub let writer_closed_error : @io.IOError = @io.IOError("writer closed")
+pub let writer_closed_error : @io.IOError = IOError("writer closed")
 
 ///|
 fn Compressor::close(self : Compressor) -> IOError? {

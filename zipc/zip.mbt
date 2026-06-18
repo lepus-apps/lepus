@@ -65,7 +65,7 @@ pub const MAX_PATH_LENGTH : Int = 65535
 
 ///|
 pub fn Archive::new() -> Archive {
-  { members: Map::new() }
+  { members: Map([]) }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub fn File::from_string(s : String) -> File raise {
   // Calculate actual CRC-32 checksum
   let crc = @crc32.bytes(data)
   {
-    compression: Compression::Stored,
+    compression: Stored,
     start: 0,
     compressed_size: len,
     compressed_bytes: data,
@@ -143,7 +143,7 @@ pub fn File::from_bytes(data : Bytes) -> File raise {
 
   let crc = @crc32.bytes(data)
   {
-    compression: Compression::Stored,
+    compression: Stored,
     start: 0,
     compressed_size: len,
     compressed_bytes: data,
@@ -176,7 +176,7 @@ pub fn File::deflate_of_binary_string(
   let compressed_data = @deflate.deflate_of_bytes(data, level)
   let crc = @crc32.bytes(data)
   {
-    compression: Compression::Deflate,
+    compression: Deflate,
     start: 0,
     compressed_size: compressed_data.length(),
     compressed_bytes: compressed_data,
@@ -205,7 +205,7 @@ pub fn deflate_of_bytes(data : Bytes, level : @deflate.Level) -> File raise {
   let compressed_data = @deflate.deflate_of_bytes(data, level)
   let crc = @crc32.bytes(data)
   {
-    compression: Compression::Deflate,
+    compression: Deflate,
     start: 0,
     compressed_size: compressed_data.length(),
     compressed_bytes: compressed_data,
@@ -240,8 +240,8 @@ pub fn File::compressed_bytes(self : File) -> Bytes {
 ///|
 pub fn File::can_extract(file : File) -> Bool {
   match file.compression {
-    Compression::Stored => true
-    Compression::Deflate => true // Would need actual deflate implementation
+    Stored => true
+    Deflate => true // Would need actual deflate implementation
     _ => false
   }
 }
@@ -254,13 +254,13 @@ pub fn File::to_bytes(self : File) -> Bytes raise {
     fail("Unsupported compression format")
   }
   match self.compression {
-    Compression::Stored => {
+    Stored => {
       let data_view = self.compressed_bytes[self.start:self.start +
         self.compressed_size]
       // Convert view back to bytes
-      data_view.to_bytes()
+      data_view.to_owned()
     }
-    Compression::Deflate =>
+    Deflate =>
       // Use bytes-based decompression for better performance
       @deflate.deflate_decompress_bytes(
         self.compressed_bytes,
@@ -283,7 +283,7 @@ pub fn Member::make(path : String, kind : MemberKind) -> Member raise {
   }
   let sanitized_path = path.replace(old="\\", new="/")
   let final_path = match kind {
-    MemberKind::Dir =>
+    Dir =>
       if sanitized_path.is_empty() {
         "./"
       } else if sanitized_path.strip_suffix("/") is Some(_) {
@@ -291,11 +291,11 @@ pub fn Member::make(path : String, kind : MemberKind) -> Member raise {
       } else {
         sanitized_path + "/"
       }
-    MemberKind::File(_) => sanitized_path
+    File(_) => sanitized_path
   }
   let default_mode = match kind {
-    MemberKind::Dir => 0o755
-    MemberKind::File(_) => 0o644
+    Dir => 0o755
+    File(_) => 0o644
   }
   {
     path: final_path,
@@ -400,7 +400,7 @@ fn write_local_file_header_bytes(mem : Member) -> Bytes {
   let path_bytes = @utf8.encode(mem.path)
   let path_len = path_bytes.length()
   match mem.kind {
-    MemberKind::Dir => {
+    Dir => {
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
       concat_bytes([
         write_u32_le_bytes(local_file_header_signature),
@@ -417,11 +417,11 @@ fn write_local_file_header_bytes(mem : Member) -> Bytes {
         path_bytes,
       ])
     }
-    MemberKind::File(file) => {
+    File(file) => {
       let compression_method = match file.compression {
-        Compression::Stored => 0
-        Compression::Deflate => 8
-        Compression::Other(m) => m
+        Stored => 0
+        Deflate => 8
+        Other(m) => m
       }
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
       concat_bytes([
@@ -453,7 +453,7 @@ fn write_central_directory_entry_bytes(
   let path_bytes = @utf8.encode(mem.path)
   let path_len = path_bytes.length()
   match mem.kind {
-    MemberKind::Dir => {
+    Dir => {
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
       concat_bytes([
         write_u32_le_bytes(central_directory_signature),
@@ -476,11 +476,11 @@ fn write_central_directory_entry_bytes(
         path_bytes,
       ])
     }
-    MemberKind::File(file) => {
+    File(file) => {
       let compression_method = match file.compression {
-        Compression::Stored => 0
-        Compression::Deflate => 8
-        Compression::Other(m) => m
+        Stored => 0
+        Deflate => 8
+        Other(m) => m
       }
       let (dos_time, dos_date) = unix_to_dos_datetime(mem.mtime)
       concat_bytes([
@@ -664,8 +664,8 @@ fn parse_central_directory_entry_bytes(
   // Determine compression type
   let compression = match compression_method {
     0 => Compression::Stored
-    8 => Compression::Deflate
-    _ => Compression::Other(compression_method)
+    8 => Deflate
+    _ => Other(compression_method)
   }
 
   // Read file data from local header
@@ -689,7 +689,7 @@ fn parse_central_directory_entry_bytes(
   // Determine if it's a directory
   let is_directory = filename.strip_suffix("/") is Some(_) ||
     (external_file_attrs & 0x10) != 0
-  let kind = if is_directory { MemberKind::Dir } else { MemberKind::File(file) }
+  let kind = if is_directory { MemberKind::Dir } else { File(file) }
 
   // Create member
   let mem = {
@@ -735,5 +735,5 @@ fn read_file_data_bytes(
     fail("File data extends beyond archive")
   }
   let file_data = data[file_data_offset:file_data_offset + compressed_size]
-  file_data.to_bytes()
+  file_data.to_owned()
 }

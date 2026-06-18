@@ -26,10 +26,10 @@ pub fn zlib_compress_bytes(data : Bytes, level : Level) -> ZlibData raise {
   let fcheck = 0 // Will be calculated
   let fdict = 0 // No preset dictionary
   let flevel = match level {
-    Level::None => 0 // Fastest
-    Level::Fast => 1 // Fast
-    Level::Default => 2 // Default
-    Level::Best => 3 // Maximum compression
+    None => 0 // Fastest
+    Fast => 1 // Fast
+    Default => 2 // Default
+    Best => 3 // Maximum compression
   }
   let flg = (flevel << 6) | (fdict << 5) | fcheck
 
@@ -87,7 +87,7 @@ pub fn zlib_decompress_bytes(zlib_data : ZlibData) -> Bytes raise {
   // Extract deflate data (everything except header and trailing checksum)
   let deflate_start = 2
   let deflate_end = data.length() - 4
-  let deflate_bytes = data[deflate_start:deflate_end].to_bytes()
+  let deflate_bytes = data[deflate_start:deflate_end].to_owned()
 
   // Extract Adler-32 checksum (last 4 bytes, big-endian)
   let expected_adler = @adler32.Adler32(
@@ -162,7 +162,7 @@ pub fn zlib_to_bytes(
   let zlib_data : ZlibData = {
     compressed_bytes: compressed_data,
     original_size,
-    adler32_checksum: @adler32.Adler32(0L), // Will be read from data
+    adler32_checksum: Adler32(0L), // Will be read from data
   }
   zlib_decompress_bytes(zlib_data)
 }

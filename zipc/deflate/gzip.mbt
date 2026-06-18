@@ -72,8 +72,8 @@ pub fn gzip_compress_bytes(
 
   // Extra flags (1 byte)
   let extra_flags = match level {
-    Level::Best => 2 // Maximum compression
-    Level::Fast => 4 // Fastest compression
+    Best => 2 // Maximum compression
+    Fast => 4 // Fastest compression
     _ => 0 // Default
   }
   header = header + Bytes::from_array([extra_flags.to_byte()])
@@ -195,7 +195,7 @@ pub fn gzip_decompress_bytes(gzip_data : GzipData) -> Bytes raise {
     fail("Truncated gzip trailer")
   }
   let deflate_end = data.length() - 8
-  let deflate_bytes = data[offset:deflate_end].to_bytes()
+  let deflate_bytes = data[offset:deflate_end].to_owned()
 
   // Extract trailer: CRC-32 and original size
   let expected_crc = @crc32.Crc32(
@@ -207,7 +207,7 @@ pub fn gzip_decompress_bytes(gzip_data : GzipData) -> Bytes raise {
   let _deflate_data : DeflateData = {
     compressed_bytes: deflate_bytes,
     original_size: expected_size,
-    adler32_checksum: @adler32.Adler32(0L), // Gzip uses CRC-32, not Adler-32
+    adler32_checksum: Adler32(0L), // Gzip uses CRC-32, not Adler-32
   }
 
   // Use bytes-based deflate decompression to avoid String conversion corruption
@@ -289,7 +289,7 @@ pub fn gzip_to_bytes(compressed_data : Bytes) -> Bytes raise {
   let gzip_data : GzipData = {
     compressed_bytes: compressed_data,
     original_size: 0, // Will be read from trailer
-    crc32_checksum: @crc32.Crc32(0L), // Will be read from trailer
+    crc32_checksum: Crc32(0L), // Will be read from trailer
     filename: None,
     comment: None,
     modification_time: 0,
@@ -344,7 +344,7 @@ pub fn gzip_extract_metadata_bytes(
       offset = offset + 1
     }
     if offset < compressed_data.length() {
-      filename = Some(compressed_data[start:offset].to_bytes().to_string())
+      filename = Some(compressed_data[start:offset].to_owned().to_string())
       offset = offset + 1
     }
   }
@@ -358,7 +358,7 @@ pub fn gzip_extract_metadata_bytes(
       offset = offset + 1
     }
     if offset < compressed_data.length() {
-      comment = Some(compressed_data[start:offset].to_bytes().to_string())
+      comment = Some(compressed_data[start:offset].to_owned().to_string())
       offset = offset + 1
     }
   }

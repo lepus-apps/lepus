@@ -8,12 +8,12 @@ pub fn decode(tokens : Array[LZ77Token]) -> Bytes raise {
   let state = new_decoder_state()
   for token in tokens {
     match token {
-      LZ77Token::Literal(byte) => {
+      Literal(byte) => {
         // Add literal byte to output
         state.output_buffer.write_byte(byte)
         state.position += 1
       }
-      LZ77Token::Reference(length, distance) =>
+      Reference(length, distance) =>
         // Copy bytes from previous position
         copy_reference(state, length, distance)
     }
@@ -114,8 +114,8 @@ pub fn validate_tokens(tokens : Array[LZ77Token]) -> Bool {
   let mut output_length = 0
   for token in tokens {
     match token {
-      LZ77Token::Literal(_) => output_length += 1
-      LZ77Token::Reference(length, distance) => {
+      Literal(_) => output_length += 1
+      Reference(length, distance) => {
         // Check if reference is valid
         if distance <= 0 || distance > output_length {
           return false
@@ -142,11 +142,11 @@ pub fn get_compression_stats(
   let mut compressed_size = 0
   for token in tokens {
     match token {
-      LZ77Token::Literal(_) => {
+      Literal(_) => {
         literal_count += 1
         compressed_size += 2 // marker + byte
       }
-      LZ77Token::Reference(length, distance) => {
+      Reference(length, distance) => {
         reference_count += 1
         // Estimate compressed size (marker + varint encoding)
         compressed_size += 1 + varint_size(length) + varint_size(distance)

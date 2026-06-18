@@ -152,14 +152,14 @@ pub fn has_text() -> Bool raise ClipboardError {
 test {
   ensure_supported()
   write_text("Hello, world!")
-  inspect(
+  debug_inspect(
     read_text(),
     content=(
       #|Some("Hello, world!")
     ),
   )
   clear()
-  inspect(
+  debug_inspect(
     read_text(),
     content=(
       #|None

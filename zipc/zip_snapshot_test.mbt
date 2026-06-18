@@ -36,7 +36,7 @@ test "error handling basic" {
       inspect(
         error,
         content=(
-          #|Failure("zipc/zip.mbt:599:5-599:53@lepus-apps/lepus FAILED: File too small to be a valid ZIP archive")
+          #|Failure(zipc/zip.mbt:583:5-583:53@lepus-apps/lepus FAILED: File too small to be a valid ZIP archive)
         ),
       )
   }
@@ -50,7 +50,7 @@ test "error handling basic" {
       inspect(
         error,
         content=(
-          #|Failure("zipc/zip.mbt:599:5-599:53@lepus-apps/lepus FAILED: File too small to be a valid ZIP archive")
+          #|Failure(zipc/zip.mbt:583:5-583:53@lepus-apps/lepus FAILED: File too small to be a valid ZIP archive)
         ),
       )
   }

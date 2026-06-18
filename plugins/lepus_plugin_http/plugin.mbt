@@ -66,7 +66,7 @@ fn parse_fetch_payload(payload : Json) -> (String, FetchInit, String?) {
 ///|
 fn normalize_method(meth : String?) -> String {
   match meth {
-    Some(meth) => meth.trim(char_set=" \n\r\t").to_string().to_upper()
+    Some(meth) => meth.trim(char_set=" \n\r\t").to_owned().to_upper()
     None => "GET"
   }
 }

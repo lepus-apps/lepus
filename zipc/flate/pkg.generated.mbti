@@ -34,8 +34,8 @@ pub impl @io.Writer for Writer
 
 // Traits
 pub(open) trait Reader {
-  read(Self, @io.Slice[Byte]) -> (Int, @io.IOError?)
-  read_byte(Self) -> (Byte, @io.IOError?)
+  fn read(Self, @io.Slice[Byte]) -> (Int, @io.IOError?)
+  fn read_byte(Self) -> (Byte, @io.IOError?)
 }
 pub impl Reader for @io.Buffer
 pub fn &Reader::new(Self) -> Decompressor

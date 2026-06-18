@@ -13,6 +13,7 @@ pub async fn run_cli() -> Int {
         ("doctor", sub) => run_doctor(parse_doctor_config(matches, sub))
         ("dev", sub) => run_dev(parse_dev_config(matches, sub))
         ("build", sub) => run_build(parse_build_config(matches, sub))
+        ("setup", sub) => run_setup(parse_setup_config(matches, sub))
         (name, _) => {
           println("Unknown command: " + name)
           1

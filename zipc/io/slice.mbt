@@ -75,7 +75,7 @@ pub fn[T] Slice::new(buf : Array[T], start? : Int = 0, end? : Int) -> Slice[T] {
   guard start >= 0 && start <= end && end <= len else {
     abort("View start index out of bounds")
   }
-  Slice::{ buf, start, len: end - start }
+  { buf, start, len: end - start }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn[T] Slice::op_as_view(
   guard self.start + start >= 0 && start <= end && self.start + end <= len else {
     abort("View start index out of bounds")
   }
-  Slice::{ buf: self.buf, start: self.start + start, len: end - start }
+  { buf: self.buf, start: self.start + start, len: end - start }
 }
 
 ///|
@@ -227,7 +227,7 @@ test "rev_foldi" {
 }
 
 ///|
-pub impl[X : Show] Show for Slice[X] with output(self, logger) {
+pub impl[X : Show] Show for Slice[X] with fn output(self, logger) {
   logger.write_iter(self.iter())
 }
 
@@ -253,7 +253,7 @@ pub fn[T] Slice::each(self : Slice[T], f : (T) -> Unit) -> Unit {
 
 ///|
 /// Compares two slices for equality.
-pub impl[T : Eq] Eq for Slice[T] with equal(self, other) {
+pub impl[T : Eq] Eq for Slice[T] with fn equal(self, other) {
   guard self.length() == other.length() else { return false }
   for i = 0 {
     // CR: format issue

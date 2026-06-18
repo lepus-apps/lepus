@@ -1,7 +1,8 @@
 import {
   "moonbitlang/async",
-  "moonbitlang/async/process" @process,
+  "moonbitlang/async/process",
   "moonbitlang/core/argparse",
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
   "moonbitlang/core/env",
@@ -27,5 +28,6 @@ options(
     "native.mbt": [ "native" ],
     "process_runner.mbt": [ "native" ],
     "project.mbt": [ "native" ],
+    "setup_command.mbt": [ "native" ],
   },
 )

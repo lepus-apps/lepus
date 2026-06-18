@@ -686,11 +686,12 @@ test "TestCopyN" {
 struct EmptyReader {}
 
 ///|
-impl @io.Reader for EmptyReader with read(_self, _b) {
+impl @io.Reader for EmptyReader with fn read(_self, _b) {
   (0, Some(@io.eof))
 }
 
 ///|
+#warnings("-unnecessary_annotation")
 test "edge case: empty read" {
   let reader : EmptyReader = EmptyReader::{  }
   let (result, _err) = @io.read_all(reader)

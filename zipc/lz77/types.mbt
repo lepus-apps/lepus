@@ -82,5 +82,5 @@ pub fn new_encoder_state(config : LZ77Config) -> EncoderState {
 
 ///|
 pub fn new_decoder_state() -> DecoderState {
-  { position: 0, output_buffer: @buffer.new() }
+  { position: 0, output_buffer: Buffer() }
 }

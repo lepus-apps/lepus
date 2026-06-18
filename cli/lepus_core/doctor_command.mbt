@@ -23,7 +23,8 @@ pub async fn run_doctor(config : DoctorConfig) -> Int {
 ///|
 async fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
   let moon_ok = has_command("moon")
-  let module_ok = @fs.exists(config.cwd + "/moon.mod.json")
+  let module_ok = @fs.exists(config.cwd + "/moon.mod") ||
+    @fs.exists(config.cwd + "/moon.mod.json")
   let config_ok = has_lepus_config(config)
   let webview_ok = has_webview_runtime()
   let platform = get_platform()
@@ -41,9 +42,9 @@ async fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
       name: "module",
       ok: module_ok,
       detail: if module_ok {
-        "moon.mod.json found"
+        "moon.mod found"
       } else {
-        "moon.mod.json not found in cwd"
+        "moon.mod not found in cwd"
       },
     },
     {

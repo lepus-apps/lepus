@@ -1,5 +1,6 @@
 import {
   "lepus-apps/lepus/zipc/io",
+  "moonbitlang/core/debug",
   "moonbitlang/core/buffer",
   "moonbitlang/core/builtin",
   "moonbitlang/core/cmp",

@@ -1,13 +1,13 @@
 ///|
 test "opener unsupported decoder fallback" {
-  inspect(
+  debug_inspect(
     decode_error_message(@utf8.encode(""), "fallback"),
-    content="fallback",
+    content="\"fallback\"",
   )
 }
 
 ///|
 test "open_reply validates empty target" {
   let reply = open_reply("")
-  inspect(reply.ok, content="false")
+  debug_inspect(reply.ok, content="false")
 }

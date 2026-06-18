@@ -8,8 +8,6 @@ pub fn bytes(Bytes) -> Crc32
 
 // Types and methods
 pub(all) struct Crc32(Int64) derive(Eq)
-#deprecated
-pub fn Crc32::inner(Self) -> Int64
 pub impl Show for Crc32
 
 // Type aliases

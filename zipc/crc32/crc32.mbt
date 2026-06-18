@@ -85,9 +85,9 @@ pub fn bytes(data : Bytes) -> Crc32 {
 }
 
 ///|
-pub impl Show for Crc32 with output(crc, logger) {
+pub impl Show for Crc32 with fn output(crc, logger) {
   let hex_chars = "0123456789abcdef"
-  let result = @buffer.new()
+  let result = Buffer()
   let mut value = crc.0
   for i = 0; i < 8; i = i + 1 {
     let digit = value.land(0xfL).to_int()

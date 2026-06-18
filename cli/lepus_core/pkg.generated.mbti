@@ -36,6 +36,8 @@ pub fn parse_doctor_config(@argparse.Matches, @argparse.Matches) -> DoctorConfig
 
 pub fn parse_init_config(@argparse.Matches, @argparse.Matches) -> InitConfig
 
+pub fn parse_setup_config(@argparse.Matches, @argparse.Matches) -> SetupConfig
+
 pub fn platform_name() -> Bytes
 
 pub fn project_basename(String) -> String
@@ -59,8 +61,14 @@ pub async fn run_moon_command(String, Array[String], extra_env? : Map[String, St
 // Types and methods
 pub struct BuildConfig {
   cwd : String
+  frontend_dir : String?
   dist_dir : String?
   output_dir : String?
+  release : Bool
+  skip_frontend : Bool
+  skip_moon : Bool
+  skip_setup : Bool
+  typecheck : Bool
   verbose : Int
 }
 
@@ -70,6 +78,7 @@ pub struct DevConfig {
   frontend_dir : String?
   port : Int?
   host : String?
+  skip_setup : Bool
   verbose : Int
 }
 
@@ -86,6 +95,12 @@ pub struct InitConfig {
   frontend : String
   force : Bool
   cwd : String
+  verbose : Int
+}
+
+pub struct SetupConfig {
+  cwd : String
+  force : Bool
   verbose : Int
 }
 

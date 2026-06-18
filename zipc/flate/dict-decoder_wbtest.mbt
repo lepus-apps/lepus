@@ -208,8 +208,8 @@ test "DictDecoder" {
     (108, 3),
     (0, 2),
   ]
-  let got = @buffer.new()
-  let want = @buffer.new()
+  let got = Buffer()
+  let want = StringBuilder::new()
   let dd = DictDecoder::new(1 << 11, Slice::new([]))
   let write_copy = fn(dist, length) {
     let mut length = length
@@ -244,17 +244,17 @@ test "DictDecoder" {
   let mut str = poem
   for pref in poem_refs {
     if pref.0 == 0 {
-      write_string(str[:pref.1].to_string())
+      write_string(str[:pref.1].to_owned())
     } else {
       write_copy(pref.0, pref.1)
     }
-    str = str[pref.1:].to_string()
+    str = str[pref.1:].to_owned()
   }
 
   //
   want.write_string(poem)
   write_copy(dd.hist_size(), 33)
-  want.write_view(want.contents().to_unchecked_string()[0:33])
+  want.write_view(want.to_string()[0:33])
 
   //
   write_string(abc)
@@ -278,13 +278,14 @@ test "DictDecoder" {
 
   //
   write_copy(dd.hist_size(), 10)
-  let to_drop = want.contents().to_unchecked_string().length() - dd.hist_size()
-  want.write_view(want.contents().to_unchecked_string()[to_drop:to_drop + 10])
+  let want_string = want.to_string()
+  let to_drop = want_string.length() - dd.hist_size()
+  want.write_view(want_string[to_drop:to_drop + 10])
 
   //
   got.write_bytes(Bytes::from_iter(dd.read_flush().iter()))
   let got = bytes2str(got.to_bytes())
-  let want = want.contents().to_unchecked_string()
+  let want = want.to_string()
   if got != want {
     abort("final string mismatch:\ngot  \{got}\nwant \{want}")
   }
@@ -294,11 +295,11 @@ test "DictDecoder" {
 /// `bytes2str` decodes a UTF-8 `Bytes` to a UTF-16 `String`.
 fn bytes2str(b : Bytes) -> String {
   let chars = (b.iter() |> @decoder.utf8()).collect()
-  let buf = @buffer.new(size_hint=chars.length())
+  let buf = StringBuilder::new(size_hint=chars.length())
   for ch in chars {
     buf.write_char(ch)
   }
-  buf.contents().to_unchecked_string()
+  buf.to_string()
 }
 
 ///|

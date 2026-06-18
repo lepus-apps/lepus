@@ -49,7 +49,7 @@ fn hex_digit(c : Char) -> Int? {
 
 ///|
 fn decode_hex(hex : String) -> Result[String, String] {
-  let trimmed = hex.trim(char_set=" \n\r\t").to_string()
+  let trimmed = hex.trim(char_set=" \n\r\t").to_owned()
   let chars = trimmed.to_array()
   if chars.length() == 0 {
     return Ok("")

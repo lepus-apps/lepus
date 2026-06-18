@@ -1,4 +1,4 @@
 ///|
 test "smoke" {
-  inspect(true, content="true")
+  debug_inspect(true, content="true")
 }

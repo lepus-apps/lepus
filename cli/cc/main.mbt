@@ -61,7 +61,7 @@ async fn linux_pkg_config_args() -> Array[String] {
         .trim()
         .split(" ")
         .filter(part => part != "")
-        .map(p => p.to_string())
+        .map(p => p.to_owned())
         .to_array()
       if libs.length() > 0 {
         return libs

@@ -82,10 +82,10 @@ pub fn encode(data : Bytes, config : LZ77Config) -> Array[LZ77Token] {
 
     // Advance position based on token type
     match token {
-      LZ77Token::Literal(_) =>
+      Literal(_) =>
         // Literal: advance by 1 byte
         state.position += 1
-      LZ77Token::Reference(length, _) => {
+      Reference(length, _) => {
         // Reference: advance by match length, but also update hash tables
         // for all intermediate positions to maintain proper hash chains
         for i = 1; i < length; i = i + 1 {
@@ -138,7 +138,7 @@ fn find_best_match(
   // Need at least min_match_length bytes for a valid match
   // If we're too close to end of data, output literal
   if pos + config.min_match_length - 1 >= data.length() {
-    return LZ77Token::Literal(data[pos])
+    return Literal(data[pos])
   }
 
   // Calculate 3-byte rolling hash for current position
@@ -148,7 +148,7 @@ fn find_best_match(
 
   // If no previous occurrence of this hash exists, output literal
   if chain_head == -1 {
-    return LZ77Token::Literal(data[pos])
+    return Literal(data[pos])
   }
 
   // Search for the longest match by following the hash chain
@@ -196,9 +196,9 @@ fn find_best_match(
     chain_count += 1
   }
   if best_length >= config.min_match_length {
-    LZ77Token::Reference(best_length, best_distance)
+    Reference(best_length, best_distance)
   } else {
-    LZ77Token::Literal(data[pos])
+    Literal(data[pos])
   }
 }
 
@@ -371,16 +371,16 @@ pub fn encode_default(data : Bytes) -> Array[LZ77Token] {
 /// ```
 pub fn encode_to_bytes(data : Bytes, config : LZ77Config) -> Bytes { // First, encode to token format
   let tokens = encode(data, config)
-  let output = @buffer.new()
+  let output = Buffer()
   // Serialize each token to byte format
   for token in tokens {
     match token {
-      LZ77Token::Literal(byte) => {
+      Literal(byte) => {
         // Literal format: marker (0x00) + literal byte
         output.write_byte(b'\x00')
         output.write_byte(byte)
       }
-      LZ77Token::Reference(length, distance) => {
+      Reference(length, distance) => {
         // Reference format: marker (0x01) + varint(length) + varint(distance)
         output.write_byte(b'\x01')
         write_uleb128(output, length)
@@ -436,7 +436,7 @@ fn write_uleb128(buffer : @buffer.Buffer, value : Int) -> Unit {
 
 ///|
 test "write_uleb128" {
-  let buffer = @buffer.new()
+  let buffer = Buffer()
   write_uleb128(buffer, 0)
   assert_eq(buffer.to_bytes(), b"\x00")
   buffer.reset()

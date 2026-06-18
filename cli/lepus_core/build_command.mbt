@@ -11,7 +11,7 @@ async fn walk(
       name
     } else {
       let base_len = base_path.length() + 1 // +1 for the separator
-      full_path[base_len:].to_string()
+      full_path[base_len:].to_owned()
     }
 
     if @fs.kind(full_path) is Directory {
@@ -20,32 +20,69 @@ async fn walk(
     } else {
       let file_data = @fs.read_file(full_path).binary()
       let zip_file = @zipc.deflate_of_bytes(file_data, Default)
-      archive.add(
-        @zipc.Member::make(relative_path, @zipc.MemberKind::File(zip_file)),
-      )
+      archive.add(@zipc.Member::make(relative_path, File(zip_file)))
     }
   }
 }
 
 ///|
 pub async fn run_build(config : BuildConfig) -> Int {
+  if !config.skip_setup {
+    let setup = ensure_lepus_toolchain(config.cwd)
+    guard setup == 0 else { return setup }
+  }
+
+  let frontend_dir = resolve_path(config.cwd, config.frontend_dir)
+  if !config.skip_frontend &&
+    @fs.exists(join_path(frontend_dir, "package.json")) {
+    let frontend = run_frontend_build(config, frontend_dir)
+    guard frontend == 0 else { return frontend }
+  }
+
   let dist_dir = resolve_path(
-    config.cwd,
+    frontend_dir,
     Some(config.dist_dir.unwrap_or("dist")),
   )
   if @fs.exists(dist_dir) {
     let archive = @zipc.Archive::new()
     walk(archive, dist_dir, dist_dir)
-    let _build_dir = resolve_path(config.cwd, Some("_build"))
+    let _build_dir = resolve_path(
+      config.cwd,
+      Some(config.output_dir.unwrap_or("_build")),
+    )
     if !@fs.exists(_build_dir) {
       @fs.mkdir(_build_dir, permission=0o755)
     }
 
     @fs.write_file(
-      resolve_path(config.cwd, Some("_build/dist.zip")),
+      join_path(_build_dir, "dist.zip"),
       archive.to_bytes(),
-      create=0o644,
+      create_mode=CreateOrTruncate,
+      permission=0o644,
     )
   }
-  0
+
+  if config.skip_moon {
+    0
+  } else {
+    run_moon_app_build(config)
+  }
+}
+
+///|
+async fn run_frontend_build(config : BuildConfig, frontend_dir : String) -> Int {
+  let npm_ready = ensure_npm_ready(frontend_dir)
+  guard npm_ready == 0 else { return npm_ready }
+
+  if config.typecheck && @fs.exists(join_path(frontend_dir, "tsconfig.json")) {
+    let typecheck = run_frontend_tool(frontend_dir, "tsc", [])
+    guard typecheck == 0 else { return typecheck }
+  }
+  run_frontend_tool(frontend_dir, "vite", ["build"])
+}
+
+///|
+async fn run_moon_app_build(config : BuildConfig) -> Int {
+  let args = if config.release { ["build", "--release"] } else { ["build"] }
+  run_moon_command(config.cwd, args)
 }
