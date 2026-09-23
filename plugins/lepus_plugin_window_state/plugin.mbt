@@ -14,7 +14,7 @@ pub struct SaveRequest {
 } derive(ToJson, FromJson)
 
 ///|
-let state_map : Ref[Map[String, WindowState]] = { val: {} }
+let state_map : Ref[Map[String, WindowState]] = { val: {}, }
 
 ///|
 fn save_state(payload : SaveRequest) -> Bool {

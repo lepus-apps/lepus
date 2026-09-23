@@ -13,8 +13,8 @@ pub struct NotifyReply {
 ///|
 fn send_reply(payload : NotifyRequest) -> NotifyReply {
   match send_notification(payload.title, payload.body) {
-    Ok(_) => { ok: true, error: None }
-    Err(message) => { ok: false, error: Some(message) }
+    Ok(_) => { ok: true, error: None, }
+    Err(message) => { ok: false, error: Some(message), }
   }
 }
 

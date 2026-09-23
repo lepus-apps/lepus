@@ -4,14 +4,15 @@ import {
   "moonbitlang/x/sys",
   "moonbitlang/async",
   "moonbitlang/async/process",
-  "moonbitlang/async/pipe" @pipe,
+  "moonbitlang/async/pipe",
 }
 
 supported_targets = "+native"
 
+pkgtype(kind: "executable")
+
 options(
   "bin-name": "cc",
   "bin-target": "native",
-  "is-main": true,
   "native-stub": [ "target_stub.c" ],
 )

@@ -6,7 +6,7 @@ pub struct CliInfo {
 
 ///|
 pub fn info() -> CliInfo {
-  { argv: @sys.get_cli_args(), cwd: "." }
+  { argv: @sys.get_cli_args(), cwd: ".", }
 }
 
 ///|

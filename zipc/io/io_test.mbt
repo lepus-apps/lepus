@@ -693,7 +693,7 @@ impl @io.Reader for EmptyReader with fn read(_self, _b) {
 ///|
 #warnings("-unnecessary_annotation")
 test "edge case: empty read" {
-  let reader : EmptyReader = EmptyReader::{  }
+  let reader : EmptyReader = EmptyReader::{ }
   let (result, _err) = @io.read_all(reader)
   inspect(result, content="[]")
 }

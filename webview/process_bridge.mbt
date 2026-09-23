@@ -23,7 +23,7 @@ pub fn[Payload : ToJson] ProcessCommandRequest::new(
   name : String,
   payload : Payload,
 ) -> ProcessCommandRequest {
-  { name, payload: payload.to_json() }
+  { name, payload: payload.to_json(), }
 }
 
 ///|
@@ -152,13 +152,13 @@ pub fn ProcessCommandProxy::new(
   source_window_id : Int,
   subtype? : String = "bridge_command",
 ) -> ProcessCommandProxy {
-  { wm, source_window_id, subtype }
+  { wm, source_window_id, subtype, }
 }
 
 ///|
 /// Creates a parent-process command router.
 pub fn ProcessCommandRouter::new() -> ProcessCommandRouter {
-  { handlers: {} }
+  { handlers: {}, }
 }
 
 ///|
@@ -168,7 +168,7 @@ pub fn ProcessCommandRouter::plugin(
   plugin_name : String,
   register : (ProcessPluginRouter) -> Unit,
 ) -> Unit {
-  register({ router: self, plugin_name })
+  register({ router: self, plugin_name, })
 }
 
 ///|

@@ -29,32 +29,32 @@ pub struct SelectReply {
 } derive(ToJson, FromJson)
 
 ///|
-let sql_connections : Ref[Map[Int, String]] = { val: {} }
+let sql_connections : Ref[Map[Int, String]] = { val: {}, }
 
 ///|
-let next_conn_id : Ref[Int] = { val: 1 }
+let next_conn_id : Ref[Int] = { val: 1, }
 
 ///|
 fn load_connection(payload : LoadRequest) -> ConnectionReply {
   let id = next_conn_id.val
   next_conn_id.val = next_conn_id.val + 1
   sql_connections.val.set(id, payload.db)
-  { id, db: payload.db }
+  { id, db: payload.db, }
 }
 
 ///|
 fn execute(payload : ExecuteRequest) -> ExecuteReply {
   match sql_connections.val.get(payload.conn_id) {
-    Some(_) => { ok: true, error: None }
-    None => { ok: false, error: Some("connection not found") }
+    Some(_) => { ok: true, error: None, }
+    None => { ok: false, error: Some("connection not found"), }
   }
 }
 
 ///|
 fn select(payload : ExecuteRequest) -> SelectReply {
   match sql_connections.val.get(payload.conn_id) {
-    Some(_) => { ok: true, rows: [payload.sql], error: None }
-    None => { ok: false, rows: [], error: Some("connection not found") }
+    Some(_) => { ok: true, rows: [payload.sql], error: None, }
+    None => { ok: false, rows: [], error: Some("connection not found"), }
   }
 }
 

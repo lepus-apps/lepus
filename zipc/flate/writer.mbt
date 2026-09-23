@@ -36,13 +36,13 @@ struct DictWriter {
 }
 
 ///|
-pub impl @io.Writer for DictWriter with write(self, b) {
+pub impl @io.Writer for DictWriter with fn write(self, b) {
   self.w.write(b)
 }
 
 ///|
 /// `write` writes the provided data to the flate Writer.
-pub impl @io.Writer for Writer with write(self, data) {
+pub impl @io.Writer for Writer with fn write(self, data) {
   self.d.write(data)
 }
 
@@ -50,7 +50,7 @@ pub impl @io.Writer for Writer with write(self, data) {
 /// `close` closes the input to the flate Writer.
 /// After closing the Writer, the compressed data can be read
 /// from the `@io.Writer` provided to `new`.
-pub impl @io.Closer for Writer with close(self) {
+pub impl @io.Closer for Writer with fn close(self) {
   self.d.close()
 }
 

@@ -5,10 +5,10 @@ pub struct SecretSetRequest {
 } derive(ToJson, FromJson)
 
 ///|
-let secret_key : Ref[String] = { val: "lepus-stronghold" }
+let secret_key : Ref[String] = { val: "lepus-stronghold", }
 
 ///|
-let encrypted_store : Ref[Map[String, String]] = { val: {} }
+let encrypted_store : Ref[Map[String, String]] = { val: {}, }
 
 ///|
 fn xor_encrypt(text : String, key : String) -> String {

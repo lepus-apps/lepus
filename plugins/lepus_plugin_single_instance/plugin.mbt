@@ -14,9 +14,9 @@ fn acquire_reply(
   payload : SingleInstanceAcquireRequest,
 ) -> SingleInstanceAcquireReply {
   if acquire(payload.app_id) {
-    { acquired: true, error: None }
+    { acquired: true, error: None, }
   } else {
-    { acquired: false, error: Some(last_error()) }
+    { acquired: false, error: Some(last_error()), }
   }
 }
 

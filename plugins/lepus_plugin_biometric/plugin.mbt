@@ -23,9 +23,9 @@ pub fn authenticate(payload : BiometricAuthRequest) -> BiometricAuthReply {
     }
   } else {
     match authenticate_native(reason) {
-      Ok(success) => { available: true, success, reason, error: None }
+      Ok(success) => { available: true, success, reason, error: None, }
       Err(message) =>
-        { available: true, success: false, reason, error: Some(message) }
+        { available: true, success: false, reason, error: Some(message), }
     }
   }
 }

@@ -167,7 +167,7 @@ pub fn WindowManager::init(is_main? : Bool = true) -> WindowManager {
     1 => Child
     _ => Unknown
   }
-  { process_type, window_ids: [] }
+  { process_type, window_ids: [], }
 }
 
 ///|

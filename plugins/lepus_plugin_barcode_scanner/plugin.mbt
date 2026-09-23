@@ -48,11 +48,11 @@ fn ean13_valid(text : String) -> Bool {
 pub fn scan(text : String) -> ScanResult {
   let trimmed = text.trim(char_set=" \n\r\t").to_owned()
   if trimmed.length() == 13 && is_all_digits(trimmed) {
-    { value: trimmed, format: Ean13, valid: ean13_valid(trimmed) }
+    { value: trimmed, format: Ean13, valid: ean13_valid(trimmed), }
   } else if trimmed.length() >= 6 {
-    { value: trimmed, format: QrLike, valid: true }
+    { value: trimmed, format: QrLike, valid: true, }
   } else {
-    { value: trimmed, format: Unknown, valid: false }
+    { value: trimmed, format: Unknown, valid: false, }
   }
 }
 

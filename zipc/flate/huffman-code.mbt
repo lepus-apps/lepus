@@ -14,15 +14,15 @@ priv struct HuffmanEncoder {
 
 ///|
 fn HuffmanEncoder::new(size : Int) -> HuffmanEncoder {
-  let codes = Array::make(size, { code: 0U, len: 0U })
+  let codes = Array::make(size, { code: 0U, len: 0U, })
   // Is this a MoonBit bug? Need to make unique arrays or else they will
   // all refer to the same one.
   for i = 0; i < size; i = i + 1 {
-    codes[i] = { code: 0U, len: 0U }
+    codes[i] = { code: 0U, len: 0U, }
   }
   let freqcache = []
   let bit_count = Array::make(17, 0)
-  { codes, freqcache, bit_count }
+  { codes, freqcache, bit_count, }
 }
 
 ///|
@@ -63,7 +63,7 @@ priv struct LevelInfo {
 
 ///|
 fn LevelInfo::new() -> LevelInfo {
-  { level: 0, last_freq: 0, next_char_freq: 0, next_pair_freq: 0, needed: 0 }
+  { level: 0, last_freq: 0, next_char_freq: 0, next_pair_freq: 0, needed: 0, }
 }
 
 // set sets the code and length of an hcode.
@@ -76,7 +76,7 @@ fn HCode::set(self : HCode, code : UInt, length : UInt) -> Unit {
 
 ///|
 fn max_node() -> LiteralNode {
-  { literal: @uint.MAX_VALUE, freq: @int.MAX_VALUE }
+  { literal: @uint.MAX_VALUE, freq: @int.MAX_VALUE, }
 }
 
 ///|
@@ -272,7 +272,7 @@ fn HuffmanEncoder::assign_encoding_and_size(
         n.to_byte(),
       )
       let len = n.reinterpret_as_uint()
-      self.codes[key] = { code: debug_code, len }
+      self.codes[key] = { code: debug_code, len, }
       code += 1
     }
     list = list[0:list.length() - bits]
@@ -301,11 +301,11 @@ fn HuffmanEncoder::generate(
     // Allocate a reusable buffer with the longest possible frequency table.
     // Possible lengths are codegenCodeCount, offsetCodeCount and max_num_lit.
     // The largest of these is max_num_lit, so we allocate for that case.
-    self.freqcache = Array::make(max_num_lit + 1, { literal: 0, freq: 0 })
+    self.freqcache = Array::make(max_num_lit + 1, { literal: 0, freq: 0, })
     // Is this a MoonBit bug? Need to make unique structs or else they will
     // all refer to the same one.
     for i = 0; i <= max_num_lit; i = i + 1 {
-      self.freqcache[i] = { literal: 0, freq: 0 }
+      self.freqcache[i] = { literal: 0, freq: 0, }
     }
   }
   let mut list = Slice::new(self.freqcache)[:freq.length() + 1]
@@ -314,7 +314,7 @@ fn HuffmanEncoder::generate(
   // Set list to be the set of all non-zero literals and their frequencies
   for i, f in freq {
     if f != 0 {
-      list[count] = { literal: (i & 0xffff).reinterpret_as_uint(), freq: f }
+      list[count] = { literal: (i & 0xffff).reinterpret_as_uint(), freq: f, }
       count += 1
     } else {
       self.codes[i].len = 0
@@ -690,36 +690,36 @@ fn by_literal(a : LiteralNode, b : LiteralNode) -> Bool {
 ///|
 let huff_offset : HuffmanEncoder = {
   codes: [
-    { code: 0, len: 1 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
-    { code: 0, len: 0 },
+    { code: 0, len: 1, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
+    { code: 0, len: 0, },
   ],
   freqcache: [],
   bit_count: [],

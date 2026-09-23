@@ -12,7 +12,7 @@ struct SumReply {
 ///|
 async fn sum_async_handler(payload : SumPayload) -> SumReply {
   @async.sleep(1000)
-  { total: payload.left + payload.right }
+  { total: payload.left + payload.right, }
 }
 
 ///|
@@ -56,6 +56,6 @@ async fn main {
 
 ///|
 async test {
-  let payload = SumPayload::{ left: 2, right: 3 }
+  let payload = SumPayload::{ left: 2, right: 3, }
   json_inspect(sum_async_handler(payload), content={ "total": 5 })
 }

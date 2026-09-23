@@ -155,7 +155,13 @@ pub fn[X] PluginHost::new(
   global_name? : String = "lepusApi",
 ) -> PluginHost[X] {
   let bridge = CommandBridge::new(webview, global_name="lepusBridge")
-  let host = PluginHost::{ webview, bridge, global_name, plugins: {}, apis: {} }
+  let host = PluginHost::{
+    webview,
+    bridge,
+    global_name,
+    plugins: {},
+    apis: {},
+  }
   host.install_script(make_plugin_host_script(global_name, "lepusBridge"))
   host
 }
@@ -176,7 +182,7 @@ pub fn PluginHost::install(
   guard self.plugins.get(plugin.name) is None else {
     abort("PluginHost::install: plugin already installed: " + plugin.name)
   }
-  let context = PluginContext::{ host: self, plugin_name: plugin.name }
+  let context = PluginContext::{ host: self, plugin_name: plugin.name, }
   self.plugins.set(plugin.name, true)
   self.install_script(
     make_plugin_namespace_script(self.global_name, plugin.name),

@@ -8,9 +8,9 @@ pub struct OpenReply {
 fn open_reply(target : String) -> OpenReply {
   try {
     open_target(target)
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    OpenerError(message) => { ok: false, error: Some(message) }
+    OpenerError(message) => { ok: false, error: Some(message), }
   }
 }
 

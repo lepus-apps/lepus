@@ -56,7 +56,7 @@ async fn collect_doctor_checks(config : DoctorConfig) -> Array[DoctorCheck] {
         "no Lepus config file found"
       },
     },
-    { name: "webview", ok: webview_ok, detail: webview_message() },
+    { name: "webview", ok: webview_ok, detail: webview_message(), },
     {
       name: "platform",
       ok: platform == "macos" || platform == "linux",

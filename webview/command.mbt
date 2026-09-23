@@ -55,7 +55,7 @@ fn[X] CommandBridge::new(
   global_name? : String = "lepusBridge",
   binding_name? : String = "__moonbit_command",
 ) -> CommandBridge[X] {
-  let bridge = CommandBridge::{ webview, binding_name, handlers: {} }
+  let bridge = CommandBridge::{ webview, binding_name, handlers: {}, }
   bridge.webview.init(make_bridge_script(global_name, binding_name))
   bridge.start_dispatch()
   bridge

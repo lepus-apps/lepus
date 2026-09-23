@@ -13,7 +13,7 @@ struct Buffer {
 /// improve performance when the size of the data to be written is known in advance.
 pub fn Buffer::new(size_hint? : Int = 0) -> Buffer {
   let b = Slice::new(Array::make(size_hint, b'\x00'), start=0, end=0)
-  { b, off: 0 }
+  { b, off: 0, }
 }
 
 ///|
@@ -25,13 +25,13 @@ let _trait5 : &Writer = Buffer::new()
 ///|
 pub fn Buffer::from_slice(s : Slice[Byte]) -> Buffer {
   let b = Slice::new(s.to_bytes().to_array())
-  { b, off: 0 }
+  { b, off: 0, }
 }
 
 ///|
 pub fn Buffer::from_bytes(b : Bytes) -> Buffer {
   let buf = Slice::new(b.to_array())
-  { b: buf, off: 0 }
+  { b: buf, off: 0, }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn Buffer::from_bytes(b : Bytes) -> Buffer {
 pub fn Buffer::from_string(s : String) -> Buffer {
   let b = @utf8.encode(s)
   let buf = Slice::new(b.to_array())
-  { b: buf, off: 0 }
+  { b: buf, off: 0, }
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn Buffer::reset(self : Buffer, size_hint? : Int = 0) -> Unit {
 }
 
 ///|
-pub impl Writer for Buffer with write(self, buf) {
+pub impl Writer for Buffer with fn write(self, buf) {
   let blen = self.b.length()
   let buflen = buf.length()
   self.b = Slice::new(
@@ -84,7 +84,7 @@ pub fn Buffer::write_string(self : Buffer, s : String) -> (Int, IOError?) {
 }
 
 ///|
-pub impl Reader for Buffer with read(self, buf) {
+pub impl Reader for Buffer with fn read(self, buf) {
   let remaining = self.b.length() - self.off
   if remaining <= 0 || buf.length() == 0 {
     return (0, Some(eof))
@@ -96,7 +96,7 @@ pub impl Reader for Buffer with read(self, buf) {
 }
 
 ///|
-pub impl ByteReader for Buffer with read_byte(self) {
+pub impl ByteReader for Buffer with fn read_byte(self) {
   let remaining = self.b.length() - self.off
   if remaining <= 0 {
     return (0, Some(eof))
@@ -126,17 +126,17 @@ pub fn Buffer::to_bytes(self : Buffer) -> Bytes {
 }
 
 ///|
-pub impl Show for Buffer with to_string(self) {
+pub impl Show for Buffer with fn to_string(self) {
   @utf8.decode_lossy(Bytes::from_array(self.b.buf)[:])
 }
 
 ///|
-pub impl Show for Buffer with output(self, logger) {
+pub impl Show for Buffer with fn output(self, logger) {
   logger.write_string(self.to_string())
 }
 
 ///|
-pub impl Eq for Buffer with equal(self, other) {
+pub impl Eq for Buffer with fn equal(self, other) {
   if self.b.length() != other.b.length() {
     return false
   }

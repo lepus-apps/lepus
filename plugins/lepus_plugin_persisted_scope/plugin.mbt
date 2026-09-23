@@ -12,7 +12,7 @@ pub struct ScopeGetRequest {
 } derive(ToJson, FromJson)
 
 ///|
-let scope_store : Ref[Map[String, Map[String, String]]] = { val: {} }
+let scope_store : Ref[Map[String, Map[String, String]]] = { val: {}, }
 
 ///|
 fn ensure_scope(scope : String) -> Map[String, String] {

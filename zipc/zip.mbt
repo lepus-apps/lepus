@@ -65,7 +65,7 @@ pub const MAX_PATH_LENGTH : Int = 65535
 
 ///|
 pub fn Archive::new() -> Archive {
-  { members: Map([]) }
+  { members: Map([]), }
 }
 
 ///|

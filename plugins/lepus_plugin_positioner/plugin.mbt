@@ -13,7 +13,7 @@ pub struct PositionRequest {
 } derive(ToJson, FromJson)
 
 ///|
-let positioned_windows : Ref[Map[String, WindowBounds]] = { val: {} }
+let positioned_windows : Ref[Map[String, WindowBounds]] = { val: {}, }
 
 ///|
 fn set_bounds(payload : PositionRequest) -> WindowBounds {

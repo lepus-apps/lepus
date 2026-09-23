@@ -18,8 +18,8 @@ let test_app_id : String = "lepus.test.app"
 ///|
 fn status_reply(app_id : String) -> AutostartStatusReply {
   match status(app_id) {
-    Ok(enabled) => { ok: true, enabled, error: None }
-    Err(message) => { ok: false, enabled: false, error: Some(message) }
+    Ok(enabled) => { ok: true, enabled, error: None, }
+    Err(message) => { ok: false, enabled: false, error: Some(message), }
   }
 }
 
@@ -27,7 +27,7 @@ fn status_reply(app_id : String) -> AutostartStatusReply {
 fn enable_reply(payload : AutostartConfig) -> AutostartStatusReply {
   match enable(payload.app_id, payload.exec_path, payload.args.unwrap_or("")) {
     Ok(_) => status_reply(payload.app_id)
-    Err(message) => { ok: false, enabled: false, error: Some(message) }
+    Err(message) => { ok: false, enabled: false, error: Some(message), }
   }
 }
 
@@ -35,14 +35,14 @@ fn enable_reply(payload : AutostartConfig) -> AutostartStatusReply {
 fn disable_reply(app_id : String) -> AutostartStatusReply {
   match disable(app_id) {
     Ok(_) => status_reply(app_id)
-    Err(message) => { ok: false, enabled: false, error: Some(message) }
+    Err(message) => { ok: false, enabled: false, error: Some(message), }
   }
 }
 
 ///|
 pub fn set_enabled(enabled : Bool) -> AutostartStatusReply {
   if enabled {
-    enable_reply({ app_id: test_app_id, exec_path: "lepus", args: None })
+    enable_reply({ app_id: test_app_id, exec_path: "lepus", args: None, })
   } else {
     disable_reply(test_app_id)
   }

@@ -5,11 +5,11 @@ pub struct LogEntry {
 } derive(ToJson, FromJson)
 
 ///|
-let logs : Ref[Array[LogEntry]] = { val: [] }
+let logs : Ref[Array[LogEntry]] = { val: [], }
 
 ///|
 fn append_log(level : String, message : String) -> LogEntry {
-  let entry = { level, message }
+  let entry = { level, message, }
   logs.val.push(entry)
   entry
 }

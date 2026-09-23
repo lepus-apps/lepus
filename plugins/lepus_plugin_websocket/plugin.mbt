@@ -24,13 +24,13 @@ pub struct RecvReply {
 } derive(ToJson, FromJson)
 
 ///|
-let ws_urls : Ref[Map[Int, String]] = { val: {} }
+let ws_urls : Ref[Map[Int, String]] = { val: {}, }
 
 ///|
-let ws_last_msg : Ref[Map[Int, String]] = { val: {} }
+let ws_last_msg : Ref[Map[Int, String]] = { val: {}, }
 
 ///|
-let next_ws_id : Ref[Int] = { val: 1 }
+let next_ws_id : Ref[Int] = { val: 1, }
 
 ///|
 fn connect(payload : ConnectRequest) -> ConnectReply {
@@ -38,7 +38,7 @@ fn connect(payload : ConnectRequest) -> ConnectReply {
   next_ws_id.val = next_ws_id.val + 1
   ws_urls.val.set(id, payload.url)
   ws_last_msg.val.set(id, "")
-  { ok: true, id: Some(id), error: None }
+  { ok: true, id: Some(id), error: None, }
 }
 
 ///|
@@ -57,9 +57,9 @@ fn recv_text(id : Int) -> RecvReply {
   match ws_urls.val.get(id) {
     Some(_) => {
       let text = ws_last_msg.val.get(id).unwrap_or("")
-      { ok: true, text: Some(text), error: None }
+      { ok: true, text: Some(text), error: None, }
     }
-    None => { ok: false, text: None, error: Some("connection not found") }
+    None => { ok: false, text: None, error: Some("connection not found"), }
   }
 }
 

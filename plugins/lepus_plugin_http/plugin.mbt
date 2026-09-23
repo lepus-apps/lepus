@@ -18,7 +18,7 @@ struct FetchReply {
 
 ///|
 fn default_fetch_init() -> FetchInit {
-  { meth: None, headers: None, body: None }
+  { meth: None, headers: None, body: None, }
 }
 
 ///|
@@ -37,7 +37,7 @@ fn parse_fetch_init(init : Json) -> FetchInit {
           }
         None => None
       }
-      { meth, headers, body: obj.get("body") }
+      { meth, headers, body: obj.get("body"), }
     }
     _ => default_fetch_init()
   }

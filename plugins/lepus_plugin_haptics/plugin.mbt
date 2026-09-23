@@ -21,9 +21,9 @@ fn pulse(payload : HapticPulseRequest) -> HapticPulseReply {
     intensity = 100
   }
   match pulse_native(intensity) {
-    Ok(_) => { ok: true, pattern: payload.pattern, intensity, error: None }
+    Ok(_) => { ok: true, pattern: payload.pattern, intensity, error: None, }
     Err(message) =>
-      { ok: false, pattern: payload.pattern, intensity, error: Some(message) }
+      { ok: false, pattern: payload.pattern, intensity, error: Some(message), }
   }
 }
 

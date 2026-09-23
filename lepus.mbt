@@ -48,13 +48,13 @@ priv struct ResolvedSource {
 
 ///|
 pub fn MemoryFile::from_bytes(path : String, content : Bytes) -> MemoryFile {
-  { path, content }
+  { path, content, }
 }
 
 ///|
 pub fn MemoryFile::from_string(path : String, content : String) -> MemoryFile {
   let content = @utf8.encode(content)
-  { path, content }
+  { path, content, }
 }
 
 ///|
@@ -62,7 +62,7 @@ pub fn MemorySource::new(
   files : Array[MemoryFile],
   entry? : String = "index.html",
 ) -> MemorySource {
-  { entry, files }
+  { entry, files, }
 }
 
 ///|
@@ -120,7 +120,7 @@ pub fn WindowConfig::set_source(
   self : WindowConfig,
   source : Source,
 ) -> WindowConfig {
-  { ..self, source: Some(source) }
+  { ..self, source: Some(source), }
 }
 
 ///|
@@ -182,7 +182,7 @@ pub fn Window::new(
 
 ///|
 pub fn Window::set_source(self : Window, source : Source) -> Window {
-  { ..self, config: self.config.set_source(source) }
+  { ..self, config: self.config.set_source(source), }
 }
 
 ///|
@@ -200,7 +200,7 @@ pub fn App::new(
   windows : Array[WindowConfig],
   plugins? : Array[@webview.Plugin] = [],
 ) -> App {
-  { windows, plugins }
+  { windows, plugins, }
 }
 
 ///|
@@ -211,7 +211,7 @@ pub fn App::with_windows(
   guard windows.length() > 0 else {
     abort("App::with_windows requires at least one window")
   }
-  { windows, plugins }
+  { windows, plugins, }
 }
 
 ///|
@@ -263,7 +263,7 @@ pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
 ///|
 async fn resolve_source(source : Source) -> ResolvedSource {
   match source {
-    Url(url) => { url, custom_protocols: [] }
+    Url(url) => { url, custom_protocols: [], }
     Local(path) => resolve_local_fs(path)
     Memory(source) => resolve_memory_source(source)
   }
@@ -291,7 +291,7 @@ async fn resolve_local_fs(path : String) -> ResolvedSource {
   guard @fs.can_read(entry_path) else {
     abort("LocalFs source is not readable: " + entry_path)
   }
-  { url: to_file_url(@fs.realpath(entry_path)), custom_protocols: [] }
+  { url: to_file_url(@fs.realpath(entry_path)), custom_protocols: [], }
 }
 
 ///|

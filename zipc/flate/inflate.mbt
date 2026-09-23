@@ -88,7 +88,7 @@ priv struct HuffmanDecoder {
 ///|
 fn HuffmanDecoder::new() -> HuffmanDecoder {
   let chunks = Array::make(huffman_num_chunks.reinterpret_as_int(), 0U)
-  { min: 0, chunks, links: [], link_mask: 0 }
+  { min: 0, chunks, links: [], link_mask: 0, }
 }
 
 ///|
@@ -226,28 +226,28 @@ fn HuffmanDecoder::initialize(
 /// The actual read interface needed by [Decompressor::new].
 pub(open) trait Reader {
   // @io.Reader
-  read(Self, Slice[Byte]) -> (Int, IOError?)
+  fn read(Self, Slice[Byte]) -> (Int, IOError?)
   // @io.ByteReader
-  read_byte(Self) -> (Byte, IOError?)
+  fn read_byte(Self) -> (Byte, IOError?)
 }
 
 ///|
-pub impl @io.Reader for &Reader with read(self, b) {
+pub impl @io.Reader for &Reader with fn read(self, b) {
   self.read(b)
 }
 
 ///|
-pub impl @io.ByteReader for &Reader with read_byte(self) {
+pub impl @io.ByteReader for &Reader with fn read_byte(self) {
   self.read_byte()
 }
 
 ///|
-pub impl Reader for @io.Buffer with read(self, b) {
+pub impl Reader for @io.Buffer with fn read(self, b) {
   self.read(b)
 }
 
 ///|
-pub impl Reader for @io.Buffer with read_byte(self) {
+pub impl Reader for @io.Buffer with fn read_byte(self) {
   self.read_byte()
 }
 
@@ -379,7 +379,7 @@ fn Decompressor::next_block(self : Decompressor) -> Unit {
 }
 
 ///|
-pub impl @io.Reader for Decompressor with read(self, b) {
+pub impl @io.Reader for Decompressor with fn read(self, b) {
   for ;; {
     if self.to_read.length() > 0 {
       let mut n = self.to_read.length()
@@ -407,7 +407,7 @@ pub impl @io.Reader for Decompressor with read(self, b) {
 }
 
 ///|
-pub impl @io.Closer for Decompressor with close(self) {
+pub impl @io.Closer for Decompressor with fn close(self) {
   if Some(ioeof) == self.err {
     return None
   }

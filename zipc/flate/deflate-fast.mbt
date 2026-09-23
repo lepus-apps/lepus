@@ -110,7 +110,7 @@ priv struct DeflateFast {
 ///|
 fn DeflateFast::new() -> DeflateFast {
   {
-    table: FixedArray::make(table_size, { val: 0U, offset: 0 }),
+    table: FixedArray::make(table_size, { val: 0U, offset: 0, }),
     prev: Slice::new([]),
     cur: max_store_block_size,
   }
@@ -177,7 +177,7 @@ fn DeflateFast::encode(
     // the number of bytes to move ahead for each iteration.
     let mut skip = 32
     let mut next_s = s
-    let mut candidate : TableEntry = { val: 0U, offset: 0 }
+    let mut candidate : TableEntry = { val: 0U, offset: 0, }
 
     //
     for ;; {
@@ -190,7 +190,7 @@ fn DeflateFast::encode(
       }
       candidate = self.table[next_hash & table_mask]
       let now = load32(src, next_s)
-      self.table[next_hash & table_mask] = { offset: s + self.cur, val: cv }
+      self.table[next_hash & table_mask] = { offset: s + self.cur, val: cv, }
       next_hash = hash(now)
       let offset = s - (candidate.offset - self.cur)
       if offset > max_match_offset || cv != candidate.val {
@@ -367,7 +367,7 @@ fn DeflateFast::shift_offsets(self : DeflateFast) -> Unit {
   if self.prev.length() == 0 {
     // We have no history; just clear the table.
     for i = 0; i < table_size; i = i + 1 {
-      self.table[i] = { val: 0U, offset: 0 }
+      self.table[i] = { val: 0U, offset: 0, }
     }
     self.cur = max_match_offset + 1
     return

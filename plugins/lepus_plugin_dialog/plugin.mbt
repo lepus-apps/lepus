@@ -41,7 +41,7 @@ fn show_dialog(payload : DialogRequest) -> DialogReply {
   let level = payload.level.unwrap_or(Info)
   match alert_native(title, payload.message, level) {
     Ok(_) =>
-      { shown: true, title, message: payload.message, level, error: None }
+      { shown: true, title, message: payload.message, level, error: None, }
     Err(message) =>
       {
         shown: false,
@@ -61,8 +61,8 @@ fn confirm_dialog(payload : ConfirmRequest) -> ConfirmReply {
       payload.message,
       payload.default_ok.unwrap_or(true),
     ) {
-    Ok(accepted) => { ok: true, accepted, error: None }
-    Err(message) => { ok: false, accepted: false, error: Some(message) }
+    Ok(accepted) => { ok: true, accepted, error: None, }
+    Err(message) => { ok: false, accepted: false, error: Some(message), }
   }
 }
 

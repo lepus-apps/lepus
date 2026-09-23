@@ -116,7 +116,7 @@ const DEFAULT_BUFFER_SIZE = 1024
 
 ///|
 fn ParseContext::make(r : &ByteReader) -> ParseContext {
-  { r, buf: Buffer::new(size_hint=DEFAULT_BUFFER_SIZE), offset: 0 }
+  { r, buf: Buffer::new(size_hint=DEFAULT_BUFFER_SIZE), offset: 0, }
 }
 
 ///|

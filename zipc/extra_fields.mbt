@@ -48,7 +48,7 @@ pub fn parse_extra_fields(data : String) -> Array[ExtraField] {
     // Read data
     if offset + data_size <= data.length() {
       let field_data = data[offset:offset + data_size]
-      fields.push({ header_id, data_size, data: field_data })
+      fields.push({ header_id, data_size, data: field_data, })
       offset = offset + data_size
     } else {
       // Truncated field, stop parsing
@@ -114,7 +114,7 @@ pub fn create_unix_timestamp_field(
     Some(time) => data = data + write_u32_le_extra(time)
     None => ()
   }
-  { header_id: info_zip_unix_id, data_size: data.length(), data }
+  { header_id: info_zip_unix_id, data_size: data.length(), data, }
 }
 
 // Parse Unix timestamp extra field
@@ -178,7 +178,7 @@ pub fn create_unicode_path_field(
 
   // Unicode path (UTF-8)
   data = data + unicode_path
-  { header_id: unicode_path_id, data_size: data.length(), data }
+  { header_id: unicode_path_id, data_size: data.length(), data, }
 }
 
 // Parse Unicode path extra field

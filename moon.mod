@@ -3,6 +3,9 @@ name = "lepus-apps/lepus"
 version = "0.1.8"
 
 import {
+  "moonbitlang/x@0.5.5",
+  "moonbitlang/async@0.22.2",
+  "moonbitlang/parser@0.4.0",
 }
 
 readme = "README.mbt.md"
@@ -17,6 +20,4 @@ description = "A modern desktop application framework based on web technologies.
 
 preferred_target = "native"
 
-options(
-  source: ".",
-)
+source = "."

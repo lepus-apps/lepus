@@ -456,7 +456,7 @@ pub fn copy_buffer(
 /// but stops with eof after n bytes.
 /// The underlying implementation is a LimitedReader.
 pub fn LimitedReader::new(r : &Reader, n : Int64) -> LimitedReader {
-  { r, n }
+  { r, n, }
 }
 
 ///|
@@ -502,7 +502,7 @@ pub fn SectionReader::new(
     // Assume we can read up to an offset of 1<<63 - 1.
     remaining = @int64.MAX_VALUE
   }
-  { r, base: off, off, limit: remaining, n }
+  { r, base: off, off, limit: remaining, n, }
 }
 
 ///|
@@ -611,7 +611,7 @@ struct OffsetWriter {
 /// OffsetWriter::new returns an [OffsetWriter] that writes to w
 /// starting at offset off.
 pub fn OffsetWriter::new(w : &WriterAt, off : Int64) -> OffsetWriter {
-  { w, base: off, off }
+  { w, base: off, off, }
 }
 
 ///|
@@ -663,7 +663,7 @@ pub fn OffsetWriter::seek(
 /// the write must complete before the read completes.
 /// Any error encountered while writing is reported as a read error.
 pub fn TeeReader::new(r : &Reader, w : &Writer) -> TeeReader {
-  { r, w }
+  { r, w, }
 }
 
 ///|
@@ -691,7 +691,7 @@ pub impl Reader for TeeReader with fn read(self, p) {
 /// discard is a [Writer] on which all Write calls succeed
 /// without doing anything.
 #warnings("-unnecessary_annotation")
-pub let discard : Discard = Discard::{  }
+pub let discard : Discard = Discard::{ }
 
 ///|
 /// `discard` satisfies the `Writer` trait.

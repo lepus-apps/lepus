@@ -31,7 +31,7 @@ async fn execute_script_with_output(
   // Execute and capture output directly
   let exit_code = @process.run(program, args, stdin=stdin_r, stdout=stdout_w)
   stdout_w.close()
-  { exit_code, output: stdout_r.read_all().text() }
+  { exit_code, output: stdout_r.read_all().text(), }
 }
 
 ///|

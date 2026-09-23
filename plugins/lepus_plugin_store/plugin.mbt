@@ -10,7 +10,7 @@ pub struct StoreDump {
 } derive(ToJson, FromJson)
 
 ///|
-let store_map : Ref[Map[String, String]] = { val: {} }
+let store_map : Ref[Map[String, String]] = { val: {}, }
 
 ///|
 fn set_item(payload : StoreSetRequest) -> Bool {

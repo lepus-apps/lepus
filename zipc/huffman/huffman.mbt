@@ -13,7 +13,7 @@ pub struct BitReader {
 
 ///|
 pub fn new_bit_reader(data : Bytes) -> BitReader {
-  { data, bit_offset: 0 }
+  { data, bit_offset: 0, }
 }
 
 // Read bits from the stream (LSB first, as per RFC 1951)

@@ -75,7 +75,7 @@ pub fn[T] Slice::new(buf : Array[T], start? : Int = 0, end? : Int) -> Slice[T] {
   guard start >= 0 && start <= end && end <= len else {
     abort("View start index out of bounds")
   }
-  { buf, start, len: end - start }
+  { buf, start, len: end - start, }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn[T] Slice::op_as_view(
   guard self.start + start >= 0 && start <= end && self.start + end <= len else {
     abort("View start index out of bounds")
   }
-  { buf: self.buf, start: self.start + start, len: end - start }
+  { buf: self.buf, start: self.start + start, len: end - start, }
 }
 
 ///|
@@ -118,7 +118,7 @@ pub fn[T] Slice::append(self : Slice[T], s : Slice[T]) -> Slice[T] {
     for i in 0..<s.length() {
       self.buf[idx + i] = s[i]
     }
-    return { buf: self.buf, start: self.start, len: self.len + s.length() }
+    return { buf: self.buf, start: self.start, len: self.len + s.length(), }
   }
   // reallocate array, copy the data, then return the new slice
   let arr = Array::new(capacity=self.length() + s.length())
@@ -129,7 +129,7 @@ pub fn[T] Slice::append(self : Slice[T], s : Slice[T]) -> Slice[T] {
   for i in 0..<s.length() {
     arr.push(s.buf[i + s.start])
   }
-  { buf: arr, start: 0, len: self.length() + s.length() }
+  { buf: arr, start: 0, len: self.length() + s.length(), }
 }
 
 ///|

@@ -13,10 +13,10 @@ pub struct LocalhostState {
 } derive(ToJson, FromJson)
 
 ///|
-let last_pid : Ref[Int?] = { val: None }
+let last_pid : Ref[Int?] = { val: None, }
 
 ///|
-let last_port : Ref[Int] = { val: 0 }
+let last_port : Ref[Int] = { val: 0, }
 
 ///|
 fn start_reply(payload : StartRequest) -> LocalhostState {
@@ -24,10 +24,10 @@ fn start_reply(payload : StartRequest) -> LocalhostState {
     Ok(pid) => {
       last_pid.val = Some(pid)
       last_port.val = payload.port
-      { running: true, port: payload.port, pid: Some(pid), error: None }
+      { running: true, port: payload.port, pid: Some(pid), error: None, }
     }
     Err(message) =>
-      { running: false, port: payload.port, pid: None, error: Some(message) }
+      { running: false, port: payload.port, pid: None, error: Some(message), }
   }
 }
 
@@ -36,7 +36,7 @@ fn stop_reply() -> LocalhostState {
   match stop_server() {
     Ok(_) => {
       last_pid.val = None
-      { running: false, port: last_port.val, pid: None, error: None }
+      { running: false, port: last_port.val, pid: None, error: None, }
     }
     Err(message) =>
       {
@@ -50,7 +50,7 @@ fn stop_reply() -> LocalhostState {
 
 ///|
 fn status_reply() -> LocalhostState {
-  { running: running(), port: last_port.val, pid: last_pid.val, error: None }
+  { running: running(), port: last_port.val, pid: last_pid.val, error: None, }
 }
 
 ///|

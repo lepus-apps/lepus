@@ -11,20 +11,20 @@ struct TestCase {
 ///|
 test "utf8" {
   let tests : Array[TestCase] = [
-    { name: "empty", input: [], expected: [] },
-    { name: "ascii_single", input: [b'a'], expected: ['a'] },
+    { name: "empty", input: [], expected: [], },
+    { name: "ascii_single", input: [b'a'], expected: ['a'], },
     {
       name: "ascii_multiple",
       input: [b'a', b'b', b'c'],
       expected: ['a', 'b', 'c'],
     },
-    { name: "two_byte", input: [0xc3, 0xa9], expected: ['é'] },
-    { name: "three_byte", input: [0xe2, 0x99, 0xa5], expected: ['♥'] },
-    { name: "four_byte", input: [0xf0, 0x9f, 0x98, 0x80], expected: ['😀'] },
-    { name: "invalid_start", input: [0x80], expected: [] },
-    { name: "incomplete_two_byte", input: [0xc3], expected: [] },
-    { name: "incomplete_three_byte", input: [0xe2, 0x99], expected: [] },
-    { name: "invalid_continuation", input: [0xc3, 0x00], expected: [] },
+    { name: "two_byte", input: [0xc3, 0xa9], expected: ['é'], },
+    { name: "three_byte", input: [0xe2, 0x99, 0xa5], expected: ['♥'], },
+    { name: "four_byte", input: [0xf0, 0x9f, 0x98, 0x80], expected: ['😀'], },
+    { name: "invalid_start", input: [0x80], expected: [], },
+    { name: "incomplete_two_byte", input: [0xc3], expected: [], },
+    { name: "incomplete_three_byte", input: [0xe2, 0x99], expected: [], },
+    { name: "invalid_continuation", input: [0xc3, 0x00], expected: [], },
     {
       name: "overlong",
       input: [0xc0, 0x80],
@@ -35,7 +35,7 @@ test "utf8" {
       input: [b'a', 0xc3, 0xa9, b'b'],
       expected: ['a', 'é', 'b'],
     },
-    { name: "invalid_in_middle", input: [b'a', 0x80, b'b'], expected: ['a'] },
+    { name: "invalid_in_middle", input: [b'a', 0x80, b'b'], expected: ['a'], },
   ]
   for tt in tests {
     let result = @decoder.utf8(tt.input.iter()).collect()

@@ -74,15 +74,20 @@ fn decode_hex(hex : String) -> Result[String, String] {
 
 ///|
 fn encode_frame(payload : NfcEncodeRequest) -> NfcFrame {
-  { ok: true, hex: to_hex(payload.text), text: Some(payload.text), error: None }
+  {
+    ok: true,
+    hex: to_hex(payload.text),
+    text: Some(payload.text),
+    error: None,
+  }
 }
 
 ///|
 fn decode_frame(payload : NfcDecodeRequest) -> NfcFrame {
   match decode_hex(payload.hex) {
-    Ok(text) => { ok: true, hex: payload.hex, text: Some(text), error: None }
+    Ok(text) => { ok: true, hex: payload.hex, text: Some(text), error: None, }
     Err(message) =>
-      { ok: false, hex: payload.hex, text: None, error: Some(message) }
+      { ok: false, hex: payload.hex, text: None, error: Some(message), }
   }
 }
 

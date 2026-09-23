@@ -11,12 +11,12 @@ struct TestCase {
 ///|
 test "utf8" {
   let tests : Array[TestCase] = [
-    { name: "empty", input: "", expected: [] },
-    { name: "ascii_single", input: "a", expected: [b'a'] },
-    { name: "ascii_multiple", input: "abc", expected: [b'a', b'b', b'c'] },
-    { name: "two_byte", input: "é", expected: [0xc3, 0xa9] },
-    { name: "three_byte", input: "♥", expected: [0xe2, 0x99, 0xa5] },
-    { name: "four_byte", input: "😀", expected: [0xf0, 0x9f, 0x98, 0x80] },
+    { name: "empty", input: "", expected: [], },
+    { name: "ascii_single", input: "a", expected: [b'a'], },
+    { name: "ascii_multiple", input: "abc", expected: [b'a', b'b', b'c'], },
+    { name: "two_byte", input: "é", expected: [0xc3, 0xa9], },
+    { name: "three_byte", input: "♥", expected: [0xe2, 0x99, 0xa5], },
+    { name: "four_byte", input: "😀", expected: [0xf0, 0x9f, 0x98, 0x80], },
     {
       name: "chinese",
       input: "中文",

@@ -7,7 +7,7 @@ pub struct GeoPosition {
 
 ///|
 let current_geo : Ref[GeoPosition] = {
-  val: { latitude: 31.2304, longitude: 121.4737, accuracy: 30.0 },
+  val: { latitude: 31.2304, longitude: 121.4737, accuracy: 30.0, },
 }
 
 ///|

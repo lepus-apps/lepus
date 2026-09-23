@@ -55,9 +55,9 @@ async fn save_text(payload : UploadSaveRequest) -> UploadSaveReply {
       create_mode=CreateOrTruncate,
       permission=0o644,
     )
-    { ok: true, path: Some(path), error: None }
+    { ok: true, path: Some(path), error: None, }
   } catch {
-    _ => { ok: false, path: None, error: Some("save upload failed") }
+    _ => { ok: false, path: None, error: Some("save upload failed"), }
   }
 }
 
@@ -65,9 +65,9 @@ async fn save_text(payload : UploadSaveRequest) -> UploadSaveReply {
 async fn delete_file(path : String) -> UploadDeleteReply {
   try {
     @fs.remove(path)
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    _ => { ok: false, error: Some("delete upload failed") }
+    _ => { ok: false, error: Some("delete upload failed"), }
   }
 }
 

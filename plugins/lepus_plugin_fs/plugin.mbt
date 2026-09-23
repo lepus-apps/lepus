@@ -97,15 +97,15 @@ fn kind_name(kind : @fs.FileKind) -> String {
 
 ///|
 async fn exists_reply(path : String) -> FsBoolReply {
-  { ok: true, value: @fs.exists(path), error: None } catch {
-    _ => { ok: false, value: false, error: Some("exists failed") }
+  { ok: true, value: @fs.exists(path), error: None, } catch {
+    _ => { ok: false, value: false, error: Some("exists failed"), }
   }
 }
 
 ///|
 async fn read_text(payload : FsPathRequest) -> FsReadReply {
-  { ok: true, content: Some(@fs.read_file(payload.path).text()), error: None } catch {
-    _ => { ok: false, content: None, error: Some("read failed") }
+  { ok: true, content: Some(@fs.read_file(payload.path).text()), error: None, } catch {
+    _ => { ok: false, content: None, error: Some("read failed"), }
   }
 }
 
@@ -120,9 +120,9 @@ async fn write_text(payload : FsWriteRequest) -> FsReply {
       create_mode=if append { OpenOrCreate } else { CreateOrTruncate },
       permission=0o644,
     )
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    _ => { ok: false, error: Some("write failed") }
+    _ => { ok: false, error: Some("write failed"), }
   }
 }
 
@@ -134,9 +134,9 @@ async fn mkdir_reply(payload : FsMkdirRequest) -> FsReply {
       recursive=payload.recursive.unwrap_or(true),
       permission=payload.permission.unwrap_or(0o755),
     )
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    _ => { ok: false, error: Some("mkdir failed") }
+    _ => { ok: false, error: Some("mkdir failed"), }
   }
 }
 
@@ -149,9 +149,9 @@ async fn remove_reply(payload : FsRemoveRequest) -> FsReply {
     } else {
       @fs.remove(payload.path)
     }
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    _ => { ok: false, error: Some("remove failed") }
+    _ => { ok: false, error: Some("remove failed"), }
   }
 }
 
@@ -167,14 +167,14 @@ async fn readdir_reply(payload : FsReaddirRequest) -> FsListReply {
     ),
     error: None,
   } catch {
-    _ => { ok: false, entries: [], error: Some("readdir failed") }
+    _ => { ok: false, entries: [], error: Some("readdir failed"), }
   }
 }
 
 ///|
 async fn realpath_reply(payload : FsPathRequest) -> FsStringReply {
-  { ok: true, value: Some(@fs.realpath(payload.path)), error: None } catch {
-    _ => { ok: false, value: None, error: Some("realpath failed") }
+  { ok: true, value: Some(@fs.realpath(payload.path)), error: None, } catch {
+    _ => { ok: false, value: None, error: Some("realpath failed"), }
   }
 }
 
@@ -185,7 +185,7 @@ async fn tmpdir_reply(payload : FsTmpdirRequest) -> FsStringReply {
     value: Some(@fs.tmpdir(prefix=payload.prefix.unwrap_or("lepus-fs"))),
     error: None,
   } catch {
-    _ => { ok: false, value: None, error: Some("tmpdir failed") }
+    _ => { ok: false, value: None, error: Some("tmpdir failed"), }
   }
 }
 

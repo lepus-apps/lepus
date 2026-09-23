@@ -41,7 +41,7 @@ struct WebView[X] {
 // runtime via set_log_level().
 
 ///|
-let webview_log_level : Ref[Int] = { val: 0 }
+let webview_log_level : Ref[Int] = { val: 0, }
 
 ///|
 /// Set the internal log verbosity.
@@ -151,7 +151,7 @@ fn[X] WebView::new_managed(
       ),
     )
   }
-  { handle, window_id, task_group }
+  { handle, window_id, task_group, }
 }
 
 ///|

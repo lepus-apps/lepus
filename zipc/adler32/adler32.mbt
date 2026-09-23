@@ -47,7 +47,7 @@ pub fn bytes(data : Bytes) -> Adler32 {
 // Check if two Adler-32 values are equal (private - use == operator instead)
 
 ///|
-pub impl Show for Adler32 with output(adler, logger) {
+pub impl Show for Adler32 with fn output(adler, logger) {
   let hex_chars = "0123456789abcdef"
   let mut result = ""
   let mut value = adler.0

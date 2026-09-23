@@ -34,9 +34,9 @@ pub struct ClipboardExampleReply {
 
 ///|
 fn read_reply() -> ClipboardTextReply {
-  { supported: true, text: read_text(), error: None } catch {
+  { supported: true, text: read_text(), error: None, } catch {
     ClipboardError(message) =>
-      { supported: is_supported(), text: None, error: Some(message) }
+      { supported: is_supported(), text: None, error: Some(message), }
   }
 }
 
@@ -44,9 +44,9 @@ fn read_reply() -> ClipboardTextReply {
 fn write_reply(text : String) -> ClipboardWriteReply {
   try {
     write_text(text)
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    ClipboardError(message) => { ok: false, error: Some(message) }
+    ClipboardError(message) => { ok: false, error: Some(message), }
   }
 }
 
@@ -54,17 +54,17 @@ fn write_reply(text : String) -> ClipboardWriteReply {
 fn clear_reply() -> ClipboardWriteReply {
   try {
     clear()
-    { ok: true, error: None }
+    { ok: true, error: None, }
   } catch {
-    ClipboardError(message) => { ok: false, error: Some(message) }
+    ClipboardError(message) => { ok: false, error: Some(message), }
   }
 }
 
 ///|
 fn has_text_reply() -> ClipboardBoolReply {
-  { supported: true, value: has_text(), error: None } catch {
+  { supported: true, value: has_text(), error: None, } catch {
     ClipboardError(message) =>
-      { supported: is_supported(), value: false, error: Some(message) }
+      { supported: is_supported(), value: false, error: Some(message), }
   }
 }
 

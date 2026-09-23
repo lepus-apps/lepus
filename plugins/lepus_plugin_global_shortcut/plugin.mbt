@@ -5,7 +5,7 @@ pub struct ShortcutBinding {
 } derive(ToJson, FromJson)
 
 ///|
-let shortcut_bindings : Ref[Map[String, String]] = { val: {} }
+let shortcut_bindings : Ref[Map[String, String]] = { val: {}, }
 
 ///|
 fn register_shortcut(payload : ShortcutBinding) -> Bool {
@@ -24,7 +24,7 @@ fn unregister_shortcut(accelerator : String) -> Bool {
 fn list_shortcuts() -> Array[ShortcutBinding] {
   let result : Array[ShortcutBinding] = []
   for accelerator, action in shortcut_bindings.val {
-    result.push({ accelerator, action })
+    result.push({ accelerator, action, })
   }
   result
 }

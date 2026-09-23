@@ -16,7 +16,7 @@ async fn run_capture(payload : ProcessRunRequest) -> ProcessRunReply {
   defer stdout_r.close()
   let exit_code = @process.run(payload.program, payload.args, stdout=stdout_w)
   stdout_w.close()
-  { exit_code, output: stdout_r.read_all().text() }
+  { exit_code, output: stdout_r.read_all().text(), }
 }
 
 ///|

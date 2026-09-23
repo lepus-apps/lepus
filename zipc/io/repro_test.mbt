@@ -19,7 +19,7 @@ impl @io.Reader for MultiReader with fn read(self, buf) {
 
 ///|
 test "read_all resize bug" {
-  let r : MultiReader = { count: 0 }
+  let r : MultiReader = { count: 0, }
   // read_all initial cap is 512.
   // First read will fill 512 bytes.
   // Then it will resize to 1024.

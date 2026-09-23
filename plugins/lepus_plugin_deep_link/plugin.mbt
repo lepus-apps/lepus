@@ -54,7 +54,7 @@ pub fn parse(url : String) -> DeepLinkParts {
   let (host_text, path_text) = split_once(before_query, '/')
   let host = if host_text.is_empty() { None } else { Some(host_text) }
   let path = "/" + path_text.unwrap_or("")
-  { scheme, host, path, query: parse_query(query_text.unwrap_or("")) }
+  { scheme, host, path, query: parse_query(query_text.unwrap_or("")), }
 }
 
 ///|
