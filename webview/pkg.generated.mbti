@@ -1,0 +1,350 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/webview"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn[Reply : @json.FromJson] decode_process_command_response(String) -> Reply raise ProcessCommandError
+
+pub fn webview_set_custom_protocol(WebView_t, Bytes, Bytes) -> Int
+
+pub fn wm_cleanup() -> Unit
+
+pub fn wm_close_window(Int) -> Int
+
+pub fn wm_connect_child_process() -> Int
+
+pub fn wm_create_child_window(Bytes, Bytes, Int, Int, Int) -> Int
+
+pub fn wm_create_window(Bytes, Bytes, Int, Int, Int, Int, Int, Int, Int) -> Int
+
+pub fn wm_destroy_window(Int) -> Int
+
+pub fn wm_eval_js(Int, Bytes) -> Int
+
+pub fn wm_fork_process() -> Int
+
+pub fn wm_get_handle(Int) -> WebView_t
+
+pub fn wm_get_process_id() -> Int
+
+pub fn wm_get_process_type() -> Int
+
+pub fn wm_get_visibility(Int) -> Int
+
+pub fn wm_init(Int) -> Int
+
+pub fn wm_init_js(Int, Bytes) -> Int
+
+pub fn wm_ipc_pop_message_wire(Int) -> Bytes
+
+pub fn wm_ipc_request_bytes(Int, Int, Bytes, Bytes, Int) -> Bytes
+
+pub fn wm_ipc_respond(Int, Int, Int, Bytes) -> Int
+
+pub fn wm_ipc_send(Int, Int, Int, Bytes, Bytes) -> Int
+
+pub fn wm_kill_child(Int) -> Int
+
+pub fn wm_maximize_window(Int) -> Int
+
+pub fn wm_minimize_window(Int) -> Int
+
+pub fn wm_navigate(Int, Bytes) -> Int
+
+pub fn wm_return_raw(Int, Bytes, Int, Bytes) -> Int
+
+pub fn wm_run_window(Int) -> Int
+
+pub fn wm_run_window_async(Int) -> Int
+
+pub fn wm_set_devtools(Int, Int) -> Int
+
+pub fn wm_set_fullscreen_window(Int, Int) -> Int
+
+pub fn wm_set_html(Int, Bytes) -> Int
+
+pub fn wm_set_size(Int, Int, Int, SizeHint) -> Int
+
+pub fn wm_set_title(Int, Bytes) -> Int
+
+pub fn wm_set_traffic_light_position(Int, Int, Int) -> Int
+
+pub fn wm_set_visibility(Int, Int) -> Int
+
+pub fn wm_set_window_customization(Int, Int, Int, Int, Int, Int, TitleBarStyle, Int) -> Int
+
+pub fn wm_spawn_process(Bytes, Bytes) -> Int
+
+pub fn wm_start_drag_window(Int) -> Int
+
+pub fn wm_terminate_window(Int) -> Int
+
+pub fn wm_toggle_fullscreen_window(Int) -> Int
+
+pub fn wm_toggle_maximize_window(Int) -> Int
+
+pub fn wm_unmaximize_window(Int) -> Int
+
+pub fn wm_wait_child_noblock(Int) -> Int
+
+// Errors
+type ProcessCommandError
+
+// Types and methods
+#external
+pub type BindingHandle
+
+type CommandBridge[X]
+
+pub(all) enum CommandResponse {
+  Ok(Json)
+  Error(String)
+} derive(Eq)
+
+pub struct IpcMessage {
+  source_window_id : Int
+  target_window_id : Int
+  message_type : IpcMessageType
+  message_id : Int
+  subtype : String
+  data : String
+}
+
+pub(all) enum IpcMessageType {
+  Data
+  Command
+  Event
+  Request
+  Response
+} derive(Eq)
+pub fn IpcMessageType::int(Self) -> Int
+
+pub struct Plugin {
+  name : String
+  install_scripts : Array[String]
+  parent_installers : Array[(ProcessPluginRouter) -> Unit]
+  child_installers : Array[(PluginContext[Unit], ProcessCommandProxy) -> Unit]
+  direct_installers : Array[(PluginContext[Unit]) -> Unit]
+}
+pub fn Plugin::new(String, (PluginBuilder) -> Unit) -> Self
+
+pub struct PluginBuilder {
+  plugin_name : String
+  install_scripts : Array[String]
+  parent_installers : Array[(ProcessPluginRouter) -> Unit]
+  child_installers : Array[(PluginContext[Unit], ProcessCommandProxy) -> Unit]
+  direct_installers : Array[(PluginContext[Unit]) -> Unit]
+}
+pub fn[Payload : @json.FromJson + ToJson, Reply : @json.FromJson + ToJson] PluginBuilder::command(Self, String, async (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson + ToJson, Reply : @json.FromJson + ToJson] PluginBuilder::command_result_async(Self, String, async (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson + ToJson, Reply : @json.FromJson + ToJson] PluginBuilder::command_sync(Self, String, (Payload) -> Reply) -> Unit
+pub fn PluginBuilder::script(Self, String) -> Unit
+
+type PluginContext[X]
+pub fn[X, Payload : @json.FromJson, Reply : ToJson] PluginContext::command_async(Self[X], String, async (Payload) -> Reply) -> Unit
+pub fn[X, Payload : @json.FromJson, Reply : ToJson] PluginContext::command_result_async(Self[X], String, async (Payload) -> Reply) -> Unit
+pub fn[X, Payload : @json.FromJson, Reply : ToJson] PluginContext::command_result_bg(Self[X], String, (Payload) -> Reply raise) -> Unit
+pub fn[X, Payload : @json.FromJson, Reply : ToJson] PluginContext::command_sync(Self[X], String, (Payload) -> Reply) -> Unit
+pub fn[X] PluginContext::install_command_api(Self[X], String, (String) -> Unit) -> Unit
+pub fn[X] PluginContext::name(Self[X]) -> String
+pub fn[X] PluginContext::register_api(Self[X], String) -> String
+
+type PluginHost[X]
+pub fn[X] PluginHost::command_bridge(Self[X]) -> CommandBridge[X]
+pub fn[X] PluginHost::destroy(Self[X]) -> Unit
+pub fn[X] PluginHost::global_name(Self[X]) -> String
+pub fn PluginHost::install(Self[Unit], Plugin, proxy? : ProcessCommandProxy?) -> Unit
+pub fn[X] PluginHost::install_script(Self[X], String) -> Unit
+pub fn[X] PluginHost::new(WebView[X], global_name? : String) -> Self[X]
+
+pub struct ProcessCommandProxy {
+  wm : WindowManager
+  source_window_id : Int
+  subtype : String
+}
+pub fn[Payload : ToJson, Reply : @json.FromJson] ProcessCommandProxy::call(Self, String, Payload, target_window_id? : Int, timeout_ms? : Int) -> Reply raise ProcessCommandError
+pub fn[Payload : ToJson, Reply : @json.FromJson] ProcessCommandProxy::call_plugin(Self, String, String, Payload, target_window_id? : Int, timeout_ms? : Int) -> Reply raise ProcessCommandError
+pub fn ProcessCommandProxy::new(WindowManager, Int, subtype? : String) -> Self
+pub fn[Payload : ToJson, Reply : @json.FromJson] ProcessCommandProxy::plugin_handler(Self, String, String, target_window_id? : Int, timeout_ms? : Int) -> (Payload) -> Reply raise
+
+type ProcessCommandReplyForTest derive(@json.FromJson)
+
+pub struct ProcessCommandRequest {
+  name : String
+  payload : Json
+} derive(ToJson, @json.FromJson)
+pub fn[Payload : ToJson] ProcessCommandRequest::new(String, Payload) -> Self
+pub fn ProcessCommandRequest::parse(String) -> Self raise ProcessCommandError
+
+pub(all) enum ProcessCommandResponse {
+  Ok(Json)
+  Error(String)
+} derive(ToJson, @json.FromJson)
+pub fn[Reply : @json.FromJson] ProcessCommandResponse::decode_reply(Self) -> Reply raise ProcessCommandError
+pub fn ProcessCommandResponse::error(String) -> Self
+pub fn[Payload : ToJson] ProcessCommandResponse::ok(Payload) -> Self
+pub fn ProcessCommandResponse::stringify(Self) -> String
+
+pub struct ProcessCommandRouter {
+  handlers : Map[String, async (Json) -> ProcessCommandResponse]
+}
+pub async fn ProcessCommandRouter::dispatch(Self, ProcessCommandRequest) -> ProcessCommandResponse
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessCommandRouter::handle(Self, String, (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessCommandRouter::handle_async(Self, String, async (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessCommandRouter::handle_result(Self, String, (Payload) -> Reply raise) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessCommandRouter::handle_result_async(Self, String, async (Payload) -> Reply) -> Unit
+pub fn ProcessCommandRouter::new() -> Self
+pub fn ProcessCommandRouter::plugin(Self, String, (ProcessPluginRouter) -> Unit) -> Unit
+pub async fn ProcessCommandRouter::serve(Self, WindowManager, Int, subtype? : String) -> Unit
+
+pub struct ProcessPluginRouter {
+  router : ProcessCommandRouter
+  plugin_name : String
+}
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessPluginRouter::command(Self, String, (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessPluginRouter::command_async(Self, String, async (Payload) -> Reply) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessPluginRouter::command_result(Self, String, (Payload) -> Reply raise) -> Unit
+pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessPluginRouter::command_result_async(Self, String, async (Payload) -> Reply) -> Unit
+
+pub(all) enum ProcessType {
+  Main
+  Child
+  Unknown
+} derive(Eq)
+
+pub(all) enum SizeHint {
+  None
+  Min
+  Max
+  Fixed
+}
+
+pub(all) enum TitleBarStyle {
+  Default
+  Hidden
+} derive(Eq, @debug.Debug)
+
+type WebView[X]
+pub fn[X] WebView::back(Self[X]) -> Unit
+pub fn[X] WebView::close(Self[X]) -> Unit
+pub fn[X] WebView::destroy(Self[X]) -> Unit
+pub fn[X] WebView::enable_custom_titlebar_support(Self[X]) -> Unit
+pub fn[X] WebView::enable_transparent_background_support(Self[X]) -> Unit
+pub fn[X] WebView::forward(Self[X]) -> Unit
+pub fn[X] WebView::get_handle(Self[X]) -> WebView_t
+pub fn[X] WebView::go(Self[X], Int) -> Unit
+pub fn[X] WebView::maximize(Self[X]) -> Unit
+pub fn[X] WebView::minimize(Self[X]) -> Unit
+pub fn[X] WebView::navigate(Self[X], String) -> Unit
+pub fn[X] WebView::reload(Self[X]) -> Unit
+pub fn[X] WebView::reload_force(Self[X]) -> Unit
+pub fn[X] WebView::set_custom_protocol(Self[X], String, String) -> Unit
+pub fn[X] WebView::set_devtools(Self[X], Bool) -> Unit
+pub fn[X] WebView::set_fullscreen(Self[X], Bool) -> Unit
+pub fn[X] WebView::set_html(Self[X], String) -> Unit
+pub fn[X] WebView::set_size(Self[X], Int, Int, SizeHint) -> Unit
+pub fn[X] WebView::set_title(Self[X], String) -> Unit
+pub fn[X] WebView::set_traffic_light_position(Self[X], Int, Int) -> Unit
+pub fn[X] WebView::set_window_customization(Self[X], Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Unit
+pub fn[X] WebView::start_drag(Self[X]) -> Unit
+pub fn[X] WebView::terminate(Self[X]) -> Unit
+pub fn[X] WebView::toggle_fullscreen(Self[X]) -> Unit
+pub fn[X] WebView::toggle_maximize(Self[X]) -> Unit
+pub fn[X] WebView::unmaximize(Self[X]) -> Unit
+
+#external
+pub type WebView_t
+
+pub struct Window {
+  title : String
+  width : Int
+  height : Int
+  size_hint : SizeHint
+  debug : Int
+  devtools : Bool
+  child_arg : String
+  mut frameless : Bool
+  mut resizable : Bool
+  mut closeable : Bool
+  mut always_on_top : Bool
+  mut transparent : Bool
+  mut title_bar_style : TitleBarStyle
+  mut title_bar_overlay : Bool
+  mut traffic_light_position : (Int, Int)
+  enable_window_controls_plugin : Bool
+  mut url : String
+  mut html : String
+  pending_custom_protocols : Array[(String, String)]
+  mut runtime_window_id : Int
+  plugins : Array[Plugin]
+}
+pub fn Window::close(Self) -> Unit
+pub fn Window::eval(Self, String) -> Unit
+pub fn Window::install(Self, Plugin) -> Unit
+pub fn Window::maximize(Self) -> Unit
+pub fn Window::minimize(Self) -> Unit
+pub fn Window::navigate(Self, String) -> Unit
+pub fn Window::new(title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), enable_window_controls_plugin? : Bool) -> Self
+pub async fn Window::run(Self) -> Unit
+pub fn Window::set_custom_protocol(Self, String, String) -> Unit
+pub fn Window::set_fullscreen(Self, Bool) -> Unit
+pub fn Window::set_html(Self, String) -> Unit
+pub fn Window::set_traffic_light_position(Self, Int, Int) -> Unit
+pub fn Window::set_window_customization(Self, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Unit
+pub fn Window::start_drag(Self) -> Unit
+pub fn Window::toggle_fullscreen(Self) -> Unit
+pub fn Window::toggle_maximize(Self) -> Unit
+pub fn Window::unmaximize(Self) -> Unit
+
+pub struct WindowManager {
+  process_type : ProcessType
+  mut window_ids : Array[Int]
+}
+pub fn WindowManager::broadcast(Self, Int, String, String) -> Int
+pub fn WindowManager::close_window(Self, Int) -> Int
+pub fn WindowManager::connect_child_process() -> Int
+pub fn WindowManager::create_child_window(Self, String, String, width? : Int, height? : Int, parent_id? : Int) -> Int
+pub fn WindowManager::create_window(Self, String, String, width? : Int, height? : Int) -> Int
+pub fn WindowManager::destroy(Self) -> Unit
+pub fn WindowManager::destroy_window(Self, Int) -> Int
+pub fn WindowManager::fork_process(Self) -> Int
+pub fn WindowManager::init(is_main? : Bool) -> Self
+pub fn WindowManager::is_child_process(Self) -> Bool
+pub fn WindowManager::is_main_process(Self) -> Bool
+pub fn WindowManager::maximize_window(Self, Int) -> Int
+pub fn WindowManager::minimize_window(Self, Int) -> Int
+pub fn WindowManager::request(Self, Int, Int, String, String, timeout_ms? : Int) -> String
+pub fn WindowManager::respond(Self, Int, Int, Int, String) -> Int
+pub fn WindowManager::run_window(Self, Int) -> Int
+pub fn WindowManager::send_message(Self, Int, Int, IpcMessageType, String, String) -> Int
+pub async fn WindowManager::serve_process_commands(Self, Int, async (ProcessCommandRequest) -> ProcessCommandResponse, subtype? : String) -> Unit
+pub fn WindowManager::set_devtools(Self, Int, Bool) -> Int
+pub fn WindowManager::set_fullscreen_window(Self, Int, Bool) -> Int
+pub fn WindowManager::set_traffic_light_position(Self, Int, Int, Int) -> Int
+pub fn WindowManager::set_window_customization(Self, Int, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Int
+pub fn WindowManager::spawn_process(Self, String, String) -> Int
+pub fn WindowManager::start_drag_window(Self, Int) -> Int
+pub fn WindowManager::toggle_fullscreen_window(Self, Int) -> Int
+pub fn WindowManager::toggle_maximize_window(Self, Int) -> Int
+pub fn WindowManager::try_pop_message(Self, Int) -> IpcMessage?
+pub fn WindowManager::unmaximize_window(Self, Int) -> Int
+pub fn WindowManager::wait_child_noblock(Self, Int) -> Int
+
+pub(all) enum WindowState {
+  Unknown
+  Created
+  Running
+  Hidden
+  Closing
+  Closed
+} derive(Eq)
+pub fn WindowState::int(Self) -> Int
+
+// Type aliases
+
+// Traits
+

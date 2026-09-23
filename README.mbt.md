@@ -142,7 +142,7 @@ The current plugin status matrix is in [`PLUGINS.md`](PLUGINS.md).
 ├── webview/     # WebView runtime and bridge
 ├── lepus.mbt    # top-level Lepus API
 ├── moon.pkg     # root package definition
-└── moon.mod.json
+└── moon.mod
 ```
 
 ## Development
@@ -151,7 +151,7 @@ Useful commands:
 
 ```sh
 moon check
-moon test --target native -p lepus-apps/webview
+moon test --target native -p lepus-apps/lepus/webview
 moon info && moon fmt
 ```
 

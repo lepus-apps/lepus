@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/webview/example"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type SumPayload derive(ToJson, @json.FromJson)
+
+type SumReply derive(ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

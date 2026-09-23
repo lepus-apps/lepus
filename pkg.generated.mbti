@@ -2,7 +2,7 @@
 package "lepus-apps/lepus"
 
 import {
-  "lepus-apps/webview",
+  "lepus-apps/lepus/webview",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }

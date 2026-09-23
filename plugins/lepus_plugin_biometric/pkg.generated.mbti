@@ -2,7 +2,7 @@
 package "lepus-apps/lepus/plugins/lepus_plugin_biometric"
 
 import {
-  "lepus-apps/webview",
+  "lepus-apps/lepus/webview",
   "moonbitlang/core/json",
 }
 

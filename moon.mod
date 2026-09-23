@@ -3,10 +3,6 @@ name = "lepus-apps/lepus"
 version = "0.1.8"
 
 import {
-  "lepus-apps/webview@0.1.15",
-  "moonbitlang/x@0.4.45",
-  "moonbitlang/async@0.19.4",
-  "moonbitlang/parser@0.3.4",
 }
 
 readme = "README.mbt.md"

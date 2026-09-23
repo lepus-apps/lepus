@@ -1,7 +1,7 @@
 import {
   "moonbitlang/core/json",
-  "lepus-apps/webview",
-  "moonbitlang/async/fs" @fs,
+  "lepus-apps/lepus/webview",
+  "moonbitlang/async/fs",
 }
 
 supported_targets = "+native"

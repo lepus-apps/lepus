@@ -1,0 +1,32 @@
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+  "moonbitlang/async",
+  "moonbitlang/x/sys",
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "stub.c", "vendor/webview_vendor.cc" ],
+  link: {
+    "native": {
+      // macOS:
+      "cc-link-flags": "-lc++ -lobjc -framework Cocoa -framework WebKit",
+      // Linux:
+      // "cc-link-flags": "-lstdc++ -ldl -lpthread $(pkg-config --libs webkit2gtk-4.1 gtk+-3.0)",
+      // or fallback:
+      // "cc-link-flags": "-lstdc++ -ldl -lpthread -lwebkit2gtk-4.1 -ljavascriptcoregtk-4.1 -lgtk-3 -lgdk-3 -lsoup-3.0 -lgobject-2.0 -lglib-2.0 -lgio-2.0",
+      // Windows (MinGW/zig cc style):
+      // "cc-link-flags": "-luser32 -lshell32 -lshlwapi -lversion -lole32 -loleaut32 -luuid -lcomdlg32 -lcomctl32 -lgdi32 -ladvapi32 -lws2_32 -lkernel32",
+    },
+  },
+  targets: {
+    "binding.mbt": [ "native" ],
+    "command.mbt": [ "native" ],
+    "managed_app.mbt": [ "native" ],
+    "plugin.mbt": [ "native" ],
+    "process_bridge.mbt": [ "native" ],
+    "webview.mbt": [ "native" ],
+  },
+)
