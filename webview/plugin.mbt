@@ -5,7 +5,7 @@
 ///
 /// ```moonbit nocheck
 /// pub fn plugin() -> @webview.Plugin {
-///   @webview.Plugin::new("math", fn(plugin) {
+///   @webview.Plugin("math", fn(plugin) {
 ///     plugin.command("sum", fn(payload : SumPayload) {
 ///       SumReply{ total: payload.left + payload.right }
 ///     })
@@ -62,7 +62,11 @@ struct PluginContext[X] {
 ///|
 /// Creates a managed plugin whose commands are available from JavaScript
 /// without exposing IPC details to user code.
-pub fn Plugin::new(name : String, register : (PluginBuilder) -> Unit) -> Plugin {
+#alias(new, deprecated="Use `Plugin()` instead")
+pub fn Plugin::Plugin(
+  name : String,
+  register : (PluginBuilder) -> Unit,
+) -> Plugin {
   let builder = PluginBuilder::{
     plugin_name: name,
     install_scripts: [],
@@ -150,7 +154,8 @@ pub fn[Payload : @json.FromJson + ToJson, Reply : @json.FromJson + ToJson] Plugi
 ///
 /// `global_name` controls the JavaScript namespace used for plugin APIs
 /// (defaults to `window.lepusApi`).
-pub fn[X] PluginHost::new(
+#alias(new, deprecated="Use `PluginHost()` instead")
+pub fn[X] PluginHost::PluginHost(
   webview : WebView[X],
   global_name? : String = "lepusApi",
 ) -> PluginHost[X] {

@@ -17,8 +17,9 @@ pub struct GeoPosition {
   longitude : Double
   accuracy : Double
 } derive(ToJson, @json.FromJson)
+pub fn GeoPosition::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn GeoPosition::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

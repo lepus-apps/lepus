@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  @lepus.Window::new(
+  @lepus.Window(
     title="Lepus Nfc Plugin",
     source=@lepus_plugin_support.example_html(
       "nfc",

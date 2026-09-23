@@ -15,13 +15,16 @@ pub fn plugin() -> @webview.Plugin
 pub struct StoreDump {
   entries : Map[String, String]
 } derive(ToJson, @json.FromJson)
+pub fn StoreDump::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn StoreDump::to_json(Self) -> Json
 
 pub struct StoreSetRequest {
   key : String
   value : String
 } derive(ToJson, @json.FromJson)
+pub fn StoreSetRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn StoreSetRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

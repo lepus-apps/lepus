@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  @lepus.Window::new(
+  @lepus.Window(
     title="Lepus Custom Window",
     width=980,
     height=620,
@@ -40,7 +40,7 @@ async fn main {
         #|        overflow: hidden;
         #|      }
         #|
-        #|      .window {
+        #|     @lepus.Window {
         #|        width: 100vw;
         #|        height: 100vh; /* Fills most of the height */
         #|        background: var(--panel);

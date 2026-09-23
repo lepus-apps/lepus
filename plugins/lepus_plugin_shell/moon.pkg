@@ -1,9 +1,7 @@
 import {
   "lepus-apps/lepus/webview",
   "moonbitlang/core/json",
-  "moonbitlang/core/encoding/utf8",
   "moonbitlang/async/process",
-  "moonbitlang/async/pipe",
 }
 
 supported_targets = "+native"

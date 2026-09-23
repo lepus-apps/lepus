@@ -9,11 +9,6 @@ pub extern "C" fn current_dir() -> Bytes = "lepus_current_dir"
 pub extern "C" fn platform_name() -> Bytes = "lepus_platform_name"
 
 ///|
-pub fn getenv(name : String) -> String? {
-  @env.get_env_var(name)
-}
-
-///|
 pub fn has_command(command : String) -> Bool {
   command_exists(@encoding/utf8.encode(command)) != 0
 }

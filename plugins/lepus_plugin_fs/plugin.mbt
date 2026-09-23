@@ -228,7 +228,7 @@ async fn stat_reply(payload : FsPathRequest) -> FsStatReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("fs", plugin => {
+  @webview.Plugin("fs", plugin => {
     plugin.command("exists", (payload : String) => exists_reply(payload))
     plugin.command("read_text", (payload : FsPathRequest) => read_text(payload))
     plugin.command("write_text", (payload : FsWriteRequest) => {

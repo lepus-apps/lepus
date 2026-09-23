@@ -77,7 +77,7 @@ pub fn check_update(payload : UpdateCheckRequest) -> UpdateCheckReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("updater", plugin => {
+  @webview.Plugin("updater", plugin => {
     plugin.command_sync("check", (payload : UpdateCheckRequest) => {
       check_update(payload)
     })

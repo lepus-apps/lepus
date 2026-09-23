@@ -28,7 +28,7 @@ fn get_bounds(window : String) -> WindowBounds? {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("positioner", plugin => {
+  @webview.Plugin("positioner", plugin => {
     plugin.command_sync("set_bounds", (payload : PositionRequest) => {
       set_bounds(payload)
     })

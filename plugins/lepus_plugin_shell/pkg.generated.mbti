@@ -13,10 +13,13 @@ pub fn plugin() -> @webview.Plugin
 
 // Types and methods
 type ExecParams derive(ToJson, @json.FromJson)
+pub fn ExecParams::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ExecParams::to_json(Self) -> Json
 
 type ExecResult derive(ToJson, @json.FromJson)
+pub fn ExecResult::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ExecResult::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

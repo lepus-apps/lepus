@@ -15,4 +15,3 @@ pub fn example_html(String, String, content? : String) -> @lepus.Source
 // Type aliases
 
 // Traits
-

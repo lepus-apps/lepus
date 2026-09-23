@@ -20,14 +20,20 @@ pub enum BarcodeFormat {
   Ean13
   QrLike
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn BarcodeFormat::equal(Self, Self) -> Bool
+pub fn BarcodeFormat::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BarcodeFormat::not_equal(Self, Self) -> Bool
+pub fn BarcodeFormat::to_json(Self) -> Json
+pub fn BarcodeFormat::to_repr(Self) -> @debug.Repr
 
 pub struct ScanResult {
   value : String
   format : BarcodeFormat
   valid : Bool
 } derive(ToJson, @json.FromJson)
+pub fn ScanResult::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ScanResult::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

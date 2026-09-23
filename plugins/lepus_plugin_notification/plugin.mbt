@@ -20,7 +20,7 @@ fn send_reply(payload : NotifyRequest) -> NotifyReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("notification", plugin => {
+  @webview.Plugin("notification", plugin => {
     plugin.command_sync("send", (payload : NotifyRequest) => send_reply(payload))
   })
 }

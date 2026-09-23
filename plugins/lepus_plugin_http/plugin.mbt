@@ -72,11 +72,18 @@ fn normalize_method(meth : String?) -> String {
 }
 
 ///|
-fn normalize_headers(headers : Map[String, String]?) -> Map[String, String] {
+fn normalize_headers(
+  headers : Map[String, String]?,
+) -> Map[@http.CaseInsensitiveString, String] {
+  let out : Map[@http.CaseInsensitiveString, String] = Map([])
   match headers {
-    Some(headers) => headers
-    None => {}
+    Some(headers) =>
+      for key, value in headers {
+        out.set(@http.CaseInsensitiveString(key), value)
+      }
+    None => ()
   }
+  out
 }
 
 ///|
@@ -92,11 +99,15 @@ fn normalize_body(body : Json?) -> String? {
 fn parse_response(response : @http.Response, data : &@io.Data) -> FetchReply {
   let body_text = data.text() catch { _ => "" }
   let body_json = Some(data.json()) catch { _ => None }
+  let headers : Map[String, String] = Map([])
+  for key, value in response.headers {
+    headers.set(key.0, value)
+  }
   {
     ok: response.code >= 200 && response.code < 300,
     status: response.code,
     status_text: response.reason,
-    headers: response.headers,
+    headers,
     body_text,
     body_json,
     error: None,
@@ -120,16 +131,12 @@ fn fetch_error(message : String) -> FetchReply {
 async fn fetch_with(
   url : String,
   meth : String,
-  headers : Map[String, String],
+  headers : Map[@http.CaseInsensitiveString, String],
   body : String?,
 ) -> FetchReply {
   try {
     let (response, data) = match meth {
-      "GET" =>
-        match body {
-          Some(body) => @http.get(url, headers~, body~)
-          None => @http.get(url, headers~)
-        }
+      "GET" => @http.get(url, headers~)
       "POST" => @http.post(url, body.unwrap_or(""), headers~)
       "PUT" => @http.put(url, body.unwrap_or(""), headers~)
       _ =>
@@ -145,7 +152,7 @@ async fn fetch_with(
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("http", plugin => {
+  @webview.Plugin("http", plugin => {
     // Mimics fetch(url, init?) with one payload:
     // - "url"
     // - ["url", { method?, headers?, body? }]

@@ -2,12 +2,9 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/process",
   "moonbitlang/core/argparse",
-  "moonbitlang/core/debug",
-  "moonbitlang/core/json",
   "moonbitlang/core/string",
   "moonbitlang/core/env",
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
-  "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbit-community/zipc",
 }

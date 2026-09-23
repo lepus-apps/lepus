@@ -27,14 +27,17 @@ pub struct AutostartConfig {
   exec_path : String
   args : String?
 } derive(ToJson, @json.FromJson)
+pub fn AutostartConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AutostartConfig::to_json(Self) -> Json
 
 pub struct AutostartStatusReply {
   ok : Bool
   enabled : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn AutostartStatusReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AutostartStatusReply::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

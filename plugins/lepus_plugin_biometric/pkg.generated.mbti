@@ -24,12 +24,15 @@ pub struct BiometricAuthReply {
   reason : String
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn BiometricAuthReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BiometricAuthReply::to_json(Self) -> Json
 
 pub struct BiometricAuthRequest {
   reason : String?
 } derive(ToJson, @json.FromJson)
+pub fn BiometricAuthRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn BiometricAuthRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

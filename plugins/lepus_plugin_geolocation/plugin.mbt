@@ -23,7 +23,7 @@ fn set_mock(payload : GeoPosition) -> GeoPosition {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("geolocation", plugin => {
+  @webview.Plugin("geolocation", plugin => {
     plugin.command_sync("get_current", (_ : Json) => get_current())
     plugin.command_sync("set_mock", (payload : GeoPosition) => set_mock(payload))
   })

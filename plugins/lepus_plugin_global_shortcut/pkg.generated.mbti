@@ -16,8 +16,9 @@ pub struct ShortcutBinding {
   accelerator : String
   action : String
 } derive(ToJson, @json.FromJson)
+pub fn ShortcutBinding::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ShortcutBinding::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

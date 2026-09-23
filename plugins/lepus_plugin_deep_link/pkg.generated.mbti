@@ -22,6 +22,8 @@ pub struct DeepLinkBuildRequest {
   path : String?
   query : Map[String, String]?
 } derive(ToJson, @json.FromJson)
+pub fn DeepLinkBuildRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeepLinkBuildRequest::to_json(Self) -> Json
 
 pub struct DeepLinkParts {
   scheme : String
@@ -29,8 +31,9 @@ pub struct DeepLinkParts {
   path : String
   query : Map[String, String]
 } derive(ToJson, @json.FromJson)
+pub fn DeepLinkParts::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DeepLinkParts::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

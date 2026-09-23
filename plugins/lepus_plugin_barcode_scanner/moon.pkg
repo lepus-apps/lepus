@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/json",
   "lepus-apps/lepus/webview",
+  "moonbitlang/core/debug",
 }
 
 supported_targets = "+native"

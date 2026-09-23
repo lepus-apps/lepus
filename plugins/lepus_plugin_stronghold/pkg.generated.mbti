@@ -16,8 +16,9 @@ pub struct SecretSetRequest {
   key : String
   value : String
 } derive(ToJson, @json.FromJson)
+pub fn SecretSetRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SecretSetRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

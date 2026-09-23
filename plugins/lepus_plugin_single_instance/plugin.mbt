@@ -22,7 +22,7 @@ fn acquire_reply(
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("single_instance", plugin => {
+  @webview.Plugin("single_instance", plugin => {
     plugin.command_sync("acquire", (payload : SingleInstanceAcquireRequest) => {
       acquire_reply(payload)
     })

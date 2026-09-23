@@ -84,7 +84,7 @@ async fn main {
       #|<html><body><h1>Hello Lepus</h1></body></html>,
     ),
   )
-  @lepus.App::new(main_window).run()
+  @lepus.App(main_window).run()
 }
 ```
 
@@ -97,7 +97,7 @@ async fn main {
     title="Dialog Example",
     html=@lepus_plugin_support.example_html("dialog", "Dialog Plugin Example"),
   )
-  @lepus.App::new(main_window, plugins=[@lepus_plugin_dialog.plugin()]).run()
+  @lepus.App(main_window, plugins=[@lepus_plugin_dialog.plugin()]).run()
 }
 ```
 
@@ -114,7 +114,7 @@ async fn main {
     title_bar_overlay=true, // overlay controls
     html="<div class='lepus-titlebar'>Drag me</div>",
   )
-  @lepus.App::new(window).run()
+  @lepus.App(window).run()
 }
 ```
 

@@ -18,8 +18,9 @@ pub struct CliInfo {
   argv : Array[String]
   cwd : String
 } derive(ToJson, @json.FromJson)
+pub fn CliInfo::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CliInfo::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

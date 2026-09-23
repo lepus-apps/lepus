@@ -17,4 +17,3 @@ type SumReply derive(ToJson, @json.FromJson)
 // Type aliases
 
 // Traits
-

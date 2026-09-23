@@ -13,10 +13,13 @@ pub fn plugin() -> @webview.Plugin
 
 // Types and methods
 type FetchInit derive(ToJson, @json.FromJson)
+pub fn FetchInit::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FetchInit::to_json(Self) -> Json
 
 type FetchReply derive(ToJson, @json.FromJson)
+pub fn FetchReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FetchReply::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

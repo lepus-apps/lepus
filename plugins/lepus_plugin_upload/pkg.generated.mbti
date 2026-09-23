@@ -16,19 +16,24 @@ pub struct UploadDeleteReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn UploadDeleteReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn UploadDeleteReply::to_json(Self) -> Json
 
 pub struct UploadSaveReply {
   ok : Bool
   path : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn UploadSaveReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn UploadSaveReply::to_json(Self) -> Json
 
 pub struct UploadSaveRequest {
   filename : String
   content : String
 } derive(ToJson, @json.FromJson)
+pub fn UploadSaveRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn UploadSaveRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

@@ -102,18 +102,18 @@ fn default_config_paths(cwd : String) -> Array[String] {
 
 ///|
 fn has_webview_runtime() -> Bool {
-  getenv("DYLD_LIBRARY_PATH") is Some(_) ||
-  getenv("LD_LIBRARY_PATH") is Some(_) ||
-  getenv("PATH") is Some(_)
+  @env.get_env_var("DYLD_LIBRARY_PATH") is Some(_) ||
+  @env.get_env_var("LD_LIBRARY_PATH") is Some(_) ||
+  @env.get_env_var("PATH") is Some(_)
 }
 
 ///|
 fn webview_message() -> String {
-  if getenv("DYLD_LIBRARY_PATH") is Some(_) {
+  if @env.get_env_var("DYLD_LIBRARY_PATH") is Some(_) {
     "DYLD_LIBRARY_PATH is set"
-  } else if getenv("LD_LIBRARY_PATH") is Some(_) {
+  } else if @env.get_env_var("LD_LIBRARY_PATH") is Some(_) {
     "LD_LIBRARY_PATH is set"
-  } else if getenv("PATH") is Some(_) {
+  } else if @env.get_env_var("PATH") is Some(_) {
     "PATH is set; relying on system webview library resolution"
   } else {
     "no library search environment detected"

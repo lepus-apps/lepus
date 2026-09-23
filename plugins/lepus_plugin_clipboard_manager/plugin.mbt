@@ -70,7 +70,7 @@ fn has_text_reply() -> ClipboardBoolReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("clipboard_manager", plugin => {
+  @webview.Plugin("clipboard_manager", plugin => {
     plugin.command("read_text", (_ : Json) => read_reply())
     plugin.command("write_text", (payload : String) => write_reply(payload))
     plugin.command("clear", (_ : Json) => clear_reply())

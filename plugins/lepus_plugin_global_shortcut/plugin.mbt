@@ -31,7 +31,7 @@ fn list_shortcuts() -> Array[ShortcutBinding] {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("global-shortcut", plugin => {
+  @webview.Plugin("global-shortcut", plugin => {
     plugin.command_sync("register", (payload : ShortcutBinding) => {
       register_shortcut(payload)
     })

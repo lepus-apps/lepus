@@ -16,8 +16,9 @@ pub struct LogEntry {
   level : String
   message : String
 } derive(ToJson, @json.FromJson)
+pub fn LogEntry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn LogEntry::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

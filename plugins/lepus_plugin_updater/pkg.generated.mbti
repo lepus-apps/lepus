@@ -21,13 +21,16 @@ pub struct UpdateCheckReply {
   current : String
   latest : String
 } derive(ToJson, @json.FromJson)
+pub fn UpdateCheckReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn UpdateCheckReply::to_json(Self) -> Json
 
 pub struct UpdateCheckRequest {
   current : String
   latest : String
 } derive(ToJson, @json.FromJson)
+pub fn UpdateCheckRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn UpdateCheckRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

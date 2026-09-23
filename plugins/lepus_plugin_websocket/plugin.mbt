@@ -73,7 +73,7 @@ fn close_conn(id : Int) -> Bool {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("websocket", plugin => {
+  @webview.Plugin("websocket", plugin => {
     plugin.command_sync("connect", (payload : ConnectRequest) => {
       connect(payload)
     })

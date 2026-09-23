@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  @lepus.Window::new(
+  @lepus.Window(
     title="Lepus Updater Plugin",
     source=@lepus_plugin_support.example_html(
       "updater", "Updater Plugin Example",

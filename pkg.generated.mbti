@@ -26,34 +26,64 @@ pub struct MemoryFile {
   path : String
   content : Bytes
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn MemoryFile::equal(Self, Self) -> Bool
 pub fn MemoryFile::from_bytes(String, Bytes) -> Self
+pub fn MemoryFile::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn MemoryFile::from_string(String, String) -> Self
+pub fn MemoryFile::hash(Self) -> Int
+pub fn MemoryFile::hash_combine(Self, Hasher) -> Unit
+pub fn MemoryFile::not_equal(Self, Self) -> Bool
+pub fn MemoryFile::to_json(Self) -> Json
+pub fn MemoryFile::to_repr(Self) -> @debug.Repr
 
 pub struct MemorySource {
   entry : String
   files : Array[MemoryFile]
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
-pub fn MemorySource::new(Array[MemoryFile], entry? : String) -> Self
+#alias(new, deprecated)
+pub fn MemorySource::MemorySource(Array[MemoryFile], entry? : String) -> Self
+pub fn MemorySource::equal(Self, Self) -> Bool
+pub fn MemorySource::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MemorySource::hash(Self) -> Int
+pub fn MemorySource::hash_combine(Self, Hasher) -> Unit
+pub fn MemorySource::not_equal(Self, Self) -> Bool
+pub fn MemorySource::to_json(Self) -> Json
+pub fn MemorySource::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Source {
   Url(String)
   Local(String)
   Memory(MemorySource)
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn Source::equal(Self, Self) -> Bool
+pub fn Source::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Source::hash(Self) -> Int
+pub fn Source::hash_combine(Self, Hasher) -> Unit
 pub fn Source::html(String) -> Self
+pub fn Source::not_equal(Self, Self) -> Bool
+pub fn Source::to_json(Self) -> Json
+pub fn Source::to_repr(Self) -> @debug.Repr
 pub fn Source::zip(Bytes) -> Self raise
 
 pub enum TitleBarStyle {
   Default
   Hidden
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn TitleBarStyle::equal(Self, Self) -> Bool
+pub fn TitleBarStyle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn TitleBarStyle::hash(Self) -> Int
+pub fn TitleBarStyle::hash_combine(Self, Hasher) -> Unit
+pub fn TitleBarStyle::not_equal(Self, Self) -> Bool
+pub fn TitleBarStyle::to_json(Self) -> Json
+pub fn TitleBarStyle::to_repr(Self) -> @debug.Repr
 
 pub struct Window {
   config : WindowConfig
   plugins : Array[@webview.Plugin]
 }
+#alias(new, deprecated)
+pub fn Window::Window(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source, plugins? : Array[@webview.Plugin]) -> Self
 pub fn Window::navigate(Self, String) -> Self
-pub fn Window::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source, plugins? : Array[@webview.Plugin]) -> Self
 pub async fn Window::run(Self) -> Unit
 pub fn Window::set_source(Self, Source) -> Self
 
@@ -72,11 +102,17 @@ pub struct WindowConfig {
   traffic_light_position : (Int, Int)
   source : Source?
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
+pub fn WindowConfig::equal(Self, Self) -> Bool
+pub fn WindowConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowConfig::hash(Self) -> Int
+pub fn WindowConfig::hash_combine(Self, Hasher) -> Unit
 pub fn WindowConfig::navigate(Self, String) -> Self
 pub fn WindowConfig::new(title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source) -> Self
+pub fn WindowConfig::not_equal(Self, Self) -> Bool
 pub fn WindowConfig::set_source(Self, Source) -> Self
+pub fn WindowConfig::to_json(Self) -> Json
+pub fn WindowConfig::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
 // Traits
-

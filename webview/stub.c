@@ -497,7 +497,7 @@ typedef struct
 
 static ipc_client_t g_ipc_client = {
     .socket_fd = IPC_INVALID_SOCKET,
-    .window_id = -1,
+   .window_id = -1,
     .connected = 0,
     .listener_thread = 0,
     .message_seq = 0,

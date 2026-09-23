@@ -58,7 +58,8 @@ pub fn MemoryFile::from_string(path : String, content : String) -> MemoryFile {
 }
 
 ///|
-pub fn MemorySource::new(
+#alias(new, deprecated="Use `MemorySource()` instead")
+pub fn MemorySource::MemorySource(
   files : Array[MemoryFile],
   entry? : String = "index.html",
 ) -> MemorySource {
@@ -67,7 +68,7 @@ pub fn MemorySource::new(
 
 ///|
 pub fn Source::html(html : String) -> Source {
-  Memory(MemorySource::new([MemoryFile::from_string("index.html", html)]))
+  Memory(MemorySource([MemoryFile::from_string("index.html", html)]))
 }
 
 ///|
@@ -79,7 +80,7 @@ pub fn Source::zip(zip : Bytes) -> Source raise {
       files.push(MemoryFile::from_bytes(name, file.to_bytes()))
     }
   })
-  Memory(MemorySource::new(files))
+  Memory(MemorySource(files))
 }
 
 ///|
@@ -144,7 +145,8 @@ pub struct Window {
 }
 
 ///|
-pub fn Window::new(
+#alias(new, deprecated="Use `Window()` instead")
+pub fn Window::Window(
   title? : String = "Lepus App",
   width? : Int = 800,
   height? : Int = 600,
@@ -230,7 +232,7 @@ pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
     abort("App::run window_index out of range")
   }
   let config = self.windows[window_index]
-  let window = @webview.Window::new(
+  let window = @webview.Window(
     title=config.title,
     width=config.width,
     height=config.height,

@@ -100,12 +100,12 @@ fn decode_ipc_message_wire(wire : Bytes) -> IpcMessage? {
   let data_start = subtype_start + subtype_len
   guard data_start + data_len <= wire.length() else { None }
   let subtype = @encoding/utf8.decode(
-    wire.view(start=subtype_start, end=data_start),
+    wire.exact_view(start=subtype_start, end=data_start),
   ) catch {
     _ => ""
   }
   let data = @encoding/utf8.decode(
-    wire.view(start=data_start, end=data_start + data_len),
+    wire.exact_view(start=data_start, end=data_start + data_len),
   ) catch {
     _ => ""
   }

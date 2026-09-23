@@ -17,26 +17,30 @@ async fn execute_script_with_output(
   args : Array[String],
   input_data : String,
 ) -> ExecResult {
-  // Create a pipe for stdin if we have input data
-  let (stdin_r, stdin_w) = @pipe.pipe()
-  let (stdout_r, stdout_w) = @pipe.pipe()
+  let (stdout_r, stdout_w) = @process.read_from_process(shared=true) catch {
+    _ => return { exit_code: 1, output: "", }
+  }
+  defer stdout_r.close()
+  let (stdin_r, stdin_w) = @process.write_to_process() catch {
+    _ => return { exit_code: 1, output: "", }
+  }
   // Write input data to stdin pipe
   if input_data.length() > 0 {
-    stdin_w.write(@utf8.encode(input_data))
+    stdin_w.write(input_data)
   }
   stdin_w.close()
-  defer stdout_r.close()
-  defer stdin_r.close()
 
   // Execute and capture output directly
   let exit_code = @process.run(program, args, stdin=stdin_r, stdout=stdout_w)
   stdout_w.close()
-  { exit_code, output: stdout_r.read_all().text(), }
+  { exit_code, output: stdout_r.read_all().text(), } catch {
+    _ => { exit_code, output: "", }
+  }
 }
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("shell", plugin => {
+  @webview.Plugin("shell", plugin => {
     plugin.command("exec", (payload : ExecParams) => {
       execute_script_with_output(
         payload.cmd.to_owned(),

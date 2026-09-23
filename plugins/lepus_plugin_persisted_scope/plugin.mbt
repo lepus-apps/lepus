@@ -19,7 +19,7 @@ fn ensure_scope(scope : String) -> Map[String, String] {
   match scope_store.val.get(scope) {
     Some(existing) => existing
     None => {
-      let created : Map[String, String] = {}
+      let created : Map[String, String] = Map([])
       scope_store.val.set(scope, created)
       created
     }
@@ -55,7 +55,7 @@ fn remove_value(payload : ScopeGetRequest) -> Bool {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("persisted_scope", plugin => {
+  @webview.Plugin("persisted_scope", plugin => {
     plugin.command_sync("set", (payload : ScopeSetRequest) => set_value(payload))
     plugin.command_sync("get", (payload : ScopeGetRequest) => get_value(payload))
     plugin.command_sync("remove", (payload : ScopeGetRequest) => {

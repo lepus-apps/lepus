@@ -18,14 +18,18 @@ pub fn plugin() -> @webview.Plugin
 pub(all) suberror OpenerError {
   OpenerError(String)
 } derive(Eq, @debug.Debug)
+pub fn OpenerError::equal(Self, Self) -> Bool
+pub fn OpenerError::not_equal(Self, Self) -> Bool
+pub fn OpenerError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct OpenReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn OpenReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn OpenReply::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

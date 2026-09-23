@@ -17,28 +17,38 @@ pub struct FsBoolReply {
   value : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsBoolReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsBoolReply::to_json(Self) -> Json
 
 pub struct FsListReply {
   ok : Bool
   entries : Array[String]
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsListReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsListReply::to_json(Self) -> Json
 
 pub struct FsMkdirRequest {
   path : String
   recursive : Bool?
   permission : Int?
 } derive(ToJson, @json.FromJson)
+pub fn FsMkdirRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsMkdirRequest::to_json(Self) -> Json
 
 pub struct FsPathRequest {
   path : String
 } derive(ToJson, @json.FromJson)
+pub fn FsPathRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsPathRequest::to_json(Self) -> Json
 
 pub struct FsReadReply {
   ok : Bool
   content : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsReadReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsReadReply::to_json(Self) -> Json
 
 pub struct FsReaddirRequest {
   path : String
@@ -46,16 +56,22 @@ pub struct FsReaddirRequest {
   include_special : Bool?
   sort : Bool?
 } derive(ToJson, @json.FromJson)
+pub fn FsReaddirRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsReaddirRequest::to_json(Self) -> Json
 
 pub struct FsRemoveRequest {
   path : String
   recursive : Bool?
 } derive(ToJson, @json.FromJson)
+pub fn FsRemoveRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsRemoveRequest::to_json(Self) -> Json
 
 pub struct FsReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsReply::to_json(Self) -> Json
 
 pub struct FsStatReply {
   ok : Bool
@@ -66,24 +82,31 @@ pub struct FsStatReply {
   can_execute : Bool?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsStatReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsStatReply::to_json(Self) -> Json
 
 pub struct FsStringReply {
   ok : Bool
   value : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsStringReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsStringReply::to_json(Self) -> Json
 
 pub struct FsTmpdirRequest {
   prefix : String?
 } derive(ToJson, @json.FromJson)
+pub fn FsTmpdirRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsTmpdirRequest::to_json(Self) -> Json
 
 pub struct FsWriteRequest {
   path : String
   content : String
   append : Bool?
 } derive(ToJson, @json.FromJson)
+pub fn FsWriteRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FsWriteRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

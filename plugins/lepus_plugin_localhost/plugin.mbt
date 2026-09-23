@@ -55,7 +55,7 @@ fn status_reply() -> LocalhostState {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("localhost", plugin => {
+  @webview.Plugin("localhost", plugin => {
     plugin.command_sync("start", (payload : StartRequest) => {
       start_reply(payload)
     })

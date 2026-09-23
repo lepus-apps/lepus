@@ -12,16 +12,20 @@ pub struct ProcessRunReply {
 
 ///|
 async fn run_capture(payload : ProcessRunRequest) -> ProcessRunReply {
-  let (stdout_r, stdout_w) = @pipe.pipe()
+  let (stdout_r, stdout_w) = @process.read_from_process(shared=true) catch {
+    _ => return { exit_code: 1, output: "", }
+  }
   defer stdout_r.close()
   let exit_code = @process.run(payload.program, payload.args, stdout=stdout_w)
   stdout_w.close()
-  { exit_code, output: stdout_r.read_all().text(), }
+  { exit_code, output: stdout_r.read_all().text(), } catch {
+    _ => { exit_code, output: "", }
+  }
 }
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("process", plugin => {
+  @webview.Plugin("process", plugin => {
     plugin.command("run", (payload : ProcessRunRequest) => run_capture(payload))
   })
 }

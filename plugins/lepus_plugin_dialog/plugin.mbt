@@ -68,7 +68,7 @@ fn confirm_dialog(payload : ConfirmRequest) -> ConfirmReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("dialog", plugin => {
+  @webview.Plugin("dialog", plugin => {
     plugin.command_sync("show", (payload : DialogRequest) => {
       show_dialog(payload)
     })

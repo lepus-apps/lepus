@@ -24,13 +24,16 @@ pub struct LocalhostState {
   pid : Int?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn LocalhostState::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn LocalhostState::to_json(Self) -> Json
 
 pub struct StartRequest {
   root : String
   port : Int
 } derive(ToJson, @json.FromJson)
+pub fn StartRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn StartRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

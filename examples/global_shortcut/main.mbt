@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  @lepus.Window::new(
+  @lepus.Window(
     title="Lepus Global Shortcut Plugin",
     source=@lepus_plugin_support.example_html(
       "global-shortcut", "Global Shortcut Plugin Example",

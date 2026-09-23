@@ -19,7 +19,7 @@ async fn sum_async_handler(payload : SumPayload) -> SumReply {
 async fn main {
   let root_dir = @fs.realpath("example")
 
-  let window = @webview.Window::new(
+  let window = @webview.Window(
     title="title",
     width=800,
     height=600,
@@ -31,7 +31,7 @@ async fn main {
     debug=1,
   )
   window.install(
-    @webview.Plugin::new("math", plugin => {
+    @webview.Plugin("math", plugin => {
       plugin.command("sum", (payload : SumPayload) => SumReply::{
         total: payload.left + payload.right,
       })
@@ -39,7 +39,7 @@ async fn main {
     }),
   )
   window.install(
-    @webview.Plugin::new("console", plugin => {
+    @webview.Plugin("console", plugin => {
       plugin.command("log", (payload : Json) => {
         println("[child-console:log] \{payload.stringify()}")
         payload

@@ -32,7 +32,7 @@ pub fn authenticate(payload : BiometricAuthRequest) -> BiometricAuthReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("biometric", plugin => {
+  @webview.Plugin("biometric", plugin => {
     plugin.command_sync("is_available", (_ : Json) => is_available())
     plugin.command_sync("authenticate", (payload : BiometricAuthRequest) => {
       authenticate(payload)

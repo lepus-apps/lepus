@@ -16,6 +16,8 @@ pub struct SaveRequest {
   window_id : String
   state : WindowState
 } derive(ToJson, @json.FromJson)
+pub fn SaveRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SaveRequest::to_json(Self) -> Json
 
 pub struct WindowState {
   x : Int
@@ -24,8 +26,9 @@ pub struct WindowState {
   height : Int
   maximized : Bool
 } derive(ToJson, @json.FromJson)
+pub fn WindowState::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowState::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

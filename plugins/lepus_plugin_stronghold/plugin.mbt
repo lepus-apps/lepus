@@ -17,7 +17,7 @@ fn xor_encrypt(text : String, key : String) -> String {
   if keys.length() == 0 {
     return text
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for i = 0; i < chars.length(); i = i + 1 {
     let x = chars[i].to_int() ^ keys[i % keys.length()].to_int()
     out.write_char((x % 95 + 32).unsafe_to_char())
@@ -44,7 +44,7 @@ fn get_secret(key : String) -> String? {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("stronghold", plugin => {
+  @webview.Plugin("stronghold", plugin => {
     plugin.command_sync("set", (payload : SecretSetRequest) => {
       set_secret(payload)
     })

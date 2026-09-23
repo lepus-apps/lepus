@@ -18,13 +18,16 @@ pub struct NotifyReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn NotifyReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NotifyReply::to_json(Self) -> Json
 
 pub struct NotifyRequest {
   title : String
   body : String
 } derive(ToJson, @json.FromJson)
+pub fn NotifyRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NotifyRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

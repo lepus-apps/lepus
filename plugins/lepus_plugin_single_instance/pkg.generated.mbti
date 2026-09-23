@@ -22,12 +22,15 @@ pub struct SingleInstanceAcquireReply {
   acquired : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn SingleInstanceAcquireReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SingleInstanceAcquireReply::to_json(Self) -> Json
 
 pub struct SingleInstanceAcquireRequest {
   app_id : String
 } derive(ToJson, @json.FromJson)
+pub fn SingleInstanceAcquireRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SingleInstanceAcquireRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

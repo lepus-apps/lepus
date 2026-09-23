@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  @lepus.Window::new(
+  @lepus.Window(
     title="Lepus Persisted Scope Plugin",
     source=@lepus_plugin_support.example_html(
       "persisted_scope", "Persisted Scope Plugin Example",

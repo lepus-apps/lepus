@@ -30,7 +30,7 @@ fn CommandResponse::error(message : String) -> CommandResponse {
 ///|
 fn CommandResponse::to_wire(self : CommandResponse) -> Bytes {
   match self {
-    Ok(payload) => @encoding/utf8.encode(payload.to_json().stringify())
+    Ok(payload) => @encoding/utf8.encode(@json.to_json(payload).stringify())
     Error(msg) => @encoding/utf8.encode("\{msg}")
   }
 }

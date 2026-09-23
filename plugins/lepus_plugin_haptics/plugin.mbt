@@ -29,7 +29,7 @@ fn pulse(payload : HapticPulseRequest) -> HapticPulseReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("haptics", plugin => {
+  @webview.Plugin("haptics", plugin => {
     plugin.command_sync("pulse", (payload : HapticPulseRequest) => {
       pulse(payload)
     })

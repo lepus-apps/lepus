@@ -67,7 +67,7 @@ fn close_connection(conn_id : Int) -> Bool {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("sql", plugin => {
+  @webview.Plugin("sql", plugin => {
     plugin.command_sync("load", (payload : LoadRequest) => {
       load_connection(payload)
     })

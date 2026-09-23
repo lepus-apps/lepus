@@ -20,8 +20,9 @@ pub struct OsInfo {
   os : String
   arch : String
 } derive(ToJson, @json.FromJson)
+pub fn OsInfo::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn OsInfo::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

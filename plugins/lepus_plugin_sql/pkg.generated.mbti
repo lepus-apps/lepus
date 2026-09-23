@@ -16,28 +16,37 @@ pub struct ConnectionReply {
   id : Int
   db : String
 } derive(ToJson, @json.FromJson)
+pub fn ConnectionReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ConnectionReply::to_json(Self) -> Json
 
 pub struct ExecuteReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ExecuteReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ExecuteReply::to_json(Self) -> Json
 
 pub struct ExecuteRequest {
   conn_id : Int
   sql : String
 } derive(ToJson, @json.FromJson)
+pub fn ExecuteRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ExecuteRequest::to_json(Self) -> Json
 
 pub struct LoadRequest {
   db : String
 } derive(ToJson, @json.FromJson)
+pub fn LoadRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn LoadRequest::to_json(Self) -> Json
 
 pub struct SelectReply {
   ok : Bool
   rows : Array[String]
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn SelectReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SelectReply::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

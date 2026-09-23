@@ -18,18 +18,27 @@ pub struct ConfirmReply {
   accepted : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ConfirmReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ConfirmReply::to_json(Self) -> Json
 
 pub struct ConfirmRequest {
   title : String?
   message : String
   default_ok : Bool?
 } derive(ToJson, @json.FromJson)
+pub fn ConfirmRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ConfirmRequest::to_json(Self) -> Json
 
 pub enum DialogLevel {
   Info
   Warning
   Error
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DialogLevel::equal(Self, Self) -> Bool
+pub fn DialogLevel::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DialogLevel::not_equal(Self, Self) -> Bool
+pub fn DialogLevel::to_json(Self) -> Json
+pub fn DialogLevel::to_repr(Self) -> @debug.Repr
 
 pub struct DialogReply {
   shown : Bool
@@ -38,14 +47,17 @@ pub struct DialogReply {
   level : DialogLevel
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn DialogReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DialogReply::to_json(Self) -> Json
 
 pub struct DialogRequest {
   title : String?
   message : String
   level : DialogLevel?
 } derive(ToJson, @json.FromJson)
+pub fn DialogRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DialogRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

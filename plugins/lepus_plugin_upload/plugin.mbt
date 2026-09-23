@@ -20,7 +20,7 @@ pub struct UploadDeleteReply {
 ///|
 fn sanitize_filename(filename : String) -> String {
   let chars = filename.to_array()
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for i = 0; i < chars.length(); i = i + 1 {
     let ch = chars[i]
     if (ch >= 'a' && ch <= 'z') ||
@@ -73,7 +73,7 @@ async fn delete_file(path : String) -> UploadDeleteReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("upload", plugin => {
+  @webview.Plugin("upload", plugin => {
     plugin.command("save_text", (payload : UploadSaveRequest) => {
       save_text(payload)
     })

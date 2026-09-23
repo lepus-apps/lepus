@@ -30,7 +30,7 @@ fn recent(limit : Int?) -> Array[LogEntry] {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("log", plugin => {
+  @webview.Plugin("log", plugin => {
     plugin.command_sync("info", (payload : String) => {
       append_log("info", payload)
     })

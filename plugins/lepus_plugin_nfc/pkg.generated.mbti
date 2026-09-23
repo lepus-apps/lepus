@@ -15,10 +15,14 @@ pub fn plugin() -> @webview.Plugin
 pub struct NfcDecodeRequest {
   hex : String
 } derive(ToJson, @json.FromJson)
+pub fn NfcDecodeRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NfcDecodeRequest::to_json(Self) -> Json
 
 pub struct NfcEncodeRequest {
   text : String
 } derive(ToJson, @json.FromJson)
+pub fn NfcEncodeRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NfcEncodeRequest::to_json(Self) -> Json
 
 pub struct NfcFrame {
   ok : Bool
@@ -26,8 +30,9 @@ pub struct NfcFrame {
   text : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn NfcFrame::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NfcFrame::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

@@ -17,23 +17,30 @@ pub struct ConnectReply {
   id : Int?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ConnectReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ConnectReply::to_json(Self) -> Json
 
 pub struct ConnectRequest {
   url : String
 } derive(ToJson, @json.FromJson)
+pub fn ConnectRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ConnectRequest::to_json(Self) -> Json
 
 pub struct RecvReply {
   ok : Bool
   text : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn RecvReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn RecvReply::to_json(Self) -> Json
 
 pub struct SendRequest {
   id : Int
   text : String
 } derive(ToJson, @json.FromJson)
+pub fn SendRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SendRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

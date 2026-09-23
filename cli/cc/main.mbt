@@ -88,19 +88,20 @@ async fn linux_link_args() -> Array[String] {
 
 ///|
 async fn run_capture(program : String, args : Array[String]) -> (Int, String) {
-  let (stdout_r, stdout_w) = @pipe.pipe()
+  let (stdout_r, stdout_w) = @process.read_from_process(shared=true) catch {
+    _ => return (1, "")
+  }
   defer stdout_r.close()
   let exit_code = @process.run(program, args, stdout=stdout_w) catch { _ => 1 }
-  stdout_w.close()
   (exit_code, stdout_r.read_all().text())
 }
 
 ///|
 fn select_windows_compiler(target : SystemTarget) -> (String, Array[String]) {
-  match @sys.get_env_var("CXX") {
+  match @env.get_env_var("CXX") {
     Some(cxx) => (cxx, [])
     None =>
-      match @sys.get_env_var("CC") {
+      match @env.get_env_var("CC") {
         Some(cc) => (cc, [])
         None =>
           match target {

@@ -55,7 +55,7 @@ pub fn get_status() -> AutostartStatusReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("autostart", plugin => {
+  @webview.Plugin("autostart", plugin => {
     plugin.command_sync("status", (payload : String) => status_reply(payload))
     plugin.command_sync("enable", (payload : AutostartConfig) => {
       enable_reply(payload)

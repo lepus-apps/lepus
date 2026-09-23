@@ -5,7 +5,7 @@ test {
     text <| "Hello world",
   ]
   inspect(
-    container.render(),
+    Component::render(container),
     content=(
       #|Hello world
       #|Hello world

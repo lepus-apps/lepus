@@ -35,7 +35,7 @@ fn clear_state(window_id : String) -> Bool {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("window_state", plugin => {
+  @webview.Plugin("window_state", plugin => {
     plugin.command_sync("save_state", (payload : SaveRequest) => {
       save_state(payload)
     })

@@ -28,7 +28,8 @@ pub struct Window {
 ///|
 /// Creates a managed app. The library handles the parent dispatcher and child
 /// webview process automatically.
-pub fn Window::new(
+#alias(new, deprecated="Use `Window()` instead")
+pub fn Window::Window(
   title? : String = "MoonBit WebView",
   url? : String = "",
   width? : Int = 800,
@@ -180,7 +181,7 @@ pub fn Window::set_custom_protocol(
 ///|
 /// Runs the managed app end-to-end.
 pub async fn Window::run(self : Window) -> Unit {
-  let args = @sys.get_cli_args()
+  let args = @env.args()
   if args.length() > 1 && args[1] == self.child_arg {
     guard WindowManager::connect_child_process() == 0 else {
       abort("ManagedApp::run: connect child process failed")
@@ -250,7 +251,7 @@ async fn Window::run_child_async(self : Window) -> Unit {
 
 ///|
 fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
-  Plugin::new("window_controls", plugin => {
+  Plugin::Plugin("window_controls", plugin => {
     plugin.command_sync("close", (_ : Json) => wm_close_window(window_id) == 0)
     plugin.command("minimize", (_ : Json) => wm_minimize_window(window_id) == 0)
     plugin.command("maximize", (_ : Json) => wm_maximize_window(window_id) == 0)
@@ -396,7 +397,7 @@ fn Window::install_child_plugins(
   wm : WindowManager,
 ) -> Unit {
   let proxy = ProcessCommandProxy::new(wm, webview.window_id())
-  let host = PluginHost::new(webview)
+  let host = PluginHost::PluginHost(webview)
   if self.enable_window_controls_plugin {
     host.install(self.window_controls_plugin(webview.window_id()))
   }

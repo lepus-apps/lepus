@@ -104,6 +104,8 @@ pub(all) enum CommandResponse {
   Ok(Json)
   Error(String)
 } derive(Eq)
+pub fn CommandResponse::equal(Self, Self) -> Bool
+pub fn CommandResponse::not_equal(Self, Self) -> Bool
 
 pub struct IpcMessage {
   source_window_id : Int
@@ -121,7 +123,9 @@ pub(all) enum IpcMessageType {
   Request
   Response
 } derive(Eq)
+pub fn IpcMessageType::equal(Self, Self) -> Bool
 pub fn IpcMessageType::int(Self) -> Int
+pub fn IpcMessageType::not_equal(Self, Self) -> Bool
 
 pub struct Plugin {
   name : String
@@ -130,7 +134,8 @@ pub struct Plugin {
   child_installers : Array[(PluginContext[Unit], ProcessCommandProxy) -> Unit]
   direct_installers : Array[(PluginContext[Unit]) -> Unit]
 }
-pub fn Plugin::new(String, (PluginBuilder) -> Unit) -> Self
+#alias(new, deprecated)
+pub fn Plugin::Plugin(String, (PluginBuilder) -> Unit) -> Self
 
 pub struct PluginBuilder {
   plugin_name : String
@@ -154,12 +159,13 @@ pub fn[X] PluginContext::name(Self[X]) -> String
 pub fn[X] PluginContext::register_api(Self[X], String) -> String
 
 type PluginHost[X]
+#alias(new, deprecated)
+pub fn[X] PluginHost::PluginHost(WebView[X], global_name? : String) -> Self[X]
 pub fn[X] PluginHost::command_bridge(Self[X]) -> CommandBridge[X]
 pub fn[X] PluginHost::destroy(Self[X]) -> Unit
 pub fn[X] PluginHost::global_name(Self[X]) -> String
 pub fn PluginHost::install(Self[Unit], Plugin, proxy? : ProcessCommandProxy?) -> Unit
 pub fn[X] PluginHost::install_script(Self[X], String) -> Unit
-pub fn[X] PluginHost::new(WebView[X], global_name? : String) -> Self[X]
 
 pub struct ProcessCommandProxy {
   wm : WindowManager
@@ -172,13 +178,16 @@ pub fn ProcessCommandProxy::new(WindowManager, Int, subtype? : String) -> Self
 pub fn[Payload : ToJson, Reply : @json.FromJson] ProcessCommandProxy::plugin_handler(Self, String, String, target_window_id? : Int, timeout_ms? : Int) -> (Payload) -> Reply raise
 
 type ProcessCommandReplyForTest derive(@json.FromJson)
+pub fn ProcessCommandReplyForTest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 
 pub struct ProcessCommandRequest {
   name : String
   payload : Json
 } derive(ToJson, @json.FromJson)
+pub fn ProcessCommandRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn[Payload : ToJson] ProcessCommandRequest::new(String, Payload) -> Self
 pub fn ProcessCommandRequest::parse(String) -> Self raise ProcessCommandError
+pub fn ProcessCommandRequest::to_json(Self) -> Json
 
 pub(all) enum ProcessCommandResponse {
   Ok(Json)
@@ -186,8 +195,10 @@ pub(all) enum ProcessCommandResponse {
 } derive(ToJson, @json.FromJson)
 pub fn[Reply : @json.FromJson] ProcessCommandResponse::decode_reply(Self) -> Reply raise ProcessCommandError
 pub fn ProcessCommandResponse::error(String) -> Self
+pub fn ProcessCommandResponse::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn[Payload : ToJson] ProcessCommandResponse::ok(Payload) -> Self
 pub fn ProcessCommandResponse::stringify(Self) -> String
+pub fn ProcessCommandResponse::to_json(Self) -> Json
 
 pub struct ProcessCommandRouter {
   handlers : Map[String, async (Json) -> ProcessCommandResponse]
@@ -215,6 +226,8 @@ pub(all) enum ProcessType {
   Child
   Unknown
 } derive(Eq)
+pub fn ProcessType::equal(Self, Self) -> Bool
+pub fn ProcessType::not_equal(Self, Self) -> Bool
 
 pub(all) enum SizeHint {
   None
@@ -227,6 +240,9 @@ pub(all) enum TitleBarStyle {
   Default
   Hidden
 } derive(Eq, @debug.Debug)
+pub fn TitleBarStyle::equal(Self, Self) -> Bool
+pub fn TitleBarStyle::not_equal(Self, Self) -> Bool
+pub fn TitleBarStyle::to_repr(Self) -> @debug.Repr
 
 type WebView[X]
 pub fn[X] WebView::back(Self[X]) -> Unit
@@ -282,13 +298,14 @@ pub struct Window {
   mut runtime_window_id : Int
   plugins : Array[Plugin]
 }
+#alias(new, deprecated)
+pub fn Window::Window(title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), enable_window_controls_plugin? : Bool) -> Self
 pub fn Window::close(Self) -> Unit
 pub fn Window::eval(Self, String) -> Unit
 pub fn Window::install(Self, Plugin) -> Unit
 pub fn Window::maximize(Self) -> Unit
 pub fn Window::minimize(Self) -> Unit
 pub fn Window::navigate(Self, String) -> Unit
-pub fn Window::new(title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), enable_window_controls_plugin? : Bool) -> Self
 pub async fn Window::run(Self) -> Unit
 pub fn Window::set_custom_protocol(Self, String, String) -> Unit
 pub fn Window::set_fullscreen(Self, Bool) -> Unit
@@ -342,9 +359,10 @@ pub(all) enum WindowState {
   Closing
   Closed
 } derive(Eq)
+pub fn WindowState::equal(Self, Self) -> Bool
 pub fn WindowState::int(Self) -> Int
+pub fn WindowState::not_equal(Self, Self) -> Bool
 
 // Type aliases
 
 // Traits
-

@@ -20,13 +20,16 @@ pub struct HapticPulseReply {
   intensity : Int
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn HapticPulseReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn HapticPulseReply::to_json(Self) -> Json
 
 pub struct HapticPulseRequest {
   pattern : String
   intensity : Int?
 } derive(ToJson, @json.FromJson)
+pub fn HapticPulseRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn HapticPulseRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

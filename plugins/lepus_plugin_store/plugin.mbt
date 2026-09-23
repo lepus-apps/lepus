@@ -31,7 +31,7 @@ fn clear_all() -> Bool {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("store", plugin => {
+  @webview.Plugin("store", plugin => {
     plugin.command_sync("set", (payload : StoreSetRequest) => set_item(payload))
     plugin.command_sync("get", (payload : String) => get_item(payload))
     plugin.command_sync("remove", (payload : String) => {

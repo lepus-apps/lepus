@@ -58,7 +58,7 @@ pub fn scan(text : String) -> ScanResult {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("barcode_scanner", plugin => {
+  @webview.Plugin("barcode_scanner", plugin => {
     plugin.command_sync("scan", (payload : String) => scan(payload))
     plugin.command_sync("validate_ean13", (payload : String) => {
       ean13_valid(payload)

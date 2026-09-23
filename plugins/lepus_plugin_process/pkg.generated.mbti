@@ -16,13 +16,16 @@ pub struct ProcessRunReply {
   exit_code : Int
   output : String
 } derive(ToJson, @json.FromJson)
+pub fn ProcessRunReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ProcessRunReply::to_json(Self) -> Json
 
 pub struct ProcessRunRequest {
   program : String
   args : Array[String]
 } derive(ToJson, @json.FromJson)
+pub fn ProcessRunRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ProcessRunRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

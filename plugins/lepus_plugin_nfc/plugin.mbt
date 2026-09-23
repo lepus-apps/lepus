@@ -24,7 +24,7 @@ fn nibble_to_hex(n : Int) -> Char {
 
 ///|
 fn to_hex(text : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let chars = text.to_array()
   for i = 0; i < chars.length(); i = i + 1 {
     let code = chars[i].to_int()
@@ -57,7 +57,7 @@ fn decode_hex(hex : String) -> Result[String, String] {
   if chars.length() % 2 != 0 {
     return Err("hex length must be even")
   }
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for i = 0; i + 1 < chars.length(); i = i + 2 {
     let hi = match hex_digit(chars[i]) {
       Some(v) => v
@@ -93,7 +93,7 @@ fn decode_frame(payload : NfcDecodeRequest) -> NfcFrame {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("nfc", plugin => {
+  @webview.Plugin("nfc", plugin => {
     plugin.command_sync("encode", (payload : NfcEncodeRequest) => {
       encode_frame(payload)
     })

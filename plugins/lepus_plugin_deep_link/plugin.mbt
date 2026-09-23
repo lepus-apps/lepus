@@ -27,7 +27,7 @@ fn split_once(text : String, needle : Char) -> (String, String?) {
 
 ///|
 fn parse_query(text : String) -> Map[String, String] {
-  let out : Map[String, String] = {}
+  let out : Map[String, String] = Map([])
   let mut rest = text
   while !rest.is_empty() {
     let (part, next) = split_once(rest, '&')
@@ -80,7 +80,7 @@ pub fn build(payload : DeepLinkBuildRequest) -> String {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("deep_link", plugin => {
+  @webview.Plugin("deep_link", plugin => {
     plugin.command_sync("parse", (payload : String) => parse(payload))
     plugin.command_sync("build", (payload : DeepLinkBuildRequest) => {
       build(payload)

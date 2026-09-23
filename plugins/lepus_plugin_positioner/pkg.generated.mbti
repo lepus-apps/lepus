@@ -16,6 +16,8 @@ pub struct PositionRequest {
   window : String
   bounds : WindowBounds
 } derive(ToJson, @json.FromJson)
+pub fn PositionRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PositionRequest::to_json(Self) -> Json
 
 pub struct WindowBounds {
   x : Int
@@ -23,8 +25,9 @@ pub struct WindowBounds {
   width : Int
   height : Int
 } derive(ToJson, @json.FromJson)
+pub fn WindowBounds::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowBounds::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

@@ -26,6 +26,9 @@ pub fn write_text(String) -> Unit raise ClipboardError
 pub(all) suberror ClipboardError {
   ClipboardError(String)
 } derive(Eq, @debug.Debug)
+pub fn ClipboardError::equal(Self, Self) -> Bool
+pub fn ClipboardError::not_equal(Self, Self) -> Bool
+pub fn ClipboardError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct ClipboardBoolReply {
@@ -33,6 +36,8 @@ pub struct ClipboardBoolReply {
   value : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ClipboardBoolReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ClipboardBoolReply::to_json(Self) -> Json
 
 pub struct ClipboardExampleReply {
   supported : Bool
@@ -41,23 +46,30 @@ pub struct ClipboardExampleReply {
   restored : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ClipboardExampleReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ClipboardExampleReply::to_json(Self) -> Json
 
 pub struct ClipboardTextReply {
   supported : Bool
   text : String?
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ClipboardTextReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ClipboardTextReply::to_json(Self) -> Json
 
 pub struct ClipboardWriteReply {
   ok : Bool
   error : String?
 } derive(ToJson, @json.FromJson)
+pub fn ClipboardWriteReply::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ClipboardWriteReply::to_json(Self) -> Json
 
 pub struct ClipboardWriteRequest {
   text : String
 } derive(ToJson, @json.FromJson)
+pub fn ClipboardWriteRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ClipboardWriteRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

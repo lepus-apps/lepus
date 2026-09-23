@@ -16,14 +16,17 @@ pub struct ScopeGetRequest {
   scope : String
   key : String
 } derive(ToJson, @json.FromJson)
+pub fn ScopeGetRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ScopeGetRequest::to_json(Self) -> Json
 
 pub struct ScopeSetRequest {
   scope : String
   key : String
   value : String
 } derive(ToJson, @json.FromJson)
+pub fn ScopeSetRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ScopeSetRequest::to_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

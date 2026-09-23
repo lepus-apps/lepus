@@ -16,7 +16,7 @@ fn open_reply(target : String) -> OpenReply {
 
 ///|
 pub fn plugin() -> @webview.Plugin {
-  @webview.Plugin::new("opener", plugin => {
+  @webview.Plugin("opener", plugin => {
     plugin.command_sync("open", (payload : String) => open_reply(payload))
     plugin.command_sync("is_supported", (_ : Json) => is_supported())
   })
