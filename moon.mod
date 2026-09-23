@@ -6,6 +6,7 @@ import {
   "moonbitlang/x@0.5.5",
   "moonbitlang/async@0.22.2",
   "moonbitlang/parser@0.4.0",
+  "moonbit-community/zipc@0.2.2",
 }
 
 readme = "README.mbt.md"

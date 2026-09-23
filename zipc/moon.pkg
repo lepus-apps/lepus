@@ -1,5 +1,0 @@
-import {
-  "lepus-apps/lepus/zipc/deflate",
-  "lepus-apps/lepus/zipc/crc32",
-  "moonbitlang/core/encoding/utf8",
-}

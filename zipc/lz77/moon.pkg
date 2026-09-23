@@ -1,8 +1,0 @@
-import {
-  "moonbitlang/core/encoding/utf8",
-  "moonbitlang/core/buffer",
-}
-
-options(
-  "is-main": false,
-)

@@ -9,7 +9,7 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/async",
   "moonbitlang/async/fs",
-  "lepus-apps/lepus/zipc",
+  "moonbit-community/zipc",
 }
 
 supported_targets = "+native"
