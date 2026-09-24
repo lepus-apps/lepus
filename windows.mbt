@@ -76,15 +76,33 @@ pub extend FullscreenWindowRequest with ToJson::{to_json}
 pub extend FullscreenWindowRequest with @json.FromJson::{from_json}
 
 ///|
+/// Cross-window control payload pushed to a target window over the directed
+/// IPC event channel (event name `lepus:window`). The target window's
+/// `window_controls` script invokes `window.LepusWindow[op](...args)`, so the
+/// native operation runs in the process that actually owns the window.
+priv struct WindowControl {
+  op : String
+  args : Json
+} derive(ToJson)
+
+///|
+/// Empty argument list for `WindowRegistry::send_control`.
+fn no_control_args() -> Json {
+  @json.to_json(([] : Array[Json]))
+}
+
+///|
 /// Shared, mutable registry owned by the main process.
 ///
 /// `ids` maps label -> window-id (== spawn base); `pids` maps label -> child
 /// pid once spawned; `children` lists every live child so the serving loop can
-/// wait on them.
+/// wait on them; `focused` mirrors each window's `WindowConfig.focused` flag so
+/// `open` knows whether a re-shown window should also grab focus.
 pub struct WindowRegistry {
   ids : Map[String, Int]
   pids : Map[String, Int]
   children : Array[Int]
+  focused : Map[String, Bool]
 }
 
 ///|
@@ -92,7 +110,11 @@ pub struct WindowRegistry {
 /// declaration order, matching the base each child uses when creating its own
 /// window (see `assign_window_ids` in `lepus.mbt`).
 pub fn WindowRegistry::new(configs : Array[WindowConfig]) -> WindowRegistry {
-  { ids: assign_window_ids(configs), pids: Map([]), children: [], }
+  let focused : Map[String, Bool] = Map([])
+  for config in configs {
+    focused.set(config.label(), config.focused)
+  }
+  { ids: assign_window_ids(configs), pids: Map([]), children: [], focused, }
 }
 
 ///|
@@ -114,39 +136,75 @@ pub fn WindowRegistry::plugin(
     plugin.command_sync("open", fn(req : LabelRequest) -> Bool {
       self.open(wm, argv0, req.label)
     })
+    plugin.command_sync("focus", fn(req : LabelRequest) -> Bool {
+      self.with_window(req.label, fn(id) {
+        wm.focus_window(id) == 0 ||
+        self.send_control(wm, req.label, "focus", no_control_args())
+      })
+    })
     plugin.command_sync("close", fn(req : LabelRequest) -> Bool {
       self.with_window(req.label, fn(id) {
-        ignore(wm.close_window(id))
-        true
+        wm.close_window(id) == 0 ||
+        self.send_control(wm, req.label, "close", no_control_args())
       })
     })
     plugin.command_sync("show", fn(req : LabelRequest) -> Bool {
-      self.with_window(req.label, fn(id) { wm.set_visibility(id, true) == 0 })
+      self.with_window(req.label, fn(id) {
+        wm.set_visibility(id, true) == 0 ||
+        self.send_control(wm, req.label, "show", no_control_args())
+      })
     })
     plugin.command_sync("hide", fn(req : LabelRequest) -> Bool {
-      self.with_window(req.label, fn(id) { wm.set_visibility(id, false) == 0 })
+      self.with_window(req.label, fn(id) {
+        wm.set_visibility(id, false) == 0 ||
+        self.send_control(wm, req.label, "hide", no_control_args())
+      })
     })
     plugin.command_sync("move", fn(req : MoveWindowRequest) -> Bool {
       self.with_window(req.label, fn(id) {
-        wm.set_position(id, req.x, req.y) == 0
+        wm.set_position(id, req.x, req.y) == 0 ||
+        self.send_control(
+          wm,
+          req.label,
+          "setPosition",
+          @json.to_json([req.x, req.y]),
+        )
       })
     })
     plugin.command_sync("resize", fn(req : ResizeWindowRequest) -> Bool {
       self.with_window(req.label, fn(id) {
-        wm.set_size(id, req.width, req.height, None) == 0
+        wm.set_size(id, req.width, req.height, None) == 0 ||
+        self.send_control(
+          wm,
+          req.label,
+          "setSize",
+          @json.to_json([req.width, req.height]),
+        )
       })
     })
     plugin.command_sync("minimize", fn(req : LabelRequest) -> Bool {
-      self.with_window(req.label, fn(id) { wm.minimize_window(id) == 0 })
+      self.with_window(req.label, fn(id) {
+        wm.minimize_window(id) == 0 ||
+        self.send_control(wm, req.label, "minimize", no_control_args())
+      })
     })
     plugin.command_sync("maximize", fn(req : LabelRequest) -> Bool {
-      self.with_window(req.label, fn(id) { wm.maximize_window(id) == 0 })
+      self.with_window(req.label, fn(id) {
+        wm.maximize_window(id) == 0 ||
+        self.send_control(wm, req.label, "maximize", no_control_args())
+      })
     })
     plugin.command_sync("set_fullscreen", fn(
       req : FullscreenWindowRequest,
     ) -> Bool {
       self.with_window(req.label, fn(id) {
-        wm.set_fullscreen_window(id, req.fullscreen) == 0
+        wm.set_fullscreen_window(id, req.fullscreen) == 0 ||
+        self.send_control(
+          wm,
+          req.label,
+          "setFullscreen",
+          @json.to_json([req.fullscreen]),
+        )
       })
     })
   })
@@ -161,6 +219,30 @@ fn WindowRegistry::is_open(self : WindowRegistry, label : String) -> Bool {
 }
 
 ///|
+/// Pushes a window-control request to a (possibly remote, child-process)
+/// window by label, using the same directed IPC event channel as the
+/// `EventBus` (`lepus-event`). The target window's `window_controls` script
+/// performs the native operation in its own process. Returns true when the
+/// message was accepted for sending; false for unknown labels or no transport.
+fn WindowRegistry::send_control(
+  self : WindowRegistry,
+  wm : @webview.WindowManager,
+  label : String,
+  op : String,
+  args : Json,
+) -> Bool {
+  let id = match self.ids.get(label) {
+    Some(id) => id
+    None => return false
+  }
+  let js = event_eval_js(
+    "lepus:window",
+    @json.to_json(WindowControl::{ op, args, }),
+  )
+  wm.send_message(0, id, @webview.IpcMessageType::Event, "lepus-event", js) == 0
+}
+
+///|
 /// Opens (spawns if needed) a window by label and ensures it is visible.
 fn WindowRegistry::open(
   self : WindowRegistry,
@@ -172,9 +254,17 @@ fn WindowRegistry::open(
     Some(id) => id
     None => return false
   }
-  // Already spawned: just reveal it.
+  // Already spawned: reveal it, applying the window's `focused` attribute
+  // (Tauri `focused` parity — re-opened windows grab focus unless declared
+  // with `focused: false`). The control pushes act on remote child-process
+  // windows and arrive in order after `show`.
   if self.is_open(label) {
-    return wm.set_visibility(id, true) == 0
+    let shown = wm.set_visibility(id, true) == 0 ||
+      self.send_control(wm, label, "show", no_control_args())
+    if self.focused.get(label).unwrap_or(true) {
+      ignore(self.send_control(wm, label, "focus", no_control_args()))
+    }
+    return shown
   }
   let pid = wm.spawn_process(argv0, @webview.child_arg_for(id, label))
   guard pid > 0 else { return false }
@@ -203,6 +293,31 @@ fn WindowRegistry::with_window(
 /// and to pick up lazily-spawned windows).
 fn WindowRegistry::live_children(self : WindowRegistry) -> Array[Int] {
   self.children
+}
+
+///|
+test "window registry keeps each window's focused attribute" {
+  let configs = [
+    WindowConfig::new(
+      label="a",
+      title="A",
+      focused=false,
+      source=Source::html(""),
+    ),
+    WindowConfig::new(label="b", title="B", source=Source::html("")),
+  ]
+  let registry = WindowRegistry::new(configs)
+  assert_eq(registry.focused.get("a"), Some(false))
+  assert_eq(registry.focused.get("b"), Some(true))
+}
+
+///|
+test "window control payload carries op and args for the JS facade" {
+  let payload = @json.to_json(WindowControl::{
+    op: "focus",
+    args: no_control_args(),
+  })
+  assert_eq(payload.stringify(), "{\"op\":\"focus\",\"args\":[]}")
 }
 
 ///|

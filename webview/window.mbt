@@ -20,6 +20,7 @@ pub struct Window {
   mut traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
+  focused : Bool
   enable_window_controls_plugin : Bool
   mut url : String
   mut html : String
@@ -52,6 +53,7 @@ pub fn Window::Window(
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
+  focused? : Bool = true,
   enable_window_controls_plugin? : Bool = true,
 ) -> Window {
   {
@@ -73,6 +75,7 @@ pub fn Window::Window(
     traffic_light_position,
     position,
     hidden,
+    focused,
     enable_window_controls_plugin,
     html: "",
     pending_custom_protocols: [],
@@ -161,7 +164,13 @@ pub fn Window::set_traffic_light_position(
 ) -> Unit {
   self.traffic_light_position = (x, y)
   if self.runtime_window_id > 0 {
-    ignore(wm_set_traffic_light_position(self.runtime_window_id, x, y))
+    ignore(
+      @window_manager.wm_set_traffic_light_position(
+        self.runtime_window_id,
+        x,
+        y,
+      ),
+    )
   }
 }
 
@@ -176,7 +185,12 @@ pub fn Window::install(self : Window, plugin : Plugin) -> Unit {
 pub fn Window::set_html(self : Window, html : String) -> Unit {
   self.html = html
   if self.runtime_window_id > 0 {
-    ignore(wm_set_html(self.runtime_window_id, @encoding/utf8.encode(html)))
+    ignore(
+      @window_manager.wm_set_html(
+        self.runtime_window_id,
+        @encoding/utf8.encode(html),
+      ),
+    )
   }
 }
 
@@ -184,7 +198,12 @@ pub fn Window::set_html(self : Window, html : String) -> Unit {
 pub fn Window::navigate(self : Window, url : String) -> Unit {
   self.url = url
   if self.runtime_window_id > 0 {
-    ignore(wm_navigate(self.runtime_window_id, @encoding/utf8.encode(url)))
+    ignore(
+      @window_manager.wm_navigate(
+        self.runtime_window_id,
+        @encoding/utf8.encode(url),
+      ),
+    )
   }
 }
 
@@ -334,6 +353,7 @@ async fn Window::run_child_async(self : Window) -> Unit {
       traffic_light_position=self.traffic_light_position,
       position=self.position,
       hidden=self.hidden,
+      focused=self.focused,
     )
     self.runtime_window_id = webview.window_id()
     // 向主进程注册本窗口：主进程据 source_window_id 建立
@@ -389,35 +409,48 @@ priv struct ResizeRequest {
 ///|
 fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
   Plugin::Plugin("window_controls", plugin => {
-    plugin.command_sync("close", (_ : Json) => wm_close_window(window_id) == 0)
-    plugin.command("minimize", (_ : Json) => wm_minimize_window(window_id) == 0)
-    plugin.command("maximize", (_ : Json) => wm_maximize_window(window_id) == 0)
+    plugin.command_sync("close", (_ : Json) => {
+      @window_manager.wm_close_window(window_id) == 0
+    })
+    plugin.command("minimize", (_ : Json) => {
+      @window_manager.wm_minimize_window(window_id) == 0
+    })
+    plugin.command("maximize", (_ : Json) => {
+      @window_manager.wm_maximize_window(window_id) == 0
+    })
     plugin.command("unmaximize", (_ : Json) => {
-      wm_unmaximize_window(window_id) == 0
+      @window_manager.wm_unmaximize_window(window_id) == 0
     })
     plugin.command("toggle_maximize", (_ : Json) => {
-      wm_toggle_maximize_window(window_id) == 0
+      @window_manager.wm_toggle_maximize_window(window_id) == 0
     })
     plugin.command("set_fullscreen_on", (_ : Json) => {
-      wm_set_fullscreen_window(window_id, 1) == 0
+      @window_manager.wm_set_fullscreen_window(window_id, 1) == 0
     })
     plugin.command("set_fullscreen_off", (_ : Json) => {
-      wm_set_fullscreen_window(window_id, 0) == 0
+      @window_manager.wm_set_fullscreen_window(window_id, 0) == 0
     })
     plugin.command("toggle_fullscreen", (_ : Json) => {
-      wm_toggle_fullscreen_window(window_id) == 0
+      @window_manager.wm_toggle_fullscreen_window(window_id) == 0
     })
     plugin.command_sync("start_drag", (_ : Json) => {
-      wm_start_drag_window(window_id) == 0
+      @window_manager.wm_start_drag_window(window_id) == 0
     })
     plugin.command("set_position", (req : MoveRequest) => {
-      wm_set_position(window_id, req.x, req.y) == 0
+      @window_manager.wm_set_position(window_id, req.x, req.y) == 0
     })
     plugin.command("set_size", (req : ResizeRequest) => {
       wm_set_size(window_id, req.width, req.height, None) == 0
     })
-    plugin.command("show", (_ : Json) => wm_set_visibility(window_id, 1) == 0)
-    plugin.command("hide", (_ : Json) => wm_set_visibility(window_id, 0) == 0)
+    plugin.command("show", (_ : Json) => {
+      @window_manager.wm_set_visibility(window_id, 1) == 0
+    })
+    plugin.command("hide", (_ : Json) => {
+      @window_manager.wm_set_visibility(window_id, 0) == 0
+    })
+    plugin.command("focus", (_ : Json) => {
+      @window_manager.wm_focus_window(window_id) == 0
+    })
     plugin.script(
       (
         #|(() => {
@@ -447,6 +480,7 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
         #|    setSize: (width, height) => callArgs('set_size', { width, height }),
         #|    show: () => call('show'),
         #|    hide: () => call('hide'),
+        #|    focus: () => call('focus'),
         #|    _originalClose: originalClose,
         #|  };
         #|  const hasDragRegion = (el) => {
@@ -468,6 +502,17 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
         #|    if (!hasDragRegion(target)) return;
         #|    call('start_drag');
         #|  }, true);
+        #|  // Cross-window control: the main-process `windows` plugin pushes a directed
+        #|  // `lepus:window` event (via the IPC event bus) so THIS window performs the
+        #|  // native operation in its own process. This is what makes commands like
+        #|  // `lepusApi.windows.focus/show/hide(...)` work for child-process windows.
+        #|  window.addEventListener('lepus_event', (e) => {
+        #|    const d = e && e.detail;
+        #|    if (!d || d.event !== 'lepus:window') return;
+        #|    const p = d.payload || {};
+        #|    const fn = window.LepusWindow && window.LepusWindow[p.op];
+        #|    if (typeof fn === 'function') fn.apply(null, Array.isArray(p.args) ? p.args : []);
+        #|  });
         #|  window.__LEPUS_WINDOW_CONTROL_READY__ = true;
         #|})();
       ),
@@ -479,56 +524,65 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
 /// Minimize native window.
 pub fn Window::minimize(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_minimize_window(window_id))
+  ignore(@window_manager.wm_minimize_window(window_id))
 }
 
 ///|
 /// Maximize native window.
 pub fn Window::maximize(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_maximize_window(window_id))
+  ignore(@window_manager.wm_maximize_window(window_id))
 }
 
 ///|
 /// Restore native window from maximized state.
 pub fn Window::unmaximize(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_unmaximize_window(window_id))
+  ignore(@window_manager.wm_unmaximize_window(window_id))
 }
 
 ///|
 /// Toggle native maximize state.
 pub fn Window::toggle_maximize(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_toggle_maximize_window(window_id))
+  ignore(@window_manager.wm_toggle_maximize_window(window_id))
 }
 
 ///|
 /// Set native fullscreen state.
 pub fn Window::set_fullscreen(self : Window, fullscreen : Bool) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_set_fullscreen_window(window_id, if fullscreen { 1 } else { 0 }))
+  ignore(
+    @window_manager.wm_set_fullscreen_window(
+      window_id,
+      if fullscreen {
+        1
+      } else {
+        0
+      },
+    ),
+  )
 }
 
 ///|
 /// Toggle native fullscreen state.
 pub fn Window::toggle_fullscreen(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_toggle_fullscreen_window(window_id))
+  ignore(@window_manager.wm_toggle_fullscreen_window(window_id))
 }
 
 ///|
 /// Start native window drag/move gesture.
 pub fn Window::start_drag(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_start_drag_window(window_id))
+  ignore(@window_manager.wm_start_drag_window(window_id))
 }
 
 ///|
 /// Move the native window to an absolute screen position.
 pub fn Window::set_position(self : Window, x : Int, y : Int) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_set_position(window_id, x, y))
+  ignore(@window_manager.wm_set_position(window_id, x, y))
 }
 
 ///|
@@ -547,21 +601,29 @@ pub fn Window::set_size(
 /// Show the native window.
 pub fn Window::show(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_set_visibility(window_id, 1))
+  ignore(@window_manager.wm_set_visibility(window_id, 1))
 }
 
 ///|
 /// Hide the native window.
 pub fn Window::hide(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_set_visibility(window_id, 0))
+  ignore(@window_manager.wm_set_visibility(window_id, 0))
+}
+
+///|
+/// Bring the native window to front and focus it. On macOS this also activates
+/// the owning process as the foreground app (Tauri `Window::set_focus` parity).
+pub fn Window::focus(self : Window) -> Unit {
+  let window_id = self.require_runtime_window_id()
+  ignore(@window_manager.wm_focus_window(window_id))
 }
 
 ///|
 /// Close native window.
 pub fn Window::close(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_close_window(window_id))
+  ignore(@window_manager.wm_close_window(window_id))
 }
 
 ///|
@@ -596,7 +658,7 @@ fn Window::install_child_plugins(
 ///|
 pub fn Window::eval(self : Window, js : String) -> Unit {
   let window_id = self.require_runtime_window_id()
-  ignore(wm_eval_js(window_id, @encoding/utf8.encode(js)))
+  ignore(@window_manager.wm_eval_js(window_id, @encoding/utf8.encode(js)))
 }
 
 ///|

@@ -45,10 +45,12 @@ async fn main {
         #|  <p class="sub">Main window — manages every other window by label at runtime.</p>
         #|
         #|  <div class="section">
-        #|    <h2>Open / close</h2>
+        #|    <h2>Open / close / focus</h2>
         #|    <div class="row">
         #|      <button class="primary" onclick="openWindow('settings')">Open Settings</button>
         #|      <button class="primary" onclick="openWindow('inspector')">Open Inspector</button>
+        #|      <button onclick="wm('focus','settings')">Focus Settings</button>
+        #|      <button onclick="wm('focus','main')">Focus Main</button>
         #|      <button class="danger" onclick="wm('close','settings')">Close Settings</button>
         #|      <button class="danger" onclick="wm('close','inspector')">Close Inspector</button>
         #|      <button onclick="refresh()">Refresh list</button>
@@ -117,6 +119,8 @@ async fn main {
       ),
     ),
   )
+  // `focused`（默认 true，Tauri window `focused` 配置的对齐语义）：
+  // 打开/显示该窗口时会激活本进程并把它带到最前；设为 false 则只排前、不抢焦点。
   let settings_window = @lepus.WindowConfig::new(
     label="settings",
     title="Settings",
@@ -124,6 +128,7 @@ async fn main {
     height=360,
     hidden=true,
     position=(780, 80),
+    focused=true,
     source=@lepus.Source::html(
       (
         #|<!doctype html>
@@ -151,6 +156,7 @@ async fn main {
         #|  <label>Notifications</label>
         #|  <input type="checkbox" checked />
         #|  <div class="row">
+        #|    <button onclick="window.lepusApi.windows.focus({ label: 'main' })">Focus Main</button>
         #|    <button onclick="window.LepusWindow.hide()">Hide self</button>
         #|    <button class="danger" onclick="window.LepusWindow.close()">Close self</button>
         #|  </div>
@@ -166,6 +172,8 @@ async fn main {
       ),
     ),
   )
+  // focused=false: 打开 Inspector 只排到最前，不激活 app（不抢当前键盘焦点），
+  // 适合做"后台辅助窗"。
   let inspector_window = @lepus.WindowConfig::new(
     label="inspector",
     title="Inspector",
@@ -173,6 +181,7 @@ async fn main {
     height=320,
     hidden=true,
     position=(680, 460),
+    focused=false,
     source=@lepus.Source::html(
       (
         #|<!doctype html>

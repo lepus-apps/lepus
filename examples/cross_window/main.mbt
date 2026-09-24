@@ -33,13 +33,16 @@ async fn main {
         #|  <div id="state">ready</div>
         #|</div>
         #|<script>
+        #|  let n = 0;
         #|  async function send() {
+        #|    n++;
         #|    const ok = await window.lepusApi.events.emit({
         #|      target: "receiver",
         #|      event: "greet",
-        #|      payload: { text: document.getElementById("text").value, at: Date.now() },
+        #|      payload: { n, at: Date.now() },
         #|    });
-        #|    document.getElementById("state").textContent = ok ? "sent" : "failed";
+        #|    document.getElementById("state").textContent =
+        #|      `#${n} ${ok ? "sent" : "failed"}`;
         #|  }
         #|</script></body></html>
       ),
@@ -70,8 +73,6 @@ async fn main {
         #|<script>
         #|  const inbox = document.getElementById("inbox");
         #|  let first = true;
-        #|  // Push: no polling — the receiver subscribes to events pushed by
-        #|  // the main process once the sender emits.
         #|  window.addEventListener("lepus_event", (e) => {
         #|    if (first) { inbox.textContent = ""; first = false; }
         #|    const { event, payload } = e.detail;

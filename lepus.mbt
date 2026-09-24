@@ -40,6 +40,7 @@ pub struct WindowConfig {
   traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
+  focused : Bool
   source : Source?
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
@@ -103,6 +104,7 @@ pub fn WindowConfig::new(
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
+  focused? : Bool = true,
   source? : Source,
 ) -> WindowConfig {
   {
@@ -121,6 +123,7 @@ pub fn WindowConfig::new(
     traffic_light_position,
     position,
     hidden,
+    focused,
     source,
   }
 }
@@ -182,6 +185,7 @@ pub fn Window::Window(
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
+  focused? : Bool = true,
   source? : Source,
   plugins? : Array[@webview.Plugin] = [],
 ) -> Window {
@@ -202,6 +206,7 @@ pub fn Window::Window(
       traffic_light_position,
       position,
       hidden,
+      focused,
       source,
     },
     plugins,
@@ -362,6 +367,7 @@ async fn build_runtime_window(
     traffic_light_position=config.traffic_light_position,
     position=config.position,
     hidden=config.hidden,
+    focused=config.focused,
   )
   guard config.source is Some(source) else {
     abort("WindowConfig::source is required")

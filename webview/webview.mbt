@@ -85,9 +85,10 @@ fn[X] WebView::new_managed(
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
+  focused? : Bool = true,
 ) -> WebView[X] {
   let create_debug = if devtools && debug <= 0 { 1 } else { debug }
-  let window_id = wm_create_window(
+  let window_id = @window_manager.wm_create_window(
     @encoding/utf8.encode(title),
     @encoding/utf8.encode(url),
     width,
@@ -101,12 +102,12 @@ fn[X] WebView::new_managed(
   guard window_id > 0 else {
     abort("WebView::new_managed failed: wm_create_window")
   }
-  let handle = wm_get_handle(window_id)
+  let handle = @window_manager.wm_get_handle(window_id)
   if create_debug > 0 {
     set_log_level(create_debug)
   }
   if devtools {
-    ignore(wm_set_devtools(window_id, 1))
+    ignore(@window_manager.wm_set_devtools(window_id, 1))
   }
   ignore(
     wm_set_window_customization(
@@ -146,7 +147,7 @@ fn[X] WebView::new_managed(
   )
   if traffic_light_position.0 >= 0 && traffic_light_position.1 >= 0 {
     ignore(
-      wm_set_traffic_light_position(
+      @window_manager.wm_set_traffic_light_position(
         window_id,
         traffic_light_position.0,
         traffic_light_position.1,
@@ -154,10 +155,15 @@ fn[X] WebView::new_managed(
     )
   }
   if position.0 >= 0 && position.1 >= 0 {
-    ignore(wm_set_position(window_id, position.0, position.1))
+    ignore(@window_manager.wm_set_position(window_id, position.0, position.1))
   }
   if hidden {
-    ignore(wm_set_visibility(window_id, 0))
+    ignore(@window_manager.wm_set_visibility(window_id, 0))
+  } else if focused {
+    // 与 Tauri window 配置 `focused`（默认 true）一致：
+    // 新窗口创建后激活 app 并置顶获得键盘焦点；
+    // focused=false 的窗口只由 webview 库自身排到最前，不抢焦点。
+    ignore(@window_manager.wm_focus_window(window_id))
   }
   { handle, window_id, task_group, }
 }
@@ -166,20 +172,22 @@ fn[X] WebView::new_managed(
 /// Destroys the webview and closes the window.
 /// Safe to call from a background thread.
 pub fn[X] WebView::destroy(self : WebView[X]) -> Unit {
-  ignore(wm_destroy_window(self.window_id))
+  ignore(@window_manager.wm_destroy_window(self.window_id))
 }
 
 ///|
 /// Stops the main event loop.
 /// Safe to call from a background thread.
 pub fn[X] WebView::terminate(self : WebView[X]) -> Unit {
-  ignore(wm_terminate_window(self.window_id))
+  ignore(@window_manager.wm_terminate_window(self.window_id))
 }
 
 ///|
 /// Updates the title of the native window.
 pub fn[X] WebView::set_title(self : WebView[X], title : String) -> Unit {
-  ignore(wm_set_title(self.window_id, @encoding/utf8.encode(title)))
+  ignore(
+    @window_manager.wm_set_title(self.window_id, @encoding/utf8.encode(title)),
+  )
 }
 
 ///|
@@ -192,7 +200,9 @@ pub fn[X] WebView::set_title(self : WebView[X], title : String) -> Unit {
 /// webview.terminate()
 /// ```
 pub fn[X] WebView::set_html(self : WebView[X], html : String) -> Unit {
-  ignore(wm_set_html(self.window_id, @encoding/utf8.encode(html)))
+  ignore(
+    @window_manager.wm_set_html(self.window_id, @encoding/utf8.encode(html)),
+  )
 }
 
 ///|
@@ -222,7 +232,9 @@ pub fn[X] WebView::set_custom_protocol(
 /// webview.terminate()
 /// ```
 pub fn[X] WebView::navigate(self : WebView[X], url : String) -> Unit {
-  ignore(wm_navigate(self.window_id, @encoding/utf8.encode(url)))
+  ignore(
+    @window_manager.wm_navigate(self.window_id, @encoding/utf8.encode(url)),
+  )
 }
 
 ///|
@@ -274,14 +286,14 @@ fn[X] WebView::window_id(self : WebView[X]) -> Int {
 ///|
 /// Evaluates arbitrary JavaScript code.
 fn[X] WebView::eval(self : WebView[X], js : String) -> Unit {
-  ignore(wm_eval_js(self.window_id, @encoding/utf8.encode(js)))
+  ignore(@window_manager.wm_eval_js(self.window_id, @encoding/utf8.encode(js)))
 }
 
 ///|
 /// Injects JavaScript code executed immediately on every page load,
 /// before `window.onload`.
 fn[X] WebView::init(self : WebView[X], js : String) -> Unit {
-  ignore(wm_init_js(self.window_id, @encoding/utf8.encode(js)))
+  ignore(@window_manager.wm_init_js(self.window_id, @encoding/utf8.encode(js)))
 }
 
 ///|
@@ -356,7 +368,7 @@ pub fn[X] WebView::set_traffic_light_position(
   x : Int,
   y : Int,
 ) -> Unit {
-  ignore(wm_set_traffic_light_position(self.window_id, x, y))
+  ignore(@window_manager.wm_set_traffic_light_position(self.window_id, x, y))
 }
 
 ///|
@@ -416,62 +428,71 @@ pub fn[X] WebView::enable_transparent_background_support(
 ///|
 /// Minimize native window.
 pub fn[X] WebView::minimize(self : WebView[X]) -> Unit {
-  ignore(wm_minimize_window(self.window_id))
+  ignore(@window_manager.wm_minimize_window(self.window_id))
 }
 
 ///|
 /// Maximize native window.
 pub fn[X] WebView::maximize(self : WebView[X]) -> Unit {
-  ignore(wm_maximize_window(self.window_id))
+  ignore(@window_manager.wm_maximize_window(self.window_id))
 }
 
 ///|
 /// Restore native window from maximized state.
 pub fn[X] WebView::unmaximize(self : WebView[X]) -> Unit {
-  ignore(wm_unmaximize_window(self.window_id))
+  ignore(@window_manager.wm_unmaximize_window(self.window_id))
 }
 
 ///|
 /// Toggle native maximize state.
 pub fn[X] WebView::toggle_maximize(self : WebView[X]) -> Unit {
-  ignore(wm_toggle_maximize_window(self.window_id))
+  ignore(@window_manager.wm_toggle_maximize_window(self.window_id))
 }
 
 ///|
 /// Set native fullscreen state.
 pub fn[X] WebView::set_fullscreen(self : WebView[X], fullscreen : Bool) -> Unit {
   ignore(
-    wm_set_fullscreen_window(self.window_id, if fullscreen { 1 } else { 0 }),
+    @window_manager.wm_set_fullscreen_window(
+      self.window_id,
+      if fullscreen {
+        1
+      } else {
+        0
+      },
+    ),
   )
 }
 
 ///|
 /// Toggle native fullscreen state.
 pub fn[X] WebView::toggle_fullscreen(self : WebView[X]) -> Unit {
-  ignore(wm_toggle_fullscreen_window(self.window_id))
+  ignore(@window_manager.wm_toggle_fullscreen_window(self.window_id))
 }
 
 ///|
 /// Start native window drag/move gesture.
 pub fn[X] WebView::start_drag(self : WebView[X]) -> Unit {
-  ignore(wm_start_drag_window(self.window_id))
+  ignore(@window_manager.wm_start_drag_window(self.window_id))
 }
 
 ///|
 /// Close native window.
 pub fn[X] WebView::close(self : WebView[X]) -> Unit {
-  ignore(wm_close_window(self.window_id))
+  ignore(@window_manager.wm_close_window(self.window_id))
 }
 
 ///|
 /// Enable or disable developer tools integration at runtime.
 pub fn[X] WebView::set_devtools(self : WebView[X], enabled : Bool) -> Unit {
-  ignore(wm_set_devtools(self.window_id, if enabled { 1 } else { 0 }))
+  ignore(
+    @window_manager.wm_set_devtools(self.window_id, if enabled { 1 } else { 0 }),
+  )
 }
 
 ///|
 /// Runs the main event loop until terminated, then destroys the webview.
 fn[X] WebView::run(self : WebView[X]) -> Unit {
-  ignore(wm_run_window(self.window_id))
+  ignore(@window_manager.wm_run_window(self.window_id))
   self.destroy()
 }

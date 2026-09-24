@@ -1,314 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <errno.h>
-#include <time.h>
-#include <limits.h>
+/*
+ * Window-manager runtime (g_wm, IPC, window lifecycle, platform view control)
+ * — extracted from webview/stub.c as a pure mechanical move, zero logic change.
+ *
+ * Split out of the webview package into its own small FFI package
+ * (`ffi/window_manager`). Shares the platform preamble and webview.h forward
+ * declarations via ../common/c_abi.h.
+ */
+#include "../common/c_abi.h"
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <process.h>
-
-typedef DWORD pid_t;
-typedef SOCKET socket_handle_t;
-typedef HANDLE pthread_t;
-typedef SRWLOCK pthread_mutex_t;
-typedef CONDITION_VARIABLE pthread_cond_t;
-
-#define PTHREAD_MUTEX_INITIALIZER SRWLOCK_INIT
-#define PTHREAD_COND_INITIALIZER CONDITION_VARIABLE_INIT
-#define IPC_INVALID_SOCKET INVALID_SOCKET
-#define UNUSED_ATTR
-#define CLOCK_REALTIME 0
-
-typedef struct
-{
-    void *(*start_routine)(void *);
-    void *arg;
-} moonbit_thread_start_ctx_t;
-
-static unsigned __stdcall moonbit_thread_start(void *arg)
-{
-    moonbit_thread_start_ctx_t *ctx = (moonbit_thread_start_ctx_t *)arg;
-    void *(*start_routine)(void *) = ctx->start_routine;
-    void *start_arg = ctx->arg;
-    free(ctx);
-    start_routine(start_arg);
-    return 0;
-}
-
-static int pthread_create(
-    pthread_t *thread,
-    void *unused_attr,
-    void *(*start_routine)(void *),
-    void *arg)
-{
-    (void)unused_attr;
-    moonbit_thread_start_ctx_t *ctx =
-        (moonbit_thread_start_ctx_t *)malloc(sizeof(moonbit_thread_start_ctx_t));
-    if (!ctx)
-        return ENOMEM;
-    ctx->start_routine = start_routine;
-    ctx->arg = arg;
-
-    uintptr_t handle = _beginthreadex(NULL, 0, moonbit_thread_start, ctx, 0, NULL);
-    if (handle == 0)
-    {
-        int err = errno ? errno : EAGAIN;
-        free(ctx);
-        return err;
-    }
-    *thread = (HANDLE)handle;
-    return 0;
-}
-
-static int pthread_join(pthread_t thread, void **retval)
-{
-    (void)retval;
-    DWORD rc = WaitForSingleObject(thread, INFINITE);
-    CloseHandle(thread);
-    return rc == WAIT_OBJECT_0 ? 0 : EINVAL;
-}
-
-static int pthread_detach(pthread_t thread)
-{
-    return CloseHandle(thread) ? 0 : EINVAL;
-}
-
-static int pthread_mutex_init(pthread_mutex_t *mutex, void *unused_attr)
-{
-    (void)unused_attr;
-    InitializeSRWLock(mutex);
-    return 0;
-}
-
-static int pthread_mutex_lock(pthread_mutex_t *mutex)
-{
-    AcquireSRWLockExclusive(mutex);
-    return 0;
-}
-
-static int pthread_mutex_unlock(pthread_mutex_t *mutex)
-{
-    ReleaseSRWLockExclusive(mutex);
-    return 0;
-}
-
-static int pthread_cond_init(pthread_cond_t *cond, void *unused_attr)
-{
-    (void)unused_attr;
-    InitializeConditionVariable(cond);
-    return 0;
-}
-
-static int pthread_cond_signal(pthread_cond_t *cond)
-{
-    WakeConditionVariable(cond);
-    return 0;
-}
-
-static int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
-{
-    return SleepConditionVariableSRW(cond, mutex, INFINITE, 0) ? 0 : EINVAL;
-}
-
-static int pthread_cond_timedwait(
-    pthread_cond_t *cond,
-    pthread_mutex_t *mutex,
-    const struct timespec *abstime)
-{
-    FILETIME ft_now;
-    ULARGE_INTEGER now;
-    GetSystemTimeAsFileTime(&ft_now);
-    now.LowPart = ft_now.dwLowDateTime;
-    now.HighPart = ft_now.dwHighDateTime;
-
-    uint64_t now_ns = (now.QuadPart - 116444736000000000ULL) * 100ULL;
-    uint64_t target_ns =
-        (uint64_t)abstime->tv_sec * 1000000000ULL + (uint64_t)abstime->tv_nsec;
-    DWORD timeout_ms = 0;
-    if (target_ns > now_ns)
-    {
-        uint64_t delta_ns = target_ns - now_ns;
-        timeout_ms = (DWORD)((delta_ns + 999999ULL) / 1000000ULL);
-    }
-
-    if (SleepConditionVariableSRW(cond, mutex, timeout_ms, 0))
-        return 0;
-    return GetLastError() == ERROR_TIMEOUT ? ETIMEDOUT : EINVAL;
-}
-
-static int clock_gettime(int clk_id, struct timespec *ts)
-{
-    (void)clk_id;
-    FILETIME ft_now;
-    ULARGE_INTEGER now;
-    GetSystemTimeAsFileTime(&ft_now);
-    now.LowPart = ft_now.dwLowDateTime;
-    now.HighPart = ft_now.dwHighDateTime;
-    uint64_t ns = (now.QuadPart - 116444736000000000ULL) * 100ULL;
-    ts->tv_sec = (time_t)(ns / 1000000000ULL);
-    ts->tv_nsec = (long)(ns % 1000000000ULL);
-    return 0;
-}
-
-static int nanosleep(const struct timespec *req, struct timespec *rem)
-{
-    (void)rem;
-    DWORD ms = (DWORD)(req->tv_sec * 1000 + req->tv_nsec / 1000000L);
-    if (ms == 0 && (req->tv_sec > 0 || req->tv_nsec > 0))
-        ms = 1;
-    Sleep(ms);
-    return 0;
-}
-
-static int get_errno_code(void)
-{
-    int err = WSAGetLastError();
-    switch (err)
-    {
-    case WSAEINTR:
-        return EINTR;
-    case WSAEWOULDBLOCK:
-        return EWOULDBLOCK;
-#ifdef WSAEAGAIN
-    case WSAEAGAIN:
-        return EAGAIN;
-#endif
-    default:
-        return err;
-    }
-}
-
-static int socket_last_error(void)
-{
-    return get_errno_code();
-}
-
-static int socket_would_block(int err)
-{
-    return err == EAGAIN || err == EWOULDBLOCK;
-}
-
-static int socket_interrupted(int err)
-{
-    return err == EINTR;
-}
-
-static void socket_close(socket_handle_t fd)
-{
-    if (fd != IPC_INVALID_SOCKET)
-        closesocket(fd);
-}
-
-static void set_nonblocking(socket_handle_t fd)
-{
-    u_long mode = 1;
-    ioctlsocket(fd, FIONBIO, &mode);
-}
-
-static int winsock_init(void)
-{
-    static int initialized = 0;
-    static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&init_mutex);
-    if (!initialized)
-    {
-        WSADATA wsa;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-        {
-            pthread_mutex_unlock(&init_mutex);
-            return -1;
-        }
-        initialized = 1;
-    }
-    pthread_mutex_unlock(&init_mutex);
-    return 0;
-}
-
-#else
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/select.h>
-#include <pthread.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <spawn.h>
-
-typedef int socket_handle_t;
-
-#define IPC_INVALID_SOCKET (-1)
-#define UNUSED_ATTR __attribute__((unused))
-static int socket_last_error(void)
-{
-    return errno;
-}
-
-static int socket_would_block(int err)
-{
-    return err == EAGAIN || err == EWOULDBLOCK;
-}
-
-static int socket_interrupted(int err)
-{
-    return err == EINTR;
-}
-
-static void socket_close(socket_handle_t fd)
-{
-    if (fd != IPC_INVALID_SOCKET)
-        close(fd);
-}
-
-static void set_nonblocking(socket_handle_t fd)
-{
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags >= 0)
-        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-}
-
-static int winsock_init(void)
-{
-    return 0;
-}
-#endif
-
-#ifdef __APPLE__
-#include <dlfcn.h>
-#endif
-
-/* ── webview 前向声明 ─────────────────────────────────────────── */
-typedef void *webview_t;
-extern webview_t webview_create(int debug, void *window);
-extern void webview_destroy(webview_t w);
-extern void webview_run(webview_t w);
-extern void webview_terminate(webview_t w);
-extern void webview_dispatch(webview_t w, void (*f)(webview_t, void *), void *arg);
-extern void webview_set_title(webview_t w, const char *title);
-extern void webview_set_size(webview_t w, int width, int height, int hints);
-extern void webview_navigate(webview_t w, const char *url);
-extern void webview_init(webview_t w, const char *js);
-extern int webview_eval(webview_t w, const char *js);
-extern void webview_bind(webview_t w, const char *name,
-                         void (*f)(const char *seq, const char *req, void *arg), void *arg);
-extern void webview_unbind(webview_t w, const char *name);
-extern void webview_return(webview_t w, const char *seq, int status, const char *result);
-extern void webview_set_html(webview_t w, const char *html);
-extern int64_t webview_get_window(webview_t w);
-extern int64_t webview_get_native_handle(webview_t w, int kind);
-#ifndef _WIN32
-extern char **environ;
-#endif
-
-/* moonbit 运行时接口 */
-#include "moonbit.h"
 
 /* ── 枚举类型 ─────────────────────────────────────────────────── */
 
@@ -882,9 +581,10 @@ static void *ipc_conn_handler(void *arg)
         if (ctx->remote_window_id < 0 && msg.source_window_id > 0)
         {
             ctx->remote_window_id = msg.source_window_id;
-            ensure_remote_window_fds_capacity_locked(msg.source_window_id);
-            if (msg.source_window_id < g_remote_window_fds_capacity)
-                g_remote_window_fds[msg.source_window_id] = ctx->client_fd;
+            /* set_remote_window_fd() 持 g_wm.mutex 完成 ensure+写入；
+             * 此前这里是无锁写共享 fd 表，与主线程持锁读构成数据竞争，
+             * 偶发导致主进程永远读不到该窗口的 fd（事件推送全部失败）。 */
+            set_remote_window_fd(msg.source_window_id, ctx->client_fd);
             pthread_mutex_lock(&g_wm.mutex);
             webview_window_t *w = find_window(msg.source_window_id);
             if (w)
@@ -1528,6 +1228,8 @@ typedef void (*mb_objc_msgsend_id_arg_t)(mb_id_t, mb_sel_t, mb_id_t);
 typedef void (*mb_objc_msgsend_id_id_arg_t)(mb_id_t, mb_sel_t, mb_id_t, mb_id_t);
 typedef void (*mb_objc_msgsend_point_arg_t)(mb_id_t, mb_sel_t, mb_point_t);
 typedef mb_id_t (*mb_objc_msgsend_id_sel_id_arg_ret_t)(mb_id_t, mb_sel_t, mb_id_t, mb_sel_t, mb_id_t);
+typedef int (*mb_objc_msgsend_sel_arg_t)(mb_id_t, mb_sel_t, mb_sel_t);
+typedef int (*mb_objc_msgsend_int_ret_t)(mb_id_t, mb_sel_t);
 
 static void *moonbit_objc_msgsend_symbol(void)
 {
@@ -1759,6 +1461,49 @@ static void moonbit_macos_clear_main_menu(void)
     if (!app)
         return;
     ((mb_objc_msgsend_id_arg_t)msgsend)(app, sel_set_main_menu, NULL);
+}
+
+/*
+ * 把当前进程激活为前台 app（参考 tao/winit 的 util::set_focus 与
+ * vendored webview.h on_application_did_finish_launching）。
+ *
+ * "setActivationPolicy:"（NSApplicationActivationPolicyRegular = 0）必须先于
+ * activate，否则非 bundle 进程（如 moon run 直接启动的辅助进程、我们的多窗口
+ * 子进程）激活请求会被忽略。
+ *
+ * macOS 14 起 activateIgnoringOtherApps: 被废弃且在新系统上可能被静默忽略；
+ * 优先使用 activateWithOptions:（NSApplicationActivateAllWindows(1) |
+ * NSApplicationActivateIgnoringOtherApps(2)），旧系统回退到
+ * activateIgnoringOtherApps:。
+ */
+static void moonbit_macos_activate_app(void)
+{
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!msgsend)
+        return;
+    mb_id_t app = ((mb_objc_msgsend_id_ret_t)msgsend)(
+        moonbit_objc_get_class("NSApplication"),
+        moonbit_sel_register_name("sharedApplication"));
+    if (!app)
+        return;
+
+    mb_sel_t sel_policy = moonbit_sel_register_name("setActivationPolicy:");
+    if (sel_policy)
+        ((mb_objc_msgsend_long_arg_t)msgsend)(app, sel_policy, 0L);
+
+    mb_sel_t sel_activate_opts = moonbit_sel_register_name("activateWithOptions:");
+    mb_sel_t sel_responds = moonbit_sel_register_name("respondsToSelector:");
+    if (sel_activate_opts && sel_responds &&
+        ((mb_objc_msgsend_sel_arg_t)msgsend)(app, sel_responds, sel_activate_opts))
+    {
+        ((mb_objc_msgsend_u64_arg_t)msgsend)(app, sel_activate_opts, 1UL | 2UL);
+    }
+    else
+    {
+        mb_sel_t sel_activate_legacy = moonbit_sel_register_name("activateIgnoringOtherApps:");
+        if (sel_activate_legacy)
+            ((mb_objc_msgsend_int_arg_t)msgsend)(app, sel_activate_legacy, 1);
+    }
 }
 #endif
 
@@ -2111,6 +1856,46 @@ MOONBIT_FFI_EXPORT int moonbit_wm_toggle_maximize_window(int window_id)
 #endif
 }
 
+/*
+ * 将窗口带到最前并获得键盘焦点（对应 Tauri 的 Window::set_focus / tao 的
+ * set_focus）：
+ * - macOS：先激活本进程为前台 app，再对窗口执行 makeKeyAndOrderFront:。
+ * - Windows：SetForegroundWindow（最小化时先 SW_RESTORE）。
+ * - Linux：未实现，返回 -1（与本文件其他窗口控制导出一致）。
+ */
+MOONBIT_FFI_EXPORT int moonbit_wm_focus_window(int window_id)
+{
+    pthread_mutex_lock(&g_wm.mutex);
+    webview_window_t *w = find_window(window_id);
+    pthread_mutex_unlock(&g_wm.mutex);
+    if (!w || !w->handle)
+        return -1;
+#ifdef _WIN32
+    HWND hwnd = (HWND)moonbit_window_native_handle(w);
+    if (!hwnd)
+        return -1;
+    if (IsIconic(hwnd))
+        ShowWindow(hwnd, SW_RESTORE);
+    SetForegroundWindow(hwnd);
+    return 0;
+#elif defined(__APPLE__)
+    void *ns_window = moonbit_window_native_handle(w);
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!ns_window || !msgsend)
+        return -1;
+    if (((mb_objc_msgsend_int_ret_t)msgsend)(
+            (mb_id_t)ns_window, moonbit_sel_register_name("isMiniaturized")))
+        return 0; /* 最小化时不强抢焦点，与 tao set_focus 语义一致 */
+    moonbit_macos_activate_app();
+    ((mb_objc_msgsend_id_arg_t)msgsend)(
+        (mb_id_t)ns_window, moonbit_sel_register_name("makeKeyAndOrderFront:"), (mb_id_t)ns_window);
+    return 0;
+#else
+    (void)window_id;
+    return -1;
+#endif
+}
+
 MOONBIT_FFI_EXPORT int moonbit_wm_set_fullscreen_window(int window_id, int fullscreen)
 {
     pthread_mutex_lock(&g_wm.mutex);
@@ -2429,6 +2214,32 @@ MOONBIT_FFI_EXPORT int moonbit_webview_set_window_visibility(int window_id, int 
     w->visible = visible ? 1 : 0;
     w->state = visible ? WINDOW_STATE_RUNNING : WINDOW_STATE_HIDDEN;
     fire_window_event(w, visible ? WINDOW_EVT_SHOWN : WINDOW_EVT_HIDDEN, NULL);
+
+    /*
+     * 原生显隐（对应 tao 的 set_visible）：
+     *   show → 排到最前并成为 key window（但不激活 app，激活是 focus 的职责）；
+     *   hide → orderOut / SW_HIDE。
+     * 远端子进程窗口节点（handle == NULL）只做记账，原生操作由子进程内的
+     * window_controls 命令执行。
+     */
+    if (w->handle)
+    {
+#ifdef _WIN32
+        HWND hwnd = (HWND)moonbit_window_native_handle(w);
+        if (hwnd)
+            ShowWindow(hwnd, visible ? SW_SHOW : SW_HIDE);
+#elif defined(__APPLE__)
+        void *ns_window = moonbit_window_native_handle(w);
+        void *msgsend = moonbit_objc_msgsend_symbol();
+        if (ns_window && msgsend)
+        {
+            ((mb_objc_msgsend_id_arg_t)msgsend)(
+                (mb_id_t)ns_window,
+                moonbit_sel_register_name(visible ? "makeKeyAndOrderFront:" : "orderOut:"),
+                (mb_id_t)ns_window);
+        }
+#endif
+    }
     return 0;
 }
 
@@ -2879,6 +2690,16 @@ MOONBIT_FFI_EXPORT int moonbit_wm_ipc_send(
                 fd = g_remote_window_fds[target_window_id];
             pthread_mutex_unlock(&g_wm.mutex);
             rc = (fd != IPC_INVALID_SOCKET) ? ipc_send(fd, &msg) : -1;
+            if (rc != 0)
+            {
+                /* 定向发送失败通常意味着目标窗口尚未注册（fd 表无映射），
+                 * 或连接已断开被清除；保留一条诊断日志便于排查。 */
+                fprintf(stderr,
+                        "[WM] ipc_send failed: target=%d type=%d sub=%s\n",
+                        target_window_id, message_type,
+                        msg.subtype);
+                fflush(stderr);
+            }
         }
     }
 

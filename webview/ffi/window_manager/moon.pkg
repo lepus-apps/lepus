@@ -1,0 +1,10 @@
+import {
+  "lepus-apps/lepus/webview/ffi/webview_sys",
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "stub.c" ],
+  targets: { "binding.mbt": [ "native" ] },
+)

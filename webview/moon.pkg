@@ -6,12 +6,13 @@ import {
   "moonbitlang/async",
   "moonbitlang/core/string",
   "lepus-apps/lepus/webview/ffi/webview_sys",
+  "lepus-apps/lepus/webview/ffi/window_manager",
 }
 
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "stub.c", "vendor/webview_vendor.cc" ],
+  "native-stub": [ "vendor/webview_vendor.cc" ],
   link: {
     "native": {
       // macOS:

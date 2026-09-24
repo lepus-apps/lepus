@@ -160,9 +160,9 @@ test "decode_ipc_message_wire" {
 /// - main process: pass `true`
 /// - child process: pass `false`
 pub fn WindowManager::init(is_main? : Bool = true) -> WindowManager {
-  let ok = wm_init(if is_main { 1 } else { 0 })
+  let ok = @window_manager.wm_init(if is_main { 1 } else { 0 })
   guard ok == 0 else { abort("WindowManager::init failed") }
-  let process_type = match wm_get_process_type() {
+  let process_type = match @window_manager.wm_get_process_type() {
     0 => ProcessType::Main
     1 => Child
     _ => Unknown
@@ -173,7 +173,7 @@ pub fn WindowManager::init(is_main? : Bool = true) -> WindowManager {
 ///|
 /// Cleanup native WM runtime.
 pub fn WindowManager::destroy(self : WindowManager) -> Unit {
-  wm_cleanup()
+  @window_manager.wm_cleanup()
   self.window_ids = []
 }
 
@@ -186,7 +186,7 @@ pub fn WindowManager::create_window(
   width? : Int = 800,
   height? : Int = 600,
 ) -> Int {
-  let id = wm_create_window(
+  let id = @window_manager.wm_create_window(
     @encoding/utf8.encode(title),
     @encoding/utf8.encode(url),
     width,
@@ -212,7 +212,7 @@ pub fn WindowManager::create_child_window(
   height? : Int = 600,
   parent_id? : Int = -1,
 ) -> Int {
-  wm_create_child_window(
+  @window_manager.wm_create_child_window(
     @encoding/utf8.encode(title),
     @encoding/utf8.encode(url),
     width,
@@ -224,7 +224,7 @@ pub fn WindowManager::create_child_window(
 ///|
 /// Fork the current process. The parent receives the child pid, the child receives `0`.
 pub fn WindowManager::fork_process(_self : WindowManager) -> Int {
-  wm_fork_process()
+  @window_manager.wm_fork_process()
 }
 
 ///|
@@ -234,13 +234,16 @@ pub fn WindowManager::spawn_process(
   program : String,
   arg1 : String,
 ) -> Int {
-  wm_spawn_process(@encoding/utf8.encode(program), @encoding/utf8.encode(arg1))
+  @window_manager.wm_spawn_process(
+    @encoding/utf8.encode(program),
+    @encoding/utf8.encode(arg1),
+  )
 }
 
 ///|
 /// Connect current process to the main-process IPC server and switch into child mode.
 pub fn WindowManager::connect_child_process() -> Int {
-  wm_connect_child_process()
+  @window_manager.wm_connect_child_process()
 }
 
 ///|
@@ -253,7 +256,7 @@ pub fn WindowManager::set_window_id_base(
   _self : WindowManager,
   base : Int,
 ) -> Int {
-  wm_set_window_id_base(base)
+  @window_manager.wm_set_window_id_base(base)
 }
 
 ///|
@@ -271,7 +274,7 @@ pub fn WindowManager::is_child_process(self : WindowManager) -> Bool {
 ///|
 /// Run a window event loop.
 pub fn WindowManager::run_window(_self : WindowManager, window_id : Int) -> Int {
-  wm_run_window(window_id)
+  @window_manager.wm_run_window(window_id)
 }
 
 ///|
@@ -280,7 +283,7 @@ pub fn WindowManager::destroy_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_destroy_window(window_id)
+  @window_manager.wm_destroy_window(window_id)
 }
 
 ///|
@@ -340,7 +343,7 @@ pub fn WindowManager::set_traffic_light_position(
   x : Int,
   y : Int,
 ) -> Int {
-  wm_set_traffic_light_position(window_id, x, y)
+  @window_manager.wm_set_traffic_light_position(window_id, x, y)
 }
 
 ///|
@@ -351,7 +354,7 @@ pub fn WindowManager::set_position(
   x : Int,
   y : Int,
 ) -> Int {
-  wm_set_position(window_id, x, y)
+  @window_manager.wm_set_position(window_id, x, y)
 }
 
 ///|
@@ -372,7 +375,7 @@ pub fn WindowManager::minimize_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_minimize_window(window_id)
+  @window_manager.wm_minimize_window(window_id)
 }
 
 ///|
@@ -381,7 +384,7 @@ pub fn WindowManager::maximize_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_maximize_window(window_id)
+  @window_manager.wm_maximize_window(window_id)
 }
 
 ///|
@@ -390,7 +393,7 @@ pub fn WindowManager::unmaximize_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_unmaximize_window(window_id)
+  @window_manager.wm_unmaximize_window(window_id)
 }
 
 ///|
@@ -399,7 +402,7 @@ pub fn WindowManager::toggle_maximize_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_toggle_maximize_window(window_id)
+  @window_manager.wm_toggle_maximize_window(window_id)
 }
 
 ///|
@@ -409,7 +412,14 @@ pub fn WindowManager::set_fullscreen_window(
   window_id : Int,
   fullscreen : Bool,
 ) -> Int {
-  wm_set_fullscreen_window(window_id, if fullscreen { 1 } else { 0 })
+  @window_manager.wm_set_fullscreen_window(
+    window_id,
+    if fullscreen {
+      1
+    } else {
+      0
+    },
+  )
 }
 
 ///|
@@ -418,7 +428,7 @@ pub fn WindowManager::toggle_fullscreen_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_toggle_fullscreen_window(window_id)
+  @window_manager.wm_toggle_fullscreen_window(window_id)
 }
 
 ///|
@@ -427,7 +437,7 @@ pub fn WindowManager::start_drag_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_start_drag_window(window_id)
+  @window_manager.wm_start_drag_window(window_id)
 }
 
 ///|
@@ -437,7 +447,7 @@ pub fn WindowManager::set_visibility(
   window_id : Int,
   visible : Bool,
 ) -> Int {
-  wm_set_visibility(window_id, if visible { 1 } else { 0 })
+  @window_manager.wm_set_visibility(window_id, if visible { 1 } else { 0 })
 }
 
 ///|
@@ -446,7 +456,17 @@ pub fn WindowManager::close_window(
   _self : WindowManager,
   window_id : Int,
 ) -> Int {
-  wm_close_window(window_id)
+  @window_manager.wm_close_window(window_id)
+}
+
+///|
+/// Bring a window to front and focus it. On macOS this also activates the
+/// process as the foreground application (Tauri `Window::set_focus` parity).
+pub fn WindowManager::focus_window(
+  _self : WindowManager,
+  window_id : Int,
+) -> Int {
+  @window_manager.wm_focus_window(window_id)
 }
 
 ///|
@@ -456,7 +476,7 @@ pub fn WindowManager::set_devtools(
   window_id : Int,
   enabled : Bool,
 ) -> Int {
-  wm_set_devtools(window_id, if enabled { 1 } else { 0 })
+  @window_manager.wm_set_devtools(window_id, if enabled { 1 } else { 0 })
 }
 
 ///|
@@ -469,7 +489,7 @@ pub fn WindowManager::send_message(
   subtype : String,
   data : String,
 ) -> Int {
-  wm_ipc_send(
+  @window_manager.wm_ipc_send(
     source_window_id,
     target_window_id,
     message_type.int(),
@@ -500,7 +520,7 @@ pub fn WindowManager::request(
   timeout_ms? : Int = 0,
 ) -> String {
   @encoding/utf8.decode(
-    wm_ipc_request_bytes(
+    @window_manager.wm_ipc_request_bytes(
       source_window_id,
       target_window_id,
       @encoding/utf8.encode(subtype),
@@ -521,7 +541,7 @@ pub fn WindowManager::respond(
   request_id : Int,
   data : String,
 ) -> Int {
-  wm_ipc_respond(
+  @window_manager.wm_ipc_respond(
     source_window_id,
     target_window_id,
     request_id,
@@ -535,7 +555,7 @@ pub fn WindowManager::try_pop_message(
   _self : WindowManager,
   queue_id : Int,
 ) -> IpcMessage? {
-  decode_ipc_message_wire(wm_ipc_pop_message_wire(queue_id))
+  decode_ipc_message_wire(@window_manager.wm_ipc_pop_message_wire(queue_id))
 }
 
 ///|
@@ -544,5 +564,5 @@ pub fn WindowManager::wait_child_noblock(
   _self : WindowManager,
   pid : Int,
 ) -> Int {
-  wm_wait_child_noblock(pid)
+  @window_manager.wm_wait_child_noblock(pid)
 }

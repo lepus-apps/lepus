@@ -1,0 +1,97 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/webview/ffi/window_manager"
+
+import {
+  "lepus-apps/lepus/webview/ffi/webview_sys",
+}
+
+// Values
+pub fn wm_cleanup() -> Unit
+
+pub fn wm_close_window(Int) -> Int
+
+pub fn wm_connect_child_process() -> Int
+
+pub fn wm_create_child_window(Bytes, Bytes, Int, Int, Int) -> Int
+
+pub fn wm_create_window(Bytes, Bytes, Int, Int, Int, Int, Int, Int, Int) -> Int
+
+pub fn wm_destroy_window(Int) -> Int
+
+pub fn wm_eval_js(Int, Bytes) -> Int
+
+pub fn wm_focus_window(Int) -> Int
+
+pub fn wm_fork_process() -> Int
+
+pub fn wm_get_handle(Int) -> @webview_sys.WebView_t
+
+pub fn wm_get_process_id() -> Int
+
+pub fn wm_get_process_type() -> Int
+
+pub fn wm_get_visibility(Int) -> Int
+
+pub fn wm_init(Int) -> Int
+
+pub fn wm_init_js(Int, Bytes) -> Int
+
+pub fn wm_ipc_pop_message_wire(Int) -> Bytes
+
+pub fn wm_ipc_request_bytes(Int, Int, Bytes, Bytes, Int) -> Bytes
+
+pub fn wm_ipc_respond(Int, Int, Int, Bytes) -> Int
+
+pub fn wm_ipc_send(Int, Int, Int, Bytes, Bytes) -> Int
+
+pub fn wm_kill_child(Int) -> Int
+
+pub fn wm_maximize_window(Int) -> Int
+
+pub fn wm_minimize_window(Int) -> Int
+
+pub fn wm_navigate(Int, Bytes) -> Int
+
+pub fn wm_return_raw(Int, Bytes, Int, Bytes) -> Int
+
+pub fn wm_run_window(Int) -> Int
+
+pub fn wm_run_window_async(Int) -> Int
+
+pub fn wm_set_devtools(Int, Int) -> Int
+
+pub fn wm_set_fullscreen_window(Int, Int) -> Int
+
+pub fn wm_set_html(Int, Bytes) -> Int
+
+pub fn wm_set_position(Int, Int, Int) -> Int
+
+pub fn wm_set_title(Int, Bytes) -> Int
+
+pub fn wm_set_traffic_light_position(Int, Int, Int) -> Int
+
+pub fn wm_set_visibility(Int, Int) -> Int
+
+pub fn wm_set_window_id_base(Int) -> Int
+
+pub fn wm_spawn_process(Bytes, Bytes) -> Int
+
+pub fn wm_start_drag_window(Int) -> Int
+
+pub fn wm_terminate_window(Int) -> Int
+
+pub fn wm_toggle_fullscreen_window(Int) -> Int
+
+pub fn wm_toggle_maximize_window(Int) -> Int
+
+pub fn wm_unmaximize_window(Int) -> Int
+
+pub fn wm_wait_child_noblock(Int) -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

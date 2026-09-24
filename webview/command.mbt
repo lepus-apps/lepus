@@ -130,7 +130,7 @@ fn[X] CommandBridge::send_response(
     Error(_) => 1
   }
   ignore(
-    wm_return_raw(
+    @window_manager.wm_return_raw(
       self.webview.window_id,
       @encoding/utf8.encode(id),
       status,

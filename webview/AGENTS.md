@@ -43,13 +43,22 @@ a high-level MoonBit API that enables:
 
 ```
 lepus/webview/
-├── binding.mbt          # FFI declarations – extern "C" wrappers for webview C API
+├── binding.mbt          # Remaining FFI decls that depend on webview enums (wm_set_size, wm_set_window_customization)
 ├── command.mbt          # CommandBridge & Command/CommandResponse types
 ├── plugin.mbt           # Plugin / PluginHost / PluginContext higher-level API
 ├── webview.mbt          # Public WebView struct and all its methods
-├── stub.c               # C glue code: MoonBit closure trampoline for webview_bind
-├── moon.pkg             # Package config: link flags, native-stub, target filters
+├── moon.pkg             # Package config: link flags, native-stub (vendor cc), target filters
 ├── pkg.generated.mbti   # Auto-generated interface file (do not edit manually)
+├── ffi/                 # Split native FFI packages (see "FFI & C Stub Layer")
+│   ├── common/c_abi.h           # Shared platform preamble: pthread/socket shims, webview.h decls
+│   ├── webview_sys/             # Raw webview.h bindings (bind/unbind, threads, cstr copy)
+│   │   ├── binding.mbt
+│   │   ├── moon.pkg
+│   │   └── stub.c
+│   └── window_manager/          # g_wm runtime: IPC transport, window lifecycle, platform view control
+│       ├── binding.mbt          # wm_* extern decls (co-located with their C implementations)
+│       ├── moon.pkg
+│       └── stub.c
 ├── lib/                 # Pre-built webview shared libraries
 │   ├── libwebview.dylib          (macOS symlink)
 │   ├── libwebview.0.12.dylib
@@ -66,10 +75,11 @@ lepus/webview/
 | File | Responsibility |
 |------|---------------|
 | `webview.mbt` | `WebView` struct, window lifecycle, JS eval/init, bind/unbind |
-| `binding.mbt` | Raw `extern "C"` FFI surface; `WebView_t` and `BindingHandle` opaque types |
+| `binding.mbt` | Remaining `extern "C"` decls tied to webview enums (`wm_set_size`, `wm_set_window_customization`) |
 | `command.mbt` | `CommandBridge`, `Command`, `CommandResponse` — typed JSON RPC layer |
 | `plugin.mbt` | `Plugin`, `PluginHost`, `PluginContext` — named plugin registry |
-| `stub.c` | Closure trampoline, `moonbit_webview_bind/unbind`, identity helper, cstr copy |
+| `ffi/webview_sys/stub.c` | Raw webview.h glue: `moonbit_webview_bind/unbind`, background thread, cstr copy |
+| `ffi/window_manager/stub.c` | Window-manager runtime: `g_wm` state, IPC transport, platform view control |
 
 ---
 
@@ -134,7 +144,7 @@ JavaScript (browser page)
     WebView  (webview.mbt)
         │  extern "C" FFI
         ▼
-   binding.mbt  ──►  stub.c  ──►  libwebview.dylib / .dll
+   binding.mbt  ──►  ffi/window_manager/stub.c  ──►  ffi/webview_sys/stub.c  ──►  webview_vendor.cc (webview.h impl)
 ```
 
 ### `WebView` (`webview.mbt`)
@@ -197,14 +207,19 @@ Convenience helpers on `WebView`: `install_plugin`, `plugin_host`, `emit_plugin`
 - Return `CommandResponse::error(message)` to propagate failures to the JS
   caller rather than panicking.
 
-### FFI Bindings (`binding.mbt`)
+### FFI Bindings (`binding.mbt` files)
 
+- `extern "C"` declarations are co-located with the package that implements
+  them: raw `webview.h` glue in `ffi/webview_sys/binding.mbt`, the `wm_*`
+  window-manager surface in `ffi/window_manager/binding.mbt`. The remaining
+  `webview/binding.mbt` only holds the two declarations that take webview enum
+  types (`wm_set_size`, `wm_set_window_customization`).
 - Every `extern "C"` function maps directly to a webview C API symbol or a
-  `moonbit_*` helper defined in `stub.c`.
+  `moonbit_*` helper defined in the corresponding package's `stub.c`.
 - Use `#borrow(param)` for `Bytes` parameters that should not transfer
   ownership to C.
 - Use `#owned(param)` for closures whose lifetime must be managed by the C side.
-- Do not add business logic to `binding.mbt`; keep it as a thin FFI surface.
+- Do not add business logic to `binding.mbt` files; keep them as thin FFI surfaces.
 
 ### JavaScript Glue
 
@@ -226,17 +241,29 @@ Convenience helpers on `WebView`: `install_plugin`, `plugin_host`, `emit_plugin`
 
 ## FFI & C Stub Layer
 
-`stub.c` provides three categories of helpers:
+The original monolithic `webview/stub.c` (~3,500 lines) was split into small
+FFI packages under `ffi/`, each with its own `moon.pkg` (`native-stub`) and a
+thin `binding.mbt`. Both stubs share the platform preamble and `webview.h`
+forward declarations via `ffi/common/c_abi.h` (a relative `#include`).
+
+### `ffi/webview_sys/stub.c` (raw `webview.h` glue)
 
 | Symbol | Purpose |
 |--------|---------|
 | `moonbit_webview_bind` | Allocates a `moonbit_webview_binding` struct to keep the MoonBit closure alive; wires it to `webview_bind` via a static trampoline. |
 | `moonbit_webview_unbind` | Calls `webview_unbind` then frees the binding struct and decrements the MoonBit closure refcount. |
 | `moonbit_webview_copy_cstr` | Copies a null-terminated C string into a MoonBit `Bytes` value (preserving null terminator). |
-| `moonbit_is_null` (implicit) | Exposed via the extern declaration in `binding.mbt` to let MoonBit check if a binding handle is null. |
+| `moonbit_run_in_background_thread` | Runs a MoonBit closure on a detached native thread. |
+| `moonbit_webview_return_raw` / `moonbit_webview_terminate` | Thin wrappers over `webview_return` / `webview_terminate`. |
 
-The stub includes `moonbit.h` for `moonbit_decref`, `moonbit_make_bytes_raw`, and
-`moonbit_bytes_t`.
+### `ffi/window_manager/stub.c` (window-manager runtime)
+
+Owns the `g_wm` state machine and `moonbit_wm_*` exports: window
+create/destroy/run, IPC server/client transport and framing, multi-process
+spawn/connect, and platform view control (macOS Objective-C / Win32 / GTK).
+
+Both stubs include `moonbit.h` for `moonbit_decref`, `moonbit_make_bytes_raw`,
+and `moonbit_bytes_t`.
 
 ---
 
