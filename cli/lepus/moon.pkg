@@ -1,15 +1,16 @@
 import {
-  "moonbitlang/x/sys",
   "moonbitlang/async",
-  "lepus-apps/lepus/cli/lepus_core",
+  "moonbitlang/async/process",
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/string",
+  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "moonbitlang/core/encoding/utf8" @encoding/utf8,
+  "moonbitlang/async/fs",
+  "moonbit-community/zipc",
+  "lepus-apps/lepus/cli/platform",
 }
 
-supported_targets = "+native"
+supported_targets = "+wasm+wasm-gc+native"
 
 pkgtype(kind: "executable")
-
-options(
-  "bin-name": "lepus",
-  "bin-target": "native",
-  targets: { "main.mbt": [ "native" ] },
-)

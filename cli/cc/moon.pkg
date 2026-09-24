@@ -3,14 +3,12 @@ import {
   "moonbitlang/x/sys",
   "moonbitlang/async",
   "moonbitlang/async/process",
+  "lepus-apps/lepus/cli/platform",
 }
-
-supported_targets = "+native"
 
 pkgtype(kind: "executable")
 
 options(
   "bin-name": "cc",
   "bin-target": "native",
-  "native-stub": [ "target_stub.c" ],
 )

@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/cli/platform"
+
+// Values
+pub fn detect_arch() -> Arch
+
+pub fn detect_platform() -> Platform
+
+pub fn detect_target() -> Target
+
+// Errors
+
+// Types and methods
+pub enum Arch {
+  Arm64
+  X86_64
+}
+pub fn Arch::to_string(Self) -> String
+
+pub enum Platform {
+  Macos
+  Linux
+  Windows
+  Unknown
+}
+pub fn Platform::to_string(Self) -> String
+
+pub enum Target {
+  Unknown
+  DarwinArm64
+  DarwinX86_64
+  LinuxArm64
+  LinuxX86_64
+  WindowsArm64
+  WindowsX86_64
+}
+pub fn Target::to_string(Self) -> String
+
+// Type aliases
+
+// Traits

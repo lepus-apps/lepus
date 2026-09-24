@@ -1,28 +1,4 @@
 ///|
-enum SystemTarget {
-  Darwin_arm64 = 1
-  Darwin_x86_64 = 2
-  Linux_arm64 = 3
-  Linux_x86_64 = 4
-  Windows_arm64 = 5
-  Windows_x86_64 = 6
-}
-
-// ///|
-// impl Show for SystemTarget with output(self, logger) {
-//   logger.write_string(
-//     match self {
-//       Darwin_arm64 => "darwin_arm64"
-//       Darwin_x86_64 => "darwin_x86_64"
-//       Linux_arm64 => "linux_arm64"
-//       Linux_x86_64 => "linux_x86_64"
-//       Windows_arm64 => "windows_arm64"
-//       Windows_x86_64 => "windows_x86_64"
-//     },
-//   )
-// }
-
-///|
 /// proxy of c compiler for cross platform
 async fn main {
   let args = @env.args()[1:]
@@ -36,9 +12,6 @@ async fn main {
     },
   )
 }
-
-///|
-extern "C" fn detect_target() -> SystemTarget = "lepus_cc_detect_target"
 
 ///|
 fn windows_link_args() -> Array[String] {
@@ -97,7 +70,9 @@ async fn run_capture(program : String, args : Array[String]) -> (Int, String) {
 }
 
 ///|
-fn select_windows_compiler(target : SystemTarget) -> (String, Array[String]) {
+fn select_windows_compiler(
+  target : @platform.Target,
+) -> (String, Array[String]) {
   match @env.get_env_var("CXX") {
     Some(cxx) => (cxx, [])
     None =>
@@ -105,7 +80,8 @@ fn select_windows_compiler(target : SystemTarget) -> (String, Array[String]) {
         Some(cc) => (cc, [])
         None =>
           match target {
-            Windows_arm64 => ("zig", ["c++", "-target", "aarch64-windows-gnu"])
+            _ if target is @platform.WindowsArm64 =>
+              ("zig", ["c++", "-target", "aarch64-windows-gnu"])
             _ => ("zig", ["c++", "-target", "x86_64-windows-gnu"])
           }
       }
@@ -114,25 +90,29 @@ fn select_windows_compiler(target : SystemTarget) -> (String, Array[String]) {
 
 ///|
 async fn target_toolchain(
-  target : SystemTarget,
+  target : @platform.Target,
 ) -> (String, Array[String], Array[String]) {
   match target {
-    Darwin_arm64 | Darwin_x86_64 =>
+    _ if target is @platform.DarwinArm64 || target is @platform.DarwinX86_64 =>
       (
         "cc",
         [],
         ["-lc++", "-lobjc", "-framework", "Cocoa", "-framework", "WebKit"],
       )
-    Linux_arm64 | Linux_x86_64 => ("cc", [], linux_link_args())
-    Windows_arm64 | Windows_x86_64 => {
+    _ if target is @platform.LinuxArm64 || target is @platform.LinuxX86_64 =>
+      ("cc", [], linux_link_args())
+    _ if target is @platform.WindowsArm64 || target is @platform.WindowsX86_64 => {
       let (compiler, prefix_args) = select_windows_compiler(target)
       (compiler, prefix_args, windows_link_args())
     }
+    _ => ("cc", [], [])
   }
 }
 
 ///|
 async fn get_compile_args() -> (String, Array[String]) {
-  let (compiler, prefix_args, link_args) = target_toolchain(detect_target())
+  let (compiler, prefix_args, link_args) = target_toolchain(
+    @platform.detect_target(),
+  )
   (compiler, [..prefix_args, ..link_args])
 }
