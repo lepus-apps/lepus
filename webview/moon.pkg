@@ -22,7 +22,7 @@ options(
       // or fallback:
       // "cc-link-flags": "-lstdc++ -ldl -lpthread -lwebkit2gtk-4.1 -ljavascriptcoregtk-4.1 -lgtk-3 -lgdk-3 -lsoup-3.0 -lgobject-2.0 -lglib-2.0 -lgio-2.0",
       // Windows (MinGW/zig cc style):
-      // "cc-link-flags": "-luser32 -lshell32 -lshlwapi -lversion -lole32 -loleaut32 -luuid -lcomdlg32 -lcomctl32 -lgdi32 -ladvapi32 -lws2_32 -lkernel32",
+      // "cc-link-flags": "-mwindows -luser32 -lshell32 -lshlwapi -lversion -lole32 -loleaut32 -luuid -lcomdlg32 -lcomctl32 -lgdi32 -ladvapi32 -lws2_32 -lkernel32",
     },
   },
   targets: {

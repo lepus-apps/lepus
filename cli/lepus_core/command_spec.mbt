@@ -26,6 +26,23 @@ pub fn root_command() -> @argparse.Command {
       OptionArg("out-dir", long="out-dir"),
     ],
   )
+  let bundle = @argparse.Command(
+    "bundle",
+    about="Create a platform application bundle for distribution.",
+    flags=[
+      FlagArg("skip-build", long="skip-build"),
+      FlagArg("skip-setup", long="skip-setup"),
+    ],
+    options=[
+      OptionArg("app-id", long="app-id"),
+      OptionArg("app-name", long="app-name"),
+      OptionArg("app-version", long="app-version"),
+      OptionArg("icon", long="icon"),
+      OptionArg("bin", long="bin"),
+      OptionArg("frontend-dir", long="frontend-dir"),
+      OptionArg("out-dir", long="out-dir"),
+    ],
+  )
   let setup = @argparse.Command(
     "setup",
     about="Prepare the Lepus MoonBit toolchain helpers.",
@@ -50,7 +67,7 @@ pub fn root_command() -> @argparse.Command {
     "lepus",
     about="Lepus desktop application toolkit.",
     version="0.1.8",
-    subcommands=[init, dev, build, setup, doctor],
+    subcommands=[init, dev, build, bundle, setup, doctor],
     flags=[
       FlagArg("verbose", short='v', long="verbose", action=Count, global=true),
     ],

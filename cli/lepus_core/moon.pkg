@@ -12,9 +12,9 @@ import {
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "native.c" ],
   targets: {
     "build_command.mbt": [ "native" ],
+    "bundle_command.mbt": [ "native" ],
     "cli_test.mbt": [ "native" ],
     "command_spec.mbt": [ "native" ],
     "dev_command.mbt": [ "native" ],

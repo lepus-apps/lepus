@@ -41,6 +41,21 @@ pub struct SetupConfig {
 }
 
 ///|
+pub struct BundleConfig {
+  cwd : String
+  app_id : String?
+  app_name : String?
+  app_version : String?
+  icon : String?
+  bin : String?
+  frontend_dir : String?
+  out_dir : String?
+  skip_build : Bool
+  skip_setup : Bool
+  verbose : Int
+}
+
+///|
 pub struct DoctorConfig {
   cwd : String
   config_path : String?
@@ -95,6 +110,26 @@ pub fn parse_build_config(
     skip_moon: sub.flags.get_or_default("skip-moon", false),
     skip_setup: sub.flags.get_or_default("skip-setup", false),
     typecheck: !sub.flags.get_or_default("no-typecheck", false),
+    verbose: verbosity(root),
+  }
+}
+
+///|
+pub fn parse_bundle_config(
+  root : @argparse.Matches,
+  sub : @argparse.Matches,
+) -> BundleConfig {
+  {
+    cwd: root_cwd(root),
+    app_id: first_value(sub, "app-id"),
+    app_name: first_value(sub, "app-name"),
+    app_version: first_value(sub, "app-version"),
+    icon: first_value(sub, "icon"),
+    bin: first_value(sub, "bin"),
+    frontend_dir: first_value(sub, "frontend-dir"),
+    out_dir: first_value(sub, "out-dir"),
+    skip_build: sub.flags.get_or_default("skip-build", false),
+    skip_setup: sub.flags.get_or_default("skip-setup", false),
     verbose: verbosity(root),
   }
 }

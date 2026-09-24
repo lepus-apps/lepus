@@ -102,3 +102,53 @@ test "setup config parses force" {
     _ => panic()
   }
 }
+
+///|
+test "bundle command is registered" {
+  let help = @lepus_core.root_command().render_help()
+  assert_true(help.contains("bundle"))
+}
+
+///|
+test "bundle config parses app metadata" {
+  let matches = @lepus_core.root_command().parse(
+    argv=[
+      "bundle", "--app-id", "com.example.test", "--app-name", "TestApp", "--app-version",
+      "2.0.0", "--icon", "icon.icns", "--out-dir", "dist",
+    ],
+    env={},
+  ) catch {
+    _ => panic()
+  }
+  match matches.subcommand {
+    Some(("bundle", sub)) => {
+      let config = @lepus_core.parse_bundle_config(matches, sub)
+      assert_eq(config.app_id, Some("com.example.test"))
+      assert_eq(config.app_name, Some("TestApp"))
+      assert_eq(config.app_version, Some("2.0.0"))
+      assert_eq(config.icon, Some("icon.icns"))
+      assert_eq(config.out_dir, Some("dist"))
+      assert_eq(config.skip_build, false)
+      assert_eq(config.skip_setup, false)
+    }
+    _ => panic()
+  }
+}
+
+///|
+test "bundle config parses skip flags" {
+  let matches = @lepus_core.root_command().parse(
+    argv=["bundle", "--skip-build", "--skip-setup"],
+    env={},
+  ) catch {
+    _ => panic()
+  }
+  match matches.subcommand {
+    Some(("bundle", sub)) => {
+      let config = @lepus_core.parse_bundle_config(matches, sub)
+      assert_eq(config.skip_build, true)
+      assert_eq(config.skip_setup, true)
+    }
+    _ => panic()
+  }
+}

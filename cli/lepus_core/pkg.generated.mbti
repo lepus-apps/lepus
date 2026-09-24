@@ -6,10 +6,6 @@ import {
 }
 
 // Values
-pub fn command_exists(Bytes) -> Int
-
-pub fn current_dir() -> Bytes
-
 pub fn embed_module_source(String) -> String
 
 pub async fn ensure_npm_ready(String) -> Int
@@ -18,7 +14,7 @@ pub fn get_cwd() -> String
 
 pub fn get_platform() -> String
 
-pub fn has_command(String) -> Bool
+pub async fn has_command(String) -> Bool
 
 pub fn join_path(String, String) -> String
 
@@ -28,6 +24,8 @@ pub fn npm_command() -> String
 
 pub fn parse_build_config(@argparse.Matches, @argparse.Matches) -> BuildConfig
 
+pub fn parse_bundle_config(@argparse.Matches, @argparse.Matches) -> BundleConfig
+
 pub fn parse_dev_config(@argparse.Matches, @argparse.Matches) -> DevConfig
 
 pub fn parse_doctor_config(@argparse.Matches, @argparse.Matches) -> DoctorConfig
@@ -36,8 +34,6 @@ pub fn parse_init_config(@argparse.Matches, @argparse.Matches) -> InitConfig
 
 pub fn parse_setup_config(@argparse.Matches, @argparse.Matches) -> SetupConfig
 
-pub fn platform_name() -> Bytes
-
 pub fn project_basename(String) -> String
 
 pub fn resolve_path(String, String?) -> String
@@ -45,6 +41,8 @@ pub fn resolve_path(String, String?) -> String
 pub fn root_command() -> @argparse.Command
 
 pub async fn run_build(BuildConfig) -> Int
+
+pub async fn run_bundle(BundleConfig) -> Int
 
 pub async fn run_cli() -> Int
 
@@ -67,6 +65,20 @@ pub struct BuildConfig {
   skip_moon : Bool
   skip_setup : Bool
   typecheck : Bool
+  verbose : Int
+}
+
+pub struct BundleConfig {
+  cwd : String
+  app_id : String?
+  app_name : String?
+  app_version : String?
+  icon : String?
+  bin : String?
+  frontend_dir : String?
+  out_dir : String?
+  skip_build : Bool
+  skip_setup : Bool
   verbose : Int
 }
 

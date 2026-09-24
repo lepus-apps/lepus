@@ -1,28 +1,45 @@
 ///|
-#borrow(command)
-pub extern "C" fn command_exists(command : Bytes) -> Int = "lepus_command_exists"
-
-///|
-pub extern "C" fn current_dir() -> Bytes = "lepus_current_dir"
-
-///|
-pub extern "C" fn platform_name() -> Bytes = "lepus_platform_name"
-
-///|
-pub fn has_command(command : String) -> Bool {
-  command_exists(@encoding/utf8.encode(command)) != 0
-}
-
-///|
-pub fn get_cwd() -> String {
-  @encoding/utf8.decode(current_dir()) catch {
-    _ => "."
+pub fn get_platform() -> String {
+  match @env.get_env_var("LEPUS_PLATFORM") {
+    Some(p) if !p.is_empty() => p.to_lower()
+    _ => detect_platform_from_env()
   }
 }
 
 ///|
-pub fn get_platform() -> String {
-  @encoding/utf8.decode(platform_name()) catch {
-    _ => "unknown"
+fn detect_platform_from_env() -> String {
+  // OSTYPE is set by bash/zsh on Unix systems
+  match @env.get_env_var("OSTYPE") {
+    Some(t) if t.has_prefix("darwin") => "macos"
+    Some(t) if t.has_prefix("linux") => "linux"
+    Some(t) if t.has_prefix("msys") ||
+      t.has_prefix("cygwin") ||
+      t.has_prefix("win32") => "windows"
+    _ =>
+      // Windows sets OS=Windows_NT
+      match @env.get_env_var("OS") {
+        Some(os) if os == "Windows_NT" => "windows"
+        _ => "unknown"
+      }
+  }
+}
+
+///|
+pub async fn has_command(command : String) -> Bool {
+  let platform = get_platform()
+  let (cmd, args) = if platform == "windows" {
+    ("where", [command])
+  } else {
+    ("which", [command])
+  }
+  let exit_code = @process.run(cmd, args)
+  exit_code == 0
+}
+
+///|
+pub fn get_cwd() -> String {
+  match @env.current_dir() {
+    Some(d) => d
+    None => "."
   }
 }

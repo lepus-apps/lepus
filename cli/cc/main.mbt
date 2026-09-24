@@ -43,8 +43,8 @@ extern "C" fn detect_target() -> SystemTarget = "lepus_cc_detect_target"
 ///|
 fn windows_link_args() -> Array[String] {
   [
-    "-luser32", "-lshell32", "-lshlwapi", "-lversion", "-lole32", "-loleaut32", "-luuid",
-    "-lcomdlg32", "-lcomctl32", "-lgdi32", "-ladvapi32", "-lws2_32", "-lkernel32",
+    "-mwindows", "-luser32", "-lshell32", "-lshlwapi", "-lversion", "-lole32", "-loleaut32",
+    "-luuid", "-lcomdlg32", "-lcomctl32", "-lgdi32", "-ladvapi32", "-lws2_32", "-lkernel32",
   ]
 }
 
