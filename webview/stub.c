@@ -1990,6 +1990,45 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_traffic_light_position(int window_id, int 
 #endif
 }
 
+MOONBIT_FFI_EXPORT int moonbit_wm_set_position(int window_id, int x, int y)
+{
+    pthread_mutex_lock(&g_wm.mutex);
+    webview_window_t *w = find_window(window_id);
+    pthread_mutex_unlock(&g_wm.mutex);
+    if (!w || !w->handle)
+        return -1;
+#ifdef _WIN32
+    HWND hwnd = (HWND)moonbit_window_native_handle(w);
+    if (!hwnd)
+        return -1;
+    RECT rc;
+    GetWindowRect(hwnd, &rc);
+    int width = rc.right - rc.left;
+    int height = rc.bottom - rc.top;
+    if (!MoveWindow(hwnd, x, y, width, height, TRUE))
+        return -1;
+#elif defined(__APPLE__)
+    void *ns_window = moonbit_window_native_handle(w);
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!ns_window || !msgsend)
+        return -1;
+    mb_sel_t sel_set_frame_origin = moonbit_sel_register_name("setFrameOrigin:");
+    if (!sel_set_frame_origin)
+        return -1;
+    mb_point_t origin = {(double)x, (double)y};
+    ((mb_objc_msgsend_point_arg_t)msgsend)((mb_id_t)ns_window, sel_set_frame_origin, origin);
+#else
+    (void)x;
+    (void)y;
+    return -1;
+#endif
+    w->x = x;
+    w->y = y;
+    int pos_data[2] = {x, y};
+    fire_window_event(w, WINDOW_EVT_MOVED, pos_data);
+    return 0;
+}
+
 MOONBIT_FFI_EXPORT int moonbit_wm_minimize_window(int window_id)
 {
     pthread_mutex_lock(&g_wm.mutex);
@@ -3302,11 +3341,39 @@ static void ensure_recv_queues(void)
     pthread_mutex_unlock(&g_recv_queues_mutex);
 }
 
-/* IPC 消息回调：将消息放入窗口的接收队列 */
+/* IPC 消息回调：将消息放入窗口的接收队列
+ *
+ * 多窗口事件推送（push）在此实现：主进程定向发给子进程窗口的
+ * `IPC_MSG_EVENT`（subtype = `lepus-event`）直接 eval 到该窗口，触发前端
+ * CustomEvent("lepus_event")。消息的 `data` 字段即完整 JS 代码（由主进程
+ * 侧构造），因此无需入队、也无需 MoonBit 侧后台轮询。
+ */
 static void ipc_recv_callback(ipc_message_t *msg)
 {
     if (msg->target_window_id < 0)
         return;
+
+    if (msg->message_type == IPC_MSG_EVENT &&
+        strcmp(msg->subtype, "lepus-event") == 0 &&
+        msg->data && msg->data_length > 0)
+    {
+        eval_js_ctx_t *ctx = (eval_js_ctx_t *)calloc(1, sizeof(eval_js_ctx_t));
+        if (!ctx)
+            return;
+        ctx->js = dup_cstr(msg->data);
+        if (!ctx->js)
+        {
+            free(ctx);
+            return;
+        }
+        if (wm_dispatch(msg->target_window_id, eval_js_trampoline, ctx) != 0)
+        {
+            free(ctx->js);
+            free(ctx);
+        }
+        return;
+    }
+
     ipc_recv_queue_t *q = get_recv_queue(msg->target_window_id);
     if (!q)
         return;

@@ -38,6 +38,8 @@ pub struct WindowConfig {
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
   traffic_light_position : (Int, Int)
+  position : (Int, Int)
+  hidden : Bool
   source : Source?
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
@@ -99,6 +101,8 @@ pub fn WindowConfig::new(
   title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
+  position? : (Int, Int) = (-1, -1),
+  hidden? : Bool = false,
   source? : Source,
 ) -> WindowConfig {
   {
@@ -115,6 +119,8 @@ pub fn WindowConfig::new(
     title_bar_style,
     title_bar_overlay,
     traffic_light_position,
+    position,
+    hidden,
     source,
   }
 }
@@ -174,6 +180,8 @@ pub fn Window::Window(
   title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
+  position? : (Int, Int) = (-1, -1),
+  hidden? : Bool = false,
   source? : Source,
   plugins? : Array[@webview.Plugin] = [],
 ) -> Window {
@@ -192,6 +200,8 @@ pub fn Window::Window(
       title_bar_style,
       title_bar_overlay,
       traffic_light_position,
+      position,
+      hidden,
       source,
     },
     plugins,
@@ -257,17 +267,24 @@ pub async fn App::run(self : App, window_index? : Int) -> Unit {
     abort("App::run requires at least one window")
   }
   assert_unique_labels(selected)
-  let bus = EventBus::new()
-  let all_plugins = self.plugins + [bus.plugin()]
   match @webview.detect_child_window() {
     Some((base, label)) => {
-      // 子进程：找到自己窗口的配置并运行
+      // 子进程：事件插件的 parent handler 不会被使用（此进程只安装
+      // child-side proxy），故传空映射与子进程 WM 即可。
+      let bus = EventBus::new(Map([]))
+      let wm = @webview.WindowManager::init(is_main=false)
+      let all_plugins = self.plugins + [bus.plugin(wm)]
       let config = find_window_config(self.windows, label)
       let window = build_runtime_window(config, all_plugins)
       window.run_child(base)
     }
     None => {
-      // 主进程：为每个窗口生成唯一的 label，spawn 子进程并统一服务
+      // 主进程：建立 label → window_id 映射（window_id == spawn 时的 base），
+      // 并为主进程的命令路由装配事件插件。
+      let ids = assign_window_ids(selected)
+      let bus = EventBus::new(ids)
+      let wm = @webview.WindowManager::init(is_main=true)
+      let all_plugins = self.plugins + [bus.plugin(wm)]
       let labels : Array[String] = []
       for config in selected {
         labels.push(config.label())
@@ -276,6 +293,19 @@ pub async fn App::run(self : App, window_index? : Int) -> Unit {
       @webview.Window::run_many(labels, router)
     }
   }
+}
+
+///|
+/// Assigns a globally-unique window id to each label, matching the `base`
+/// values the child processes use when creating their windows.
+fn assign_window_ids(windows : Array[WindowConfig]) -> Map[String, Int] {
+  let ids = Map([])
+  let mut base = 1
+  for config in windows {
+    ids.set(config.label(), base)
+    base = base + 1
+  }
+  ids
 }
 
 ///|
@@ -330,6 +360,8 @@ async fn build_runtime_window(
     },
     title_bar_overlay=config.title_bar_overlay,
     traffic_light_position=config.traffic_light_position,
+    position=config.position,
+    hidden=config.hidden,
   )
   guard config.source is Some(source) else {
     abort("WindowConfig::source is required")

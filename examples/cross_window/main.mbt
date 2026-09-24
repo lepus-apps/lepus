@@ -70,16 +70,13 @@ async fn main {
         #|<script>
         #|  const inbox = document.getElementById("inbox");
         #|  let first = true;
-        #|  async function poll() {
-        #|    const msgs = await window.lepusApi.events.poll({ label: "receiver" });
-        #|    if (msgs.length) {
-        #|      if (first) { inbox.textContent = ""; first = false; }
-        #|      for (const m of msgs) {
-        #|        inbox.textContent += `[${m.event}] ${JSON.stringify(m.payload)}\n`;
-        #|      }
-        #|    }
-        #|  }
-        #|  setInterval(poll, 300);
+        #|  // Push: no polling — the receiver subscribes to events pushed by
+        #|  // the main process once the sender emits.
+        #|  window.addEventListener("lepus_event", (e) => {
+        #|    if (first) { inbox.textContent = ""; first = false; }
+        #|    const { event, payload } = e.detail;
+        #|    inbox.textContent += `[${event}] ${JSON.stringify(payload)}\n`;
+        #|  });
         #|</script></body></html>
       ),
     ),

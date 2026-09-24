@@ -31,21 +31,24 @@ pub fn EmitRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDeco
 pub fn EmitRequest::to_json(Self) -> Json
 
 pub struct EventBus {
-  queues : Map[String, Array[EventMessage]]
+  window_ids : Map[String, Int]
 }
-pub fn EventBus::drain(Self, String) -> Array[EventMessage]
-pub fn EventBus::new() -> Self
-pub fn EventBus::plugin(Self) -> @webview.Plugin
-pub fn EventBus::push(Self, String, String, Json) -> Unit
+pub fn EventBus::new(Map[String, Int]) -> Self
+pub fn EventBus::plugin(Self, @webview.WindowManager) -> @webview.Plugin
+pub fn EventBus::window_id(Self, String) -> Int
 
-pub struct EventMessage {
-  event : String
-  payload : Json
-} derive(Eq, ToJson, @json.FromJson)
-pub fn EventMessage::equal(Self, Self) -> Bool
-pub fn EventMessage::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
-pub fn EventMessage::not_equal(Self, Self) -> Bool
-pub fn EventMessage::to_json(Self) -> Json
+pub struct FullscreenWindowRequest {
+  label : String
+  fullscreen : Bool
+} derive(ToJson, @json.FromJson)
+pub fn FullscreenWindowRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn FullscreenWindowRequest::to_json(Self) -> Json
+
+pub struct LabelRequest {
+  label : String
+} derive(ToJson, @json.FromJson)
+pub fn LabelRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn LabelRequest::to_json(Self) -> Json
 
 pub struct MemoryFile {
   path : String
@@ -75,11 +78,21 @@ pub fn MemorySource::not_equal(Self, Self) -> Bool
 pub fn MemorySource::to_json(Self) -> Json
 pub fn MemorySource::to_repr(Self) -> @debug.Repr
 
-pub struct PollRequest {
+pub struct MoveWindowRequest {
   label : String
+  x : Int
+  y : Int
 } derive(ToJson, @json.FromJson)
-pub fn PollRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
-pub fn PollRequest::to_json(Self) -> Json
+pub fn MoveWindowRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn MoveWindowRequest::to_json(Self) -> Json
+
+pub struct ResizeWindowRequest {
+  label : String
+  width : Int
+  height : Int
+} derive(ToJson, @json.FromJson)
+pub fn ResizeWindowRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ResizeWindowRequest::to_json(Self) -> Json
 
 pub(all) enum Source {
   Url(String)
@@ -113,7 +126,7 @@ pub struct Window {
   plugins : Array[@webview.Plugin]
 }
 #alias(new, deprecated)
-pub fn Window::Window(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source, plugins? : Array[@webview.Plugin]) -> Self
+pub fn Window::Window(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, source? : Source, plugins? : Array[@webview.Plugin]) -> Self
 pub fn Window::navigate(Self, String) -> Self
 pub async fn Window::run(Self) -> Unit
 pub fn Window::set_source(Self, Source) -> Self
@@ -132,6 +145,8 @@ pub struct WindowConfig {
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
   traffic_light_position : (Int, Int)
+  position : (Int, Int)
+  hidden : Bool
   source : Source?
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
 pub fn WindowConfig::equal(Self, Self) -> Bool
@@ -140,11 +155,33 @@ pub fn WindowConfig::hash(Self) -> Int
 pub fn WindowConfig::hash_combine(Self, Hasher) -> Unit
 pub fn WindowConfig::label(Self) -> String
 pub fn WindowConfig::navigate(Self, String) -> Self
-pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), source? : Source) -> Self
+pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, source? : Source) -> Self
 pub fn WindowConfig::not_equal(Self, Self) -> Bool
 pub fn WindowConfig::set_source(Self, Source) -> Self
 pub fn WindowConfig::to_json(Self) -> Json
 pub fn WindowConfig::to_repr(Self) -> @debug.Repr
+
+pub struct WindowInfo {
+  label : String
+  open : Bool
+} derive(ToJson, @json.FromJson)
+pub fn WindowInfo::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WindowInfo::to_json(Self) -> Json
+
+pub struct WindowRegistry {
+  ids : Map[String, Int]
+  pids : Map[String, Int]
+  children : Array[Int]
+}
+pub fn WindowRegistry::new(Array[WindowConfig]) -> Self
+pub fn WindowRegistry::plugin(Self, @webview.WindowManager, String) -> @webview.Plugin
+
+pub struct Windows {
+  configs : Array[WindowConfig]
+  plugins : Array[@webview.Plugin]
+}
+pub fn Windows::new(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
+pub async fn Windows::run(Self) -> Unit
 
 // Type aliases
 

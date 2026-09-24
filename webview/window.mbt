@@ -18,6 +18,8 @@ pub struct Window {
   mut title_bar_style : TitleBarStyle
   mut title_bar_overlay : Bool
   mut traffic_light_position : (Int, Int)
+  position : (Int, Int)
+  hidden : Bool
   enable_window_controls_plugin : Bool
   mut url : String
   mut html : String
@@ -48,6 +50,8 @@ pub fn Window::Window(
   title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
+  position? : (Int, Int) = (-1, -1),
+  hidden? : Bool = false,
   enable_window_controls_plugin? : Bool = true,
 ) -> Window {
   {
@@ -67,6 +71,8 @@ pub fn Window::Window(
     title_bar_style,
     title_bar_overlay,
     traffic_light_position,
+    position,
+    hidden,
     enable_window_controls_plugin,
     html: "",
     pending_custom_protocols: [],
@@ -326,8 +332,17 @@ async fn Window::run_child_async(self : Window) -> Unit {
       title_bar_style=self.title_bar_style,
       title_bar_overlay=self.title_bar_overlay,
       traffic_light_position=self.traffic_light_position,
+      position=self.position,
+      hidden=self.hidden,
     )
     self.runtime_window_id = webview.window_id()
+    // 向主进程注册本窗口：主进程据 source_window_id 建立
+    // `window_id -> 子进程 fd` 映射，从而能定向 push 事件到本窗口。
+    let _reg = wm.broadcast(
+      self.runtime_window_id,
+      "window_registered",
+      "{\"window_id\":" + self.runtime_window_id.to_string() + "}",
+    )
     self.pending_custom_protocols.each(mapping => {
       let (scheme, root_dir) = mapping
       webview.set_custom_protocol(scheme, root_dir)
@@ -358,6 +373,20 @@ async fn Window::run_child_async(self : Window) -> Unit {
 }
 
 ///|
+/// Payload for the native window move command.
+priv struct MoveRequest {
+  x : Int
+  y : Int
+} derive(ToJson, FromJson)
+
+///|
+/// Payload for the native window resize command.
+priv struct ResizeRequest {
+  width : Int
+  height : Int
+} derive(ToJson, FromJson)
+
+///|
 fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
   Plugin::Plugin("window_controls", plugin => {
     plugin.command_sync("close", (_ : Json) => wm_close_window(window_id) == 0)
@@ -381,6 +410,14 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
     plugin.command_sync("start_drag", (_ : Json) => {
       wm_start_drag_window(window_id) == 0
     })
+    plugin.command("set_position", (req : MoveRequest) => {
+      wm_set_position(window_id, req.x, req.y) == 0
+    })
+    plugin.command("set_size", (req : ResizeRequest) => {
+      wm_set_size(window_id, req.width, req.height, None) == 0
+    })
+    plugin.command("show", (_ : Json) => wm_set_visibility(window_id, 1) == 0)
+    plugin.command("hide", (_ : Json) => wm_set_visibility(window_id, 0) == 0)
     plugin.script(
       (
         #|(() => {
@@ -389,6 +426,11 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
         #|    const api = window.lepusApi?.window_controls?.[name];
         #|    if (typeof api !== 'function') return Promise.resolve(false);
         #|    return api(null).catch(() => false);
+        #|  };
+        #|  const callArgs = (name, arg) => {
+        #|    const api = window.lepusApi?.window_controls?.[name];
+        #|    if (typeof api !== 'function') return Promise.resolve(false);
+        #|    return api(arg).catch(() => false);
         #|  };
         #|  const originalClose = typeof window.close === 'function' ? window.close.bind(window) : null;
         #|  window.close = () => { call('close'); };
@@ -401,6 +443,10 @@ fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
         #|    setFullscreen: (v) => call(v ? 'set_fullscreen_on' : 'set_fullscreen_off'),
         #|    toggleFullscreen: () => call('toggle_fullscreen'),
         #|    startDrag: () => call('start_drag'),
+        #|    setPosition: (x, y) => callArgs('set_position', { x, y }),
+        #|    setSize: (width, height) => callArgs('set_size', { width, height }),
+        #|    show: () => call('show'),
+        #|    hide: () => call('hide'),
         #|    _originalClose: originalClose,
         #|  };
         #|  const hasDragRegion = (el) => {
@@ -476,6 +522,39 @@ pub fn Window::toggle_fullscreen(self : Window) -> Unit {
 pub fn Window::start_drag(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
   ignore(wm_start_drag_window(window_id))
+}
+
+///|
+/// Move the native window to an absolute screen position.
+pub fn Window::set_position(self : Window, x : Int, y : Int) -> Unit {
+  let window_id = self.require_runtime_window_id()
+  ignore(wm_set_position(window_id, x, y))
+}
+
+///|
+/// Resize the native window.
+pub fn Window::set_size(
+  self : Window,
+  width : Int,
+  height : Int,
+  hint? : SizeHint = None,
+) -> Unit {
+  let window_id = self.require_runtime_window_id()
+  ignore(wm_set_size(window_id, width, height, hint))
+}
+
+///|
+/// Show the native window.
+pub fn Window::show(self : Window) -> Unit {
+  let window_id = self.require_runtime_window_id()
+  ignore(wm_set_visibility(window_id, 1))
+}
+
+///|
+/// Hide the native window.
+pub fn Window::hide(self : Window) -> Unit {
+  let window_id = self.require_runtime_window_id()
+  ignore(wm_set_visibility(window_id, 0))
 }
 
 ///|

@@ -73,6 +73,8 @@ pub fn wm_set_fullscreen_window(Int, Int) -> Int
 
 pub fn wm_set_html(Int, Bytes) -> Int
 
+pub fn wm_set_position(Int, Int, Int) -> Int
+
 pub fn wm_set_size(Int, Int, Int, SizeHint) -> Int
 
 pub fn wm_set_title(Int, Bytes) -> Int
@@ -220,6 +222,7 @@ pub fn ProcessCommandRouter::new() -> Self
 pub fn ProcessCommandRouter::plugin(Self, String, (ProcessPluginRouter) -> Unit) -> Unit
 pub async fn ProcessCommandRouter::serve(Self, WindowManager, Int, subtype? : String) -> Unit
 pub async fn ProcessCommandRouter::serve_many(Self, WindowManager, Array[Int], subtype? : String) -> Unit
+pub async fn ProcessCommandRouter::serve_many_dynamic(Self, WindowManager, () -> Array[Int], subtype? : String) -> Unit
 
 pub struct ProcessPluginRouter {
   router : ProcessCommandRouter
@@ -301,6 +304,8 @@ pub struct Window {
   mut title_bar_style : TitleBarStyle
   mut title_bar_overlay : Bool
   mut traffic_light_position : (Int, Int)
+  position : (Int, Int)
+  hidden : Bool
   enable_window_controls_plugin : Bool
   mut url : String
   mut html : String
@@ -309,9 +314,10 @@ pub struct Window {
   plugins : Array[Plugin]
 }
 #alias(new, deprecated)
-pub fn Window::Window(label? : String, title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), enable_window_controls_plugin? : Bool) -> Self
+pub fn Window::Window(label? : String, title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, enable_window_controls_plugin? : Bool) -> Self
 pub fn Window::close(Self) -> Unit
 pub fn Window::eval(Self, String) -> Unit
+pub fn Window::hide(Self) -> Unit
 pub fn Window::install(Self, Plugin) -> Unit
 pub fn Window::label(Self) -> String
 pub fn Window::maximize(Self) -> Unit
@@ -323,8 +329,11 @@ pub async fn Window::run_many(Array[String], ProcessCommandRouter) -> Unit
 pub fn Window::set_custom_protocol(Self, String, String) -> Unit
 pub fn Window::set_fullscreen(Self, Bool) -> Unit
 pub fn Window::set_html(Self, String) -> Unit
+pub fn Window::set_position(Self, Int, Int) -> Unit
+pub fn Window::set_size(Self, Int, Int, hint? : SizeHint) -> Unit
 pub fn Window::set_traffic_light_position(Self, Int, Int) -> Unit
 pub fn Window::set_window_customization(Self, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Unit
+pub fn Window::show(Self) -> Unit
 pub fn Window::start_drag(Self) -> Unit
 pub fn Window::toggle_fullscreen(Self) -> Unit
 pub fn Window::toggle_maximize(Self) -> Unit
@@ -354,7 +363,10 @@ pub fn WindowManager::send_message(Self, Int, Int, IpcMessageType, String, Strin
 pub async fn WindowManager::serve_process_commands(Self, Int, async (ProcessCommandRequest) -> ProcessCommandResponse, subtype? : String) -> Unit
 pub fn WindowManager::set_devtools(Self, Int, Bool) -> Int
 pub fn WindowManager::set_fullscreen_window(Self, Int, Bool) -> Int
+pub fn WindowManager::set_position(Self, Int, Int, Int) -> Int
+pub fn WindowManager::set_size(Self, Int, Int, Int, SizeHint) -> Int
 pub fn WindowManager::set_traffic_light_position(Self, Int, Int, Int) -> Int
+pub fn WindowManager::set_visibility(Self, Int, Bool) -> Int
 pub fn WindowManager::set_window_customization(Self, Int, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Int
 pub fn WindowManager::set_window_id_base(Self, Int) -> Int
 pub fn WindowManager::spawn_process(Self, String, String) -> Int

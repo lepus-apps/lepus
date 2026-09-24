@@ -116,6 +116,11 @@ pub extern "C" fn wm_set_size(
 ) -> Int = "moonbit_wm_set_size"
 
 ///|
+/// Move managed window to an absolute screen position (top-left origin on
+/// Windows/Linux; bottom-left Cocoa origin on macOS).
+pub extern "C" fn wm_set_position(window_id : Int, x : Int, y : Int) -> Int = "moonbit_wm_set_position"
+
+///|
 /// Apply native custom-window style flags.
 pub extern "C" fn wm_set_window_customization(
   window_id : Int,

@@ -83,6 +83,8 @@ fn[X] WebView::new_managed(
   title_bar_style? : TitleBarStyle = Default,
   title_bar_overlay? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
+  position? : (Int, Int) = (-1, -1),
+  hidden? : Bool = false,
 ) -> WebView[X] {
   let create_debug = if devtools && debug <= 0 { 1 } else { debug }
   let window_id = wm_create_window(
@@ -90,8 +92,8 @@ fn[X] WebView::new_managed(
     @encoding/utf8.encode(url),
     width,
     height,
-    -1,
-    -1,
+    position.0,
+    position.1,
     0,
     create_debug,
     -1,
@@ -150,6 +152,12 @@ fn[X] WebView::new_managed(
         traffic_light_position.1,
       ),
     )
+  }
+  if position.0 >= 0 && position.1 >= 0 {
+    ignore(wm_set_position(window_id, position.0, position.1))
+  }
+  if hidden {
+    ignore(wm_set_visibility(window_id, 0))
   }
   { handle, window_id, task_group, }
 }

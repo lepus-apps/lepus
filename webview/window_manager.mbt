@@ -344,6 +344,29 @@ pub fn WindowManager::set_traffic_light_position(
 }
 
 ///|
+/// Move native window to an absolute screen position.
+pub fn WindowManager::set_position(
+  _self : WindowManager,
+  window_id : Int,
+  x : Int,
+  y : Int,
+) -> Int {
+  wm_set_position(window_id, x, y)
+}
+
+///|
+/// Resize native window.
+pub fn WindowManager::set_size(
+  _self : WindowManager,
+  window_id : Int,
+  width : Int,
+  height : Int,
+  hints : SizeHint,
+) -> Int {
+  wm_set_size(window_id, width, height, hints)
+}
+
+///|
 /// Minimize native window.
 pub fn WindowManager::minimize_window(
   _self : WindowManager,
@@ -405,6 +428,16 @@ pub fn WindowManager::start_drag_window(
   window_id : Int,
 ) -> Int {
   wm_start_drag_window(window_id)
+}
+
+///|
+/// Show or hide a native window.
+pub fn WindowManager::set_visibility(
+  _self : WindowManager,
+  window_id : Int,
+  visible : Bool,
+) -> Int {
+  wm_set_visibility(window_id, if visible { 1 } else { 0 })
 }
 
 ///|

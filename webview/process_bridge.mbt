@@ -269,7 +269,24 @@ pub async fn ProcessCommandRouter::serve_many(
   guard child_pids.length() > 0 else {
     abort("ProcessCommandRouter::serve_many requires at least one child pid")
   }
-  while any_child_running(wm, child_pids) {
+  self.serve_many_dynamic(wm, () => child_pids, subtype~)
+}
+
+///|
+/// Serves process commands from a dynamically-changing set of child webview
+/// processes.
+///
+/// `poll_children` returns the current live child pids on every iteration, so
+/// child processes spawned while serving (e.g. a window opened at runtime) are
+/// picked up automatically. The loop ends once `poll_children` reports nothing
+/// running.
+pub async fn ProcessCommandRouter::serve_many_dynamic(
+  self : ProcessCommandRouter,
+  wm : WindowManager,
+  poll_children : () -> Array[Int],
+  subtype? : String = "bridge_command",
+) -> Unit {
+  while any_child_running(wm, poll_children()) {
     match wm.try_pop_message(0) {
       Some(message) =>
         if message.message_type == Request && message.subtype == subtype {

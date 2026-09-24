@@ -1,20 +1,16 @@
-// Cross-window event bus.
+// Cross-window event push.
 //
-// The event bus lives in the **main process** and is the foundation for
-// cross-window communication. Each window labels itself; a window can "emit"
-// a message targeted at another label, and the target can "poll" (drain) the
-// messages queued for it.
+// The bus lives in the **main process** and maps each window label to its
+// globally-unique window id. When one window emits a message targeted at
+// another label, the main-process router sends a directed IPC event to that
+// window; the target child process receives it on its IPC listener thread and
+// evals a `CustomEvent("lepus_event")` into that window's JavaScript.
 //
-// Implementation deliberately routes everything through the existing
-// command bridge (JS → MoonBit request, forwarded by the child-side proxy to
-// the main-process router). This keeps cross-window events reliable without
-// adding a MoonBit→JS push channel or a child-side background listener loop.
-
-///|
-pub struct EventMessage {
-  event : String
-  payload : Json
-} derive(Eq, ToJson, FromJson)
+// Frontend:
+//   window.addEventListener("lepus_event", e => {
+//     const { event, payload } = e.detail; // event: string, payload: object
+//   });
+// Or emit from any window: `window.lepusApi.events.emit({ target, event, payload })`.
 
 ///|
 pub struct EmitRequest {
@@ -24,114 +20,80 @@ pub struct EmitRequest {
 } derive(ToJson, FromJson)
 
 ///|
-pub struct PollRequest {
-  label : String
-} derive(ToJson, FromJson)
-
-///|
-pub extend EventMessage with Eq::{not_equal, equal}
-
-///|
-pub extend EventMessage with ToJson::{to_json}
-
-///|
-pub extend EventMessage with @json.FromJson::{from_json}
-
-///|
 pub extend EmitRequest with ToJson::{to_json}
 
 ///|
 pub extend EmitRequest with @json.FromJson::{from_json}
 
 ///|
-pub extend PollRequest with ToJson::{to_json}
-
-///|
-pub extend PollRequest with @json.FromJson::{from_json}
-
-///|
 pub struct EventBus {
-  queues : Map[String, Array[EventMessage]]
+  window_ids : Map[String, Int]
 }
 
 ///|
-pub fn EventBus::new() -> EventBus {
-  { queues: Map([]), }
+pub fn EventBus::new(window_ids : Map[String, Int]) -> EventBus {
+  { window_ids, }
 }
 
 ///|
-pub fn EventBus::push(
+/// Returns the window id for a label, or `-1` if unknown.
+pub fn EventBus::window_id(self : EventBus, label : String) -> Int {
+  match self.window_ids.get(label) {
+    Some(id) => id
+    None => -1
+  }
+}
+
+///|
+/// Constructs the JS snippet that dispatches `CustomEvent("lepus_event")` with
+/// `detail = { event: <name>, payload: <json> }` into the target window.
+fn event_eval_js(event : String, payload : Json) -> String {
+  let event_literal = Json::string(event).stringify()
+  let payload_json = payload.stringify()
+  "window.dispatchEvent(new CustomEvent(\"lepus_event\",{detail:" +
+  "{\"event\":" +
+  event_literal +
+  ",\"payload\":" +
+  payload_json +
+  "}}));"
+}
+
+///|
+/// Builds the `events` plugin. Its `emit` command resolves the target label
+/// into a window id and sends a directed IPC event carrying the JS snippet.
+///
+/// `wm` must be the main-process `WindowManager` (the plugin is installed on
+/// the main-process router, whose handler performs the directed send).
+pub fn EventBus::plugin(
   self : EventBus,
-  label : String,
-  event : String,
-  payload : Json,
-) -> Unit {
-  let existing = match self.queues.get(label) {
-    Some(items) => items
-    None => []
-  }
-  self.queues.set(label, existing + [{ event, payload, }])
-}
-
-///|
-/// Drains and clears all queued messages for `label`.
-pub fn EventBus::drain(self : EventBus, label : String) -> Array[EventMessage] {
-  let items = match self.queues.get(label) {
-    Some(items) => items
-    None => []
-  }
-  self.queues.set(label, [])
-  items
-}
-
-///|
-/// Builds the `events` plugin. Installed at the App level so that both the
-/// main-process router (`emit`/`poll` real handlers) and each child proxy
-/// expose `window.lepusApi.events`:
-///
-/// - `emit({ target, event, payload })` → queues a message for another window
-/// - `poll({ label })` → drains this window's queue
-///
-/// The plugin callbacks capture `self`, whose shared `Map` is mutated across
-/// requests so messages persist between polls.
-pub fn EventBus::plugin(self : EventBus) -> @webview.Plugin {
+  wm : @webview.WindowManager,
+) -> @webview.Plugin {
   @webview.Plugin("events", plugin => {
     plugin.command_sync("emit", fn(request : EmitRequest) -> Bool {
-      self.push(request.target, request.event, request.payload)
-      true
-    })
-    plugin.command_sync("poll", fn(
-      request : PollRequest,
-    ) -> Array[EventMessage] {
-      self.drain(request.label)
+      let id = self.window_id(request.target)
+      guard id > 0 else { false }
+      let js = event_eval_js(request.event, request.payload)
+      wm.send_message(0, id, @webview.IpcMessageType::Event, "lepus-event", js) ==
+      0
     })
   })
 }
 
 ///|
-test "event bus drains messages for a specific label" {
-  let bus = EventBus::new()
-  bus.push("receiver", "greet", Json::string("h"))
-  bus.push("receiver", "ping", Json::number(1))
-  bus.push("other", "ignored", Json::string("x"))
-  let drained = bus.drain("receiver")
-  assert_eq(drained.length(), 2)
-  assert_eq(drained[0].event, "greet")
-  assert_eq(drained[1].event, "ping")
-  // drain clears the queue
-  assert_eq(bus.drain("receiver").length(), 0)
+test "event eval snippet embeds event and payload as a JS object literal" {
+  let js = event_eval_js("greet", Json::string("hi"))
+  assert_eq(
+    js, "window.dispatchEvent(new CustomEvent(\"lepus_event\",{detail:{\"event\":\"greet\",\"payload\":\"hi\"}}));",
+  )
 }
 
 ///|
-test "event bus isolates labels" {
-  let bus = EventBus::new()
-  bus.push("a", "to-a", Json::number(1))
-  bus.push("b", "to-b", Json::number(2))
-  let for_a = bus.drain("a")
-  assert_eq(for_a.length(), 1)
-  assert_eq(for_a[0].event, "to-a")
-  // b still has its own message
-  let for_b = bus.drain("b")
-  assert_eq(for_b.length(), 1)
-  assert_eq(for_b[0].event, "to-b")
+test "event bus resolves window ids by label" {
+  let ids = Map([])
+  ids.set("main", 1)
+  ids.set("settings", 2)
+  let bus = EventBus::new(ids)
+  assert_eq(bus.window_id("main"), 1)
+  assert_eq(bus.window_id("settings"), 2)
+  assert_eq(bus.window_id("unknown"), -1)
 }
