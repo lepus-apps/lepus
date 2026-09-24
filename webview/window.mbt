@@ -2,6 +2,7 @@
 /// High-level managed app that owns the parent dispatcher and child webview
 /// process lifecycle.
 pub struct Window {
+  label : String
   title : String
   width : Int
   height : Int
@@ -30,6 +31,7 @@ pub struct Window {
 /// webview process automatically.
 #alias(new, deprecated="Use `Window()` instead")
 pub fn Window::Window(
+  label? : String = "",
   title? : String = "MoonBit WebView",
   url? : String = "",
   width? : Int = 800,
@@ -49,6 +51,7 @@ pub fn Window::Window(
   enable_window_controls_plugin? : Bool = true,
 ) -> Window {
   {
+    label,
     title,
     url,
     width,
@@ -70,6 +73,17 @@ pub fn Window::Window(
     runtime_window_id: -1,
     plugins: [],
     size_hint,
+  }
+}
+
+///|
+/// Returns the stable label used for cross-window addressing.
+/// Falls back to the `title` when no explicit label was provided.
+pub fn Window::label(self : Window) -> String {
+  if self.label.is_empty() {
+    self.title
+  } else {
+    self.label
   }
 }
 
@@ -196,6 +210,100 @@ pub async fn Window::run(self : Window) -> Unit {
     abort("ManagedApp::run: spawn webview process failed")
   }
   self.build_router().serve(wm, child_pid)
+}
+
+///|
+/// Encodes a unique child-process marker used to carry a globally-unique
+/// window-id `base` and a stable `label` across a re-exec`ed child process.
+pub fn child_arg_for(base : Int, label : String) -> String {
+  "--lepus-child:" + base.to_string() + ":" + label
+}
+
+///|
+/// Detects whether the current process was spawned as a Lepus multi-window
+/// child.
+///
+/// Returns `(window_id_base, label)` when argv carries a
+/// `--lepus-child:<base>:<label>` marker, otherwise `None`.
+pub fn detect_child_window() -> (Int, String)? {
+  let prefix = "--lepus-child:"
+  let args = @env.args()
+  for arg in args {
+    if arg.has_prefix(prefix) {
+      let body = arg[prefix.length():]
+      match body.find(":") {
+        Some(idx) => {
+          let base_str = body[:idx]
+          let parsed = @string.parse_int(base_str) catch { _ => return None }
+          let label = body[idx + 1:].to_owned()
+          return Some((parsed, label))
+        }
+        None => ()
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Runs this window in the current (already-spawned, child) process.
+///
+/// Connects to the main-process IPC server, sets the globally-unique
+/// window-id base, then creates and runs the webview. This is the child-side
+/// half of `Window::run_many`.
+pub async fn Window::run_child(self : Window, window_id_base : Int) -> Unit {
+  guard WindowManager::connect_child_process() == 0 else {
+    abort("Window::run_child: connect child process failed")
+  }
+  let wm = WindowManager::init(is_main=false)
+  guard wm.set_window_id_base(window_id_base) == 0 else {
+    abort("Window::run_child: set window id base failed")
+  }
+  self.run_child_async()
+}
+
+///|
+/// Runs a multi-window app: spawns one child process per window (each with a
+/// globally-unique window-id base and stable label), then serves commands from
+/// all children until every window closes.
+///
+/// `labels` order must match the window order the child sides use to resolve
+/// their own configuration via `detect_child_window()`.
+pub async fn Window::run_many(
+  labels : Array[String],
+  router : ProcessCommandRouter,
+) -> Unit {
+  guard labels.length() > 0 else {
+    abort("Window::run_many requires at least one window")
+  }
+  let args = @env.args()
+  guard args.length() > 0 else { abort("Window::run_many: missing argv[0]") }
+  let wm = WindowManager::init(is_main=true)
+  let children : Array[Int] = []
+  let mut base = 1
+  for label in labels {
+    let pid = wm.spawn_process(args[0], child_arg_for(base, label))
+    guard pid > 0 else {
+      abort("Window::run_many: spawn child for " + label + " failed")
+    }
+    children.push(pid)
+    base = base + 1
+  }
+  router.serve_many(wm, children)
+}
+
+///|
+/// Builds a main-process command router from an App-level plugin list.
+pub fn build_router(plugins : Array[Plugin]) -> ProcessCommandRouter {
+  let router = ProcessCommandRouter::new()
+  for plugin in plugins {
+    router.plugin(plugin.name, plugin_router => {
+      for install in plugin.parent_installers {
+        install(plugin_router)
+      }
+    })
+  }
+  router
 }
 
 ///|

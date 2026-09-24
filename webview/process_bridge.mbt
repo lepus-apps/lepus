@@ -256,6 +256,59 @@ pub async fn ProcessCommandRouter::serve(
 }
 
 ///|
+/// Serves process commands from many child webview processes.
+///
+/// Continues pumping the main-process IPC queue and dispatching requests until
+/// every child has exited. Requests are responded via their `window_id`.
+pub async fn ProcessCommandRouter::serve_many(
+  self : ProcessCommandRouter,
+  wm : WindowManager,
+  child_pids : Array[Int],
+  subtype? : String = "bridge_command",
+) -> Unit {
+  guard child_pids.length() > 0 else {
+    abort("ProcessCommandRouter::serve_many requires at least one child pid")
+  }
+  while any_child_running(wm, child_pids) {
+    match wm.try_pop_message(0) {
+      Some(message) =>
+        if message.message_type == Request && message.subtype == subtype {
+          let response = try {
+            let request = ProcessCommandRequest::parse(message.data)
+            self.dispatch(request)
+          } catch {
+            ProcessCommandError(message) =>
+              ProcessCommandResponse::error(message)
+            _ => ProcessCommandResponse::error("Unexpected bridge error")
+          }
+          ignore(
+            wm.respond(
+              0,
+              message.source_window_id,
+              message.message_id,
+              response.stringify(),
+            ),
+          )
+        } else {
+          @async.pause()
+        }
+      None => @async.sleep(10)
+    }
+  }
+}
+
+///|
+/// Returns `true` while at least one child process still reports running.
+fn any_child_running(wm : WindowManager, pids : Array[Int]) -> Bool {
+  for pid in pids {
+    if wm.wait_child_noblock(pid) == 0 {
+      return true
+    }
+  }
+  false
+}
+
+///|
 /// Registers a typed synchronous command on the parent-process router.
 pub fn[Payload : @json.FromJson, Reply : ToJson] ProcessCommandRouter::handle(
   self : ProcessCommandRouter,

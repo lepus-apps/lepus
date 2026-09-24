@@ -25,6 +25,7 @@ pub(all) enum Source {
 
 ///|
 pub struct WindowConfig {
+  label : String
   title : String
   width : Int
   height : Int
@@ -85,6 +86,7 @@ pub fn Source::zip(zip : Bytes) -> Source raise {
 
 ///|
 pub fn WindowConfig::new(
+  label? : String = "",
   title? : String = "Lepus App",
   width? : Int = 800,
   height? : Int = 600,
@@ -100,6 +102,7 @@ pub fn WindowConfig::new(
   source? : Source,
 ) -> WindowConfig {
   {
+    label,
     title,
     width,
     height,
@@ -113,6 +116,17 @@ pub fn WindowConfig::new(
     title_bar_overlay,
     traffic_light_position,
     source,
+  }
+}
+
+///|
+/// Returns the window label used for stable cross-window addressing.
+/// Falls back to `title` when no explicit label was given.
+pub fn WindowConfig::label(self : WindowConfig) -> String {
+  if self.label.is_empty() {
+    self.title
+  } else {
+    self.label
   }
 }
 
@@ -147,6 +161,7 @@ pub struct Window {
 ///|
 #alias(new, deprecated="Use `Window()` instead")
 pub fn Window::Window(
+  label? : String = "",
   title? : String = "Lepus App",
   width? : Int = 800,
   height? : Int = 600,
@@ -164,6 +179,7 @@ pub fn Window::Window(
 ) -> Window {
   {
     config: {
+      label,
       title,
       width,
       height,
@@ -227,12 +243,78 @@ pub fn App::window_count(self : App) -> Int {
 }
 
 ///|
-pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
-  guard window_index >= 0 && window_index < self.windows.length() else {
-    abort("App::run window_index out of range")
+pub async fn App::run(self : App, window_index? : Int) -> Unit {
+  let selected = match window_index {
+    Some(i) => {
+      guard i >= 0 && i < self.windows.length() else {
+        abort("App::run window_index out of range")
+      }
+      [self.windows[i]]
+    }
+    None => self.windows
   }
-  let config = self.windows[window_index]
+  guard selected.length() > 0 else {
+    abort("App::run requires at least one window")
+  }
+  assert_unique_labels(selected)
+  let bus = EventBus::new()
+  let all_plugins = self.plugins + [bus.plugin()]
+  match @webview.detect_child_window() {
+    Some((base, label)) => {
+      // 子进程：找到自己窗口的配置并运行
+      let config = find_window_config(self.windows, label)
+      let window = build_runtime_window(config, all_plugins)
+      window.run_child(base)
+    }
+    None => {
+      // 主进程：为每个窗口生成唯一的 label，spawn 子进程并统一服务
+      let labels : Array[String] = []
+      for config in selected {
+        labels.push(config.label())
+      }
+      let router = @webview.build_router(all_plugins)
+      @webview.Window::run_many(labels, router)
+    }
+  }
+}
+
+///|
+/// Returns the window whose `label()` matches `label`, aborting when absent.
+fn find_window_config(
+  windows : Array[WindowConfig],
+  label : String,
+) -> WindowConfig {
+  for config in windows {
+    if config.label() == label {
+      return config
+    }
+  }
+  abort("App: no window with label " + label)
+}
+
+///|
+/// Asserts that every window label is unique so cross-window addressing and
+/// child-process dispatch are unambiguous.
+fn assert_unique_labels(windows : Array[WindowConfig]) -> Unit {
+  let seen : Array[String] = []
+  for config in windows {
+    let label = config.label()
+    guard !seen.contains(label) else {
+      abort("App: duplicate window label " + label)
+    }
+    seen.push(label)
+  }
+}
+
+///|
+/// Builds a runtime `@webview.Window` from a `WindowConfig`, resolving its
+/// source, registering custom protocols, and installing the App-level plugins.
+async fn build_runtime_window(
+  config : WindowConfig,
+  plugins : Array[@webview.Plugin],
+) -> @webview.Window {
   let window = @webview.Window(
+    label=config.label(),
     title=config.title,
     width=config.width,
     height=config.height,
@@ -258,8 +340,8 @@ pub async fn App::run(self : App, window_index? : Int = 0) -> Unit {
     window.set_custom_protocol(scheme, root_dir)
   })
   window.navigate(resolved.url)
-  self.plugins.each(plugin => window.install(plugin))
-  window.run()
+  plugins.each(plugin => window.install(plugin))
+  window
 }
 
 ///|

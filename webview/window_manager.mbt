@@ -244,6 +244,19 @@ pub fn WindowManager::connect_child_process() -> Int {
 }
 
 ///|
+/// Set the current (child) process window-id starting base.
+///
+/// The main process assigns each child a globally unique base so that windows
+/// created in different children never collide on `window_id` (used for IPC
+/// routing). Call before creating any window in the child process.
+pub fn WindowManager::set_window_id_base(
+  _self : WindowManager,
+  base : Int,
+) -> Int {
+  wm_set_window_id_base(base)
+}
+
+///|
 /// Return true when running in main process.
 pub fn WindowManager::is_main_process(self : WindowManager) -> Bool {
   self.process_type == Main

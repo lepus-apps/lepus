@@ -10,5 +10,5 @@ import {
 supported_targets = "+native"
 
 options(
-  targets: { "lepus.mbt": [ "native" ] },
+  targets: { "lepus.mbt": [ "native" ], "events.mbt": [ "native" ] },
 )

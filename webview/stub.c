@@ -2665,6 +2665,23 @@ MOONBIT_FFI_EXPORT int moonbit_wm_connect_child_process(void)
     return 0;
 }
 
+/**
+ * 设置当前（子）进程的窗口 ID 起始值。
+ *
+ * 在多进程多窗口场景下，主进程为每个子进程分配一个全局唯一的起始 id，
+ * 子进程在 connect 之后、创建窗口之前调用本函数，保证各子进程分配的
+ * window_id 互不冲突（IPC 通过 window_id 路由到具体窗口）。
+ *
+ * 返回 0 成功，-1 失败（base 非法）。
+ */
+MOONBIT_FFI_EXPORT int moonbit_wm_set_window_id_base(int base)
+{
+    if (base < 1)
+        return -1;
+    g_wm.next_window_id = base;
+    return 0;
+}
+
 /** 阻塞等待子进程结束；status 接收退出状态（可为 NULL）。 */
 static int moonbit_wm_wait_child(int pid, int *status)
 {

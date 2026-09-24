@@ -243,6 +243,10 @@ pub extern "C" fn wm_spawn_process(program : Bytes, arg1 : Bytes) -> Int = "moon
 pub extern "C" fn wm_connect_child_process() -> Int = "moonbit_wm_connect_child_process"
 
 ///|
+/// Set the current (child) process window-id starting base for globally unique id allocation.
+pub extern "C" fn wm_set_window_id_base(base : Int) -> Int = "moonbit_wm_set_window_id_base"
+
+///|
 /// Get process type: 0 main, 1 child.
 pub extern "C" fn wm_get_process_type() -> Int = "moonbit_wm_get_process_type"
 

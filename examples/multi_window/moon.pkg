@@ -1,0 +1,13 @@
+import {
+  "lepus-apps/lepus",
+  "moonbitlang/async",
+}
+
+supported_targets = "+native"
+
+pkgtype(kind: "executable")
+
+options(
+  link: { "native": { "cc": "_build/native/release/build/cli/cc/cc.exe" } },
+  targets: { "main.mbt": [ "native" ] },
+)
