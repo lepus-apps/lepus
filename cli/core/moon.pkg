@@ -9,5 +9,3 @@ import {
   "moonbit-community/zipc",
   "lepus-apps/lepus/cli/platform",
 }
-
-supported_targets = "+wasm+wasm-gc+native"
