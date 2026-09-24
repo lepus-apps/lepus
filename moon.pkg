@@ -1,20 +1,9 @@
 import {
-  "lepus-apps/lepus/webview",
-  "moonbit-community/zipc",
   "moonbitlang/async",
-  "moonbitlang/async/fs",
-  "moonbitlang/core/debug",
-  "moonbitlang/core/json",
-  "moonbitlang/core/encoding/utf8",
-  "moonbitlang/core/env",
+  "moonbitlang/x/sys",
+  "lepus-apps/lepus/cli/core",
 }
 
 supported_targets = "+native"
 
-options(
-  targets: {
-    "lepus.mbt": [ "native" ],
-    "events.mbt": [ "native" ],
-    "windows.mbt": [ "native" ],
-  },
-)
+pkgtype(kind: "executable")

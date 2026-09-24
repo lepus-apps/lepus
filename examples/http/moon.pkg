@@ -1,5 +1,5 @@
 import {
-  "lepus-apps/lepus",
+  "lepus-apps/lepus/lib" @lepus,
   "moonbitlang/async",
   "lepus-apps/lepus/plugins/lepus_plugin_http",
   "lepus-apps/lepus/plugins/lepus_plugin_support",
