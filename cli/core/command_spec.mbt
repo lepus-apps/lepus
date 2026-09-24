@@ -66,7 +66,7 @@ pub fn root_command() -> @argparse.Command {
   Command(
     "lepus",
     about="Lepus desktop application toolkit.",
-    version="0.2.1",
+    version="0.2.2",
     subcommands=[init, dev, build, bundle, setup, doctor],
     flags=[
       FlagArg("verbose", short='v', long="verbose", action=Count, global=true),
