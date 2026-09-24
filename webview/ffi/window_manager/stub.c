@@ -2021,6 +2021,269 @@ MOONBIT_FFI_EXPORT int moonbit_wm_close_window(int window_id)
 #endif
 }
 
+/* ════════════════════════════════════════════════════════════════
+   macOS 应用外观：单一 Dock 图标 + 标准菜单/快捷键 + 全局退出
+   ════════════════════════════════════════════════════════════════
+   Lepus 每个窗口是独立子进程，各自启动 NSApplication 并被 vendor
+   设为 Regular 激活策略 → 多个 Dock 图标。这里让子进程改为 Prohibited
+   （不占 Dock），由主进程声明 Regular 持有唯一图标。
+   Cocoa 的快捷键全由主菜单驱动，无菜单则 Cmd+W/Q/M 及 Edit 系列全部失效，
+   因此为每个窗口进程安装标准主菜单。
+   Cmd+Q 走自定义 action → IPC 广播 "app-quit" → 主进程转发给所有子进程 →
+   各自 webview_terminate 干净退出。
+   ════════════════════════════════════════════════════════════════ */
+
+#ifdef __APPLE__
+/* NSMenuItem key-equivalent 默认修饰键即 Command；Redo 用 Command+Shift。 */
+#define LEPUS_MOD_COMMAND (1UL << 20)
+#define LEPUS_MOD_SHIFT (1UL << 17)
+
+static void lepus_request_app_quit(void)
+{
+    if (g_wm.process_type == PROCESS_TYPE_MAIN)
+    {
+        /* 单进程模式（主进程持有本地窗口）：直接终止全部本地窗口。 */
+        webview_t handles[64];
+        int count = 0;
+        pthread_mutex_lock(&g_wm.mutex);
+        webview_window_t *w = g_wm.head;
+        while (w && count < 64)
+        {
+            if (w->handle)
+                handles[count++] = w->handle;
+            w = w->next;
+        }
+        pthread_mutex_unlock(&g_wm.mutex);
+        for (int i = 0; i < count; i++)
+            webview_terminate(handles[i]);
+    }
+    else
+    {
+        /* 子进程：向主进程发 "app-quit" 事件，由主进程广播给全部窗口。 */
+        int wid = -1;
+        pthread_mutex_lock(&g_wm.mutex);
+        if (g_wm.head)
+            wid = g_wm.head->window_id;
+        pthread_mutex_unlock(&g_wm.mutex);
+        if (wid > 0)
+        {
+            ipc_message_t msg;
+            memset(&msg, 0, sizeof(msg));
+            msg.source_window_id = wid;
+            msg.target_window_id = 0;
+            msg.message_type = IPC_MSG_EVENT;
+            msg.message_id = alloc_message_id();
+            strncpy(msg.subtype, "app-quit", IPC_SUBTYPE_LEN - 1);
+            msg.data = (char *)"{}";
+            msg.data_length = 2;
+            if (g_ipc_client.connected)
+                ipc_send(g_ipc_client.socket_fd, &msg);
+        }
+    }
+}
+
+/* 菜单 Quit 动作的 IMP（C 函数，注册为 ObjC 方法 requestQuit:）。 */
+static void lepus_menu_quit_imp(mb_id_t self, mb_sel_t cmd, mb_id_t sender)
+{
+    (void)self;
+    (void)cmd;
+    (void)sender;
+    lepus_request_app_quit();
+}
+
+/* 返回单例 LepusMenuHelper 实例（注册 ObjC 类一次）。 */
+static mb_id_t lepus_menu_helper_instance(void)
+{
+    static mb_id_t instance = NULL;
+    if (instance)
+        return instance;
+
+    void *lib = dlopen("/usr/lib/libobjc.A.dylib", RTLD_LAZY);
+    if (!lib)
+        lib = dlopen("/usr/lib/libobjc.dylib", RTLD_LAZY);
+    if (!lib)
+        return NULL;
+
+    /* objc 运行时符号（stub.c 以纯 C 编译，不能直接用 Class/SEL/IMP 类型，
+     * 全部走 void* + dlsym）。 */
+    typedef void *(*objc_alloc_class_t)(void *, const char *, size_t);
+    typedef int (*objc_add_method_t)(void *, void *, void *, const char *);
+    typedef void (*objc_register_class_t)(void *);
+    objc_alloc_class_t p_alloc = (objc_alloc_class_t)dlsym(lib, "objc_allocateClassPair");
+    objc_add_method_t p_add = (objc_add_method_t)dlsym(lib, "class_addMethod");
+    objc_register_class_t p_reg = (objc_register_class_t)dlsym(lib, "objc_registerClassPair");
+    if (!p_alloc || !p_add || !p_reg)
+        return NULL;
+
+    const char *class_name = "LepusMenuHelper";
+    void *cls = moonbit_objc_get_class(class_name);
+    if (!cls)
+    {
+        void *nsobj = moonbit_objc_get_class("NSObject");
+        if (!nsobj)
+            return NULL;
+        cls = p_alloc(nsobj, class_name, 0);
+        if (!cls)
+            return NULL;
+        mb_sel_t sel_quit = moonbit_sel_register_name("requestQuit:");
+        if (!sel_quit || !p_add(cls, sel_quit, (void *)lepus_menu_quit_imp, "v@:@"))
+            return NULL;
+        p_reg(cls);
+    }
+
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!msgsend)
+        return NULL;
+    mb_sel_t sel_alloc = moonbit_sel_register_name("alloc");
+    mb_sel_t sel_init = moonbit_sel_register_name("init");
+    mb_id_t obj = ((mb_objc_msgsend_id_ret_t)msgsend)((mb_id_t)cls, sel_alloc);
+    if (obj)
+        obj = ((mb_objc_msgsend_id_ret_t)msgsend)(obj, sel_init);
+    instance = obj;
+    return instance;
+}
+
+static mb_id_t lepus_menu_make(const char *title, void *msgsend)
+{
+    mb_id_t ns_str_cls = moonbit_objc_get_class("NSString");
+    mb_sel_t sel_with_utf8 = moonbit_sel_register_name("stringWithUTF8String:");
+    mb_id_t title_str = ((mb_objc_msgsend_cstr_arg_ret_t)msgsend)(ns_str_cls, sel_with_utf8, title);
+    mb_id_t menu_cls = moonbit_objc_get_class("NSMenu");
+    mb_sel_t sel_alloc = moonbit_sel_register_name("alloc");
+    mb_sel_t sel_init_title = moonbit_sel_register_name("initWithTitle:");
+    mb_id_t menu = ((mb_objc_msgsend_id_ret_t)msgsend)(menu_cls, sel_alloc);
+    if (menu && sel_init_title)
+        ((mb_objc_msgsend_id_arg_t)msgsend)(menu, sel_init_title, title_str);
+    return menu;
+}
+
+static mb_id_t lepus_menu_item(const char *title, const char *action_name,
+                               const char *key_eq, mb_id_t target,
+                               unsigned long mod_mask, void *msgsend)
+{
+    mb_id_t ns_str_cls = moonbit_objc_get_class("NSString");
+    mb_sel_t sel_with_utf8 = moonbit_sel_register_name("stringWithUTF8String:");
+    mb_id_t title_str = ((mb_objc_msgsend_cstr_arg_ret_t)msgsend)(ns_str_cls, sel_with_utf8, title);
+    mb_id_t key_str = ((mb_objc_msgsend_cstr_arg_ret_t)msgsend)(ns_str_cls, sel_with_utf8, key_eq);
+    mb_id_t item_cls = moonbit_objc_get_class("NSMenuItem");
+    mb_sel_t sel_alloc = moonbit_sel_register_name("alloc");
+    mb_sel_t sel_init = moonbit_sel_register_name("initWithTitle:action:keyEquivalent:");
+    mb_sel_t sel_action = moonbit_sel_register_name(action_name);
+    mb_id_t item = ((mb_objc_msgsend_id_ret_t)msgsend)(item_cls, sel_alloc);
+    if (!item || !sel_init || !sel_action)
+        return NULL;
+    item = ((mb_objc_msgsend_id_sel_id_arg_ret_t)msgsend)(item, sel_init, title_str, sel_action, key_str);
+    if (target)
+    {
+        mb_sel_t sel_set_target = moonbit_sel_register_name("setTarget:");
+        ((mb_objc_msgsend_id_arg_t)msgsend)(item, sel_set_target, target);
+    }
+    if (mod_mask)
+    {
+        mb_sel_t sel_set_mask = moonbit_sel_register_name("setKeyEquivalentModifierMask:");
+        ((mb_objc_msgsend_u64_arg_t)msgsend)(item, sel_set_mask, mod_mask);
+    }
+    return item;
+}
+
+static void lepus_menu_add_item(mb_id_t menu, mb_id_t item, void *msgsend)
+{
+    mb_sel_t sel_add = moonbit_sel_register_name("addItem:");
+    ((mb_objc_msgsend_id_arg_t)msgsend)(menu, sel_add, item);
+}
+
+static mb_id_t lepus_menu_separator(void *msgsend)
+{
+    mb_id_t item_cls = moonbit_objc_get_class("NSMenuItem");
+    mb_sel_t sel_sep = moonbit_sel_register_name("separatorItem");
+    return ((mb_objc_msgsend_id_ret_t)msgsend)(item_cls, sel_sep);
+}
+
+static void lepus_menu_add_submenu(mb_id_t main_menu, mb_id_t submenu,
+                                   void *msgsend)
+{
+    mb_id_t item_cls = moonbit_objc_get_class("NSMenuItem");
+    mb_sel_t sel_alloc = moonbit_sel_register_name("alloc");
+    mb_sel_t sel_init = moonbit_sel_register_name("init");
+    mb_sel_t sel_set_submenu = moonbit_sel_register_name("setSubmenu:");
+    mb_sel_t sel_add = moonbit_sel_register_name("addItem:");
+    mb_id_t item = ((mb_objc_msgsend_id_ret_t)msgsend)(item_cls, sel_alloc);
+    if (item && sel_init)
+        item = ((mb_objc_msgsend_id_ret_t)msgsend)(item, sel_init);
+    if (item && sel_set_submenu)
+        ((mb_objc_msgsend_id_arg_t)msgsend)(item, sel_set_submenu, submenu);
+    if (item && sel_add)
+        ((mb_objc_msgsend_id_arg_t)msgsend)(main_menu, sel_add, item);
+}
+#endif /* __APPLE__ */
+
+MOONBIT_FFI_EXPORT int moonbit_wm_set_activation_policy(int policy)
+{
+#ifdef __APPLE__
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!msgsend)
+        return -1;
+    mb_id_t app_cls = moonbit_objc_get_class("NSApplication");
+    mb_sel_t sel_shared = moonbit_sel_register_name("sharedApplication");
+    mb_sel_t sel_set_policy = moonbit_sel_register_name("setActivationPolicy:");
+    mb_id_t app = ((mb_objc_msgsend_id_ret_t)msgsend)(app_cls, sel_shared);
+    if (!app || !sel_set_policy)
+        return -1;
+    ((mb_objc_msgsend_u64_arg_t)msgsend)(app, sel_set_policy, (unsigned long)policy);
+    return 0;
+#else
+    (void)policy;
+    return 0;
+#endif
+}
+
+MOONBIT_FFI_EXPORT int moonbit_wm_install_default_app_menu(void)
+{
+#ifdef __APPLE__
+    void *msgsend = moonbit_objc_msgsend_symbol();
+    if (!msgsend)
+        return -1;
+    mb_id_t app_cls = moonbit_objc_get_class("NSApplication");
+    mb_sel_t sel_shared = moonbit_sel_register_name("sharedApplication");
+    mb_sel_t sel_set_main = moonbit_sel_register_name("setMainMenu:");
+    mb_id_t app = ((mb_objc_msgsend_id_ret_t)msgsend)(app_cls, sel_shared);
+    if (!app || !sel_set_main)
+        return -1;
+
+    mb_id_t helper = lepus_menu_helper_instance();
+
+    mb_id_t main_menu = lepus_menu_make("Main", msgsend);
+
+    mb_id_t app_menu = lepus_menu_make("Lepus", msgsend);
+    lepus_menu_add_item(app_menu,
+        lepus_menu_item("Quit Lepus", "requestQuit:", "q", helper, 0, msgsend),
+        msgsend);
+    lepus_menu_add_submenu(main_menu, app_menu, msgsend);
+
+    mb_id_t edit_menu = lepus_menu_make("Edit", msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Undo", "undo:", "z", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Redo", "redo:", "z", NULL,
+        LEPUS_MOD_COMMAND | LEPUS_MOD_SHIFT, msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_separator(msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Cut", "cut:", "x", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Copy", "copy:", "c", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Paste", "paste:", "v", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(edit_menu, lepus_menu_item("Select All", "selectAll:", "a", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_submenu(main_menu, edit_menu, msgsend);
+
+    mb_id_t win_menu = lepus_menu_make("Window", msgsend);
+    lepus_menu_add_item(win_menu, lepus_menu_item("Close Window", "performClose:", "w", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(win_menu, lepus_menu_item("Minimize", "performMiniaturize:", "m", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_item(win_menu, lepus_menu_item("Zoom", "zoom:", "", NULL, 0, msgsend), msgsend);
+    lepus_menu_add_submenu(main_menu, win_menu, msgsend);
+
+    ((mb_objc_msgsend_id_arg_t)msgsend)(app, sel_set_main, main_menu);
+    return 0;
+#else
+    return 0;
+#endif
+}
+
 MOONBIT_FFI_EXPORT int moonbit_wm_set_devtools(int window_id, int enabled)
 {
     pthread_mutex_lock(&g_wm.mutex);
@@ -3039,6 +3302,46 @@ static void ensure_recv_queues(void)
     pthread_mutex_unlock(&g_recv_queues_mutex);
 }
 
+/* 处理 "app-quit" 事件：
+ * - 主进程：转发给全部子进程（各自 webview_terminate），并终止本地窗口；
+ * - 子进程：终止本地窗口（run loop 退出 → 进程自然结束）。
+ */
+static void lepus_handle_app_quit_message(ipc_message_t *msg)
+{
+    webview_t handles[64];
+    int count = 0;
+
+    pthread_mutex_lock(&g_wm.mutex);
+    if (g_wm.process_type == PROCESS_TYPE_MAIN)
+    {
+        for (int i = 0; i < g_remote_window_fds_capacity; i++)
+        {
+            if (g_remote_window_fds[i] != IPC_INVALID_SOCKET)
+            {
+                ipc_message_t fwd;
+                memset(&fwd, 0, sizeof(fwd));
+                fwd.source_window_id = msg->source_window_id;
+                fwd.target_window_id = i;
+                fwd.message_type = IPC_MSG_EVENT;
+                fwd.message_id = msg->message_id;
+                strncpy(fwd.subtype, "app-quit", IPC_SUBTYPE_LEN - 1);
+                ipc_send(g_remote_window_fds[i], &fwd);
+            }
+        }
+    }
+    webview_window_t *w = g_wm.head;
+    while (w && count < 64)
+    {
+        if (w->handle)
+            handles[count++] = w->handle;
+        w = w->next;
+    }
+    pthread_mutex_unlock(&g_wm.mutex);
+
+    for (int i = 0; i < count; i++)
+        webview_terminate(handles[i]);
+}
+
 /* IPC 消息回调：将消息放入窗口的接收队列
  *
  * 多窗口事件推送（push）在此实现：主进程定向发给子进程窗口的
@@ -3050,6 +3353,13 @@ static void ipc_recv_callback(ipc_message_t *msg)
 {
     if (msg->target_window_id < 0)
         return;
+
+    if (msg->message_type == IPC_MSG_EVENT &&
+        strcmp(msg->subtype, "app-quit") == 0)
+    {
+        lepus_handle_app_quit_message(msg);
+        return;
+    }
 
     if (msg->message_type == IPC_MSG_EVENT &&
         strcmp(msg->subtype, "lepus-event") == 0 &&

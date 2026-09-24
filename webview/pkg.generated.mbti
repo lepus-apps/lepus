@@ -3,6 +3,7 @@ package "lepus-apps/lepus/webview"
 
 import {
   "lepus-apps/lepus/webview/ffi/webview_sys",
+  "moonbitlang/async",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
@@ -15,6 +16,8 @@ pub fn child_arg_for(Int, String) -> String
 pub fn[Reply : @json.FromJson] decode_process_command_response(String) -> Reply raise ProcessCommandError
 
 pub fn detect_child_window() -> (Int, String)?
+
+pub fn window_controls_plugin(Int) -> Plugin
 
 pub fn wm_set_size(Int, Int, Int, SizeHint) -> Int
 
@@ -178,12 +181,14 @@ pub fn[X] WebView::close(Self[X]) -> Unit
 pub fn[X] WebView::destroy(Self[X]) -> Unit
 pub fn[X] WebView::enable_custom_titlebar_support(Self[X]) -> Unit
 pub fn[X] WebView::enable_transparent_background_support(Self[X]) -> Unit
+pub fn[X] WebView::eval(Self[X], String) -> Unit
 pub fn[X] WebView::forward(Self[X]) -> Unit
 pub fn[X] WebView::get_handle(Self[X]) -> @webview_sys.WebView_t
 pub fn[X] WebView::go(Self[X], Int) -> Unit
 pub fn[X] WebView::maximize(Self[X]) -> Unit
 pub fn[X] WebView::minimize(Self[X]) -> Unit
 pub fn[X] WebView::navigate(Self[X], String) -> Unit
+pub fn[X] WebView::new_managed(@async.TaskGroup[X], title? : String, url? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool) -> Self[X]
 pub fn[X] WebView::reload(Self[X]) -> Unit
 pub fn[X] WebView::reload_force(Self[X]) -> Unit
 pub fn[X] WebView::set_custom_protocol(Self[X], String, String) -> Unit
@@ -199,6 +204,7 @@ pub fn[X] WebView::terminate(Self[X]) -> Unit
 pub fn[X] WebView::toggle_fullscreen(Self[X]) -> Unit
 pub fn[X] WebView::toggle_maximize(Self[X]) -> Unit
 pub fn[X] WebView::unmaximize(Self[X]) -> Unit
+pub fn[X] WebView::window_id(Self[X]) -> Int
 
 pub struct Window {
   label : String
@@ -268,6 +274,7 @@ pub fn WindowManager::destroy_window(Self, Int) -> Int
 pub fn WindowManager::focus_window(Self, Int) -> Int
 pub fn WindowManager::fork_process(Self) -> Int
 pub fn WindowManager::init(is_main? : Bool) -> Self
+pub fn WindowManager::install_default_app_menu(Self) -> Int
 pub fn WindowManager::is_child_process(Self) -> Bool
 pub fn WindowManager::is_main_process(Self) -> Bool
 pub fn WindowManager::maximize_window(Self, Int) -> Int
@@ -277,6 +284,7 @@ pub fn WindowManager::respond(Self, Int, Int, Int, String) -> Int
 pub fn WindowManager::run_window(Self, Int) -> Int
 pub fn WindowManager::send_message(Self, Int, Int, IpcMessageType, String, String) -> Int
 pub async fn WindowManager::serve_process_commands(Self, Int, async (ProcessCommandRequest) -> ProcessCommandResponse, subtype? : String) -> Unit
+pub fn WindowManager::set_activation_policy(Self, Int) -> Int
 pub fn WindowManager::set_devtools(Self, Int, Bool) -> Int
 pub fn WindowManager::set_fullscreen_window(Self, Int, Bool) -> Int
 pub fn WindowManager::set_position(Self, Int, Int, Int) -> Int

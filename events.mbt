@@ -97,3 +97,47 @@ test "event bus resolves window ids by label" {
   assert_eq(bus.window_id("settings"), 2)
   assert_eq(bus.window_id("unknown"), -1)
 }
+
+// ════════════════════════════════════════════════════════════════
+// 单进程模式：本地事件总线（直接 eval，无 IPC）
+// ════════════════════════════════════════════════════════════════
+// 单进程多窗口模式下，所有窗口在同一进程，事件可直接 `webview.eval`
+// 投递到目标窗口，无需 IPC。这同时让整个应用共享一个 NSApplication /
+// Dock 图标（macOS），窗口天然可聚焦。
+
+///|
+/// 本地事件总线：label → WebView 句柄的直接映射。
+pub struct LocalEventBus {
+  webviews : Map[String, @webview.WebView[Unit]]
+}
+
+///|
+pub fn LocalEventBus::new() -> LocalEventBus {
+  { webviews: Map([]), }
+}
+
+///|
+pub fn LocalEventBus::register(
+  self : LocalEventBus,
+  label : String,
+  webview : @webview.WebView[Unit],
+) -> Unit {
+  self.webviews.set(label, webview)
+}
+
+///|
+/// 构建 `events` 插件。`emit` 直接对目标窗口的 WebView 执行 eval，
+/// 触发 `CustomEvent("lepus_event")`。同进程内即时送达，无 IPC 开销。
+pub fn LocalEventBus::plugin(self : LocalEventBus) -> @webview.Plugin {
+  @webview.Plugin("events", plugin => {
+    plugin.command_sync("emit", fn(request : EmitRequest) -> Bool {
+      match self.webviews.get(request.target) {
+        Some(wv) => {
+          wv.eval(event_eval_js(request.event, request.payload))
+          true
+        }
+        None => false
+      }
+    })
+  })
+}

@@ -1,10 +1,9 @@
 ///|
-/// Cross-window communication via the App-level event bus.
-///
-/// The "sender" window emits messages targeted at the "receiver" label; the
-/// "receiver" window periodically polls its queue and renders incoming
-/// messages. Both windows are children of one App whose main process owns the
-/// event bus and routes every `emit`/`poll` command.
+/// Cross-window communication via the App-level event bus, running in
+/// **single-process** mode (`run_single_process`). Both windows share one
+/// OS process / Dock icon; the sender emits a message targeted at the
+/// "receiver" label, which the local event bus delivers by direct `eval`,
+/// triggering a `lepus_event` CustomEvent in the receiver's page.
 async fn main {
   let sender = @lepus.WindowConfig::new(
     label="sender",
@@ -82,5 +81,5 @@ async fn main {
       ),
     ),
   )
-  @lepus.App::new([sender, receiver]).run()
+  @lepus.App::new([sender, receiver]).run_single_process()
 }

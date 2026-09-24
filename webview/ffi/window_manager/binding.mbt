@@ -121,6 +121,20 @@ pub extern "C" fn wm_focus_window(window_id : Int) -> Int = "moonbit_wm_focus_wi
 pub extern "C" fn wm_set_devtools(window_id : Int, enabled : Int) -> Int = "moonbit_wm_set_devtools"
 
 ///|
+/// Set the NSApplication activation policy (macOS only).
+/// 0 = Regular (shows Dock icon), 1 = Accessory, 2 = Prohibited (no Dock icon).
+/// No-op on other platforms. Used so a multi-window app shows a single Dock
+/// icon: the main process declares Regular, child window processes Prohibited.
+pub extern "C" fn wm_set_activation_policy(policy : Int) -> Int = "moonbit_wm_set_activation_policy"
+
+///|
+/// Install the standard application main menu (macOS only) so that keyboard
+/// shortcuts work: Cmd+Q (quit app), Cmd+W (close window), Cmd+M (minimize),
+/// and the Edit menu (Cmd+Z/X/C/V/A) for text editing in WKWebView.
+/// No-op on other platforms.
+pub extern "C" fn wm_install_default_app_menu() -> Int = "moonbit_wm_install_default_app_menu"
+
+///|
 /// Navigate managed window to URL.
 #borrow(url)
 pub extern "C" fn wm_navigate(window_id : Int, url : Bytes) -> Int = "moonbit_wm_navigate"

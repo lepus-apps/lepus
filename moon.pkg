@@ -1,6 +1,7 @@
 import {
   "lepus-apps/lepus/webview",
   "moonbit-community/zipc",
+  "moonbitlang/async",
   "moonbitlang/async/fs",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",

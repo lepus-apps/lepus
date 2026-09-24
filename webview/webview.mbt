@@ -67,7 +67,7 @@ fn log(level : Int, msg : String) -> Unit {
 ///
 /// Window lifecycle operations (`terminate/set_title/set_size/`
 /// `navigate/set_html/eval/init`) will be routed through `wm_*` APIs.
-fn[X] WebView::new_managed(
+pub fn[X] WebView::new_managed(
   task_group : @async.TaskGroup[X],
   title? : String = "MoonBit WebView",
   url? : String = "",
@@ -279,13 +279,13 @@ pub fn[X] WebView::get_handle(self : WebView[X]) -> @webview_sys.WebView_t {
 
 ///|
 /// Returns the managed window id.
-fn[X] WebView::window_id(self : WebView[X]) -> Int {
+pub fn[X] WebView::window_id(self : WebView[X]) -> Int {
   self.window_id
 }
 
 ///|
 /// Evaluates arbitrary JavaScript code.
-fn[X] WebView::eval(self : WebView[X], js : String) -> Unit {
+pub fn[X] WebView::eval(self : WebView[X], js : String) -> Unit {
   ignore(@window_manager.wm_eval_js(self.window_id, @encoding/utf8.encode(js)))
 }
 

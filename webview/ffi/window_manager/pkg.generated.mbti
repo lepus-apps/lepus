@@ -36,6 +36,8 @@ pub fn wm_init(Int) -> Int
 
 pub fn wm_init_js(Int, Bytes) -> Int
 
+pub fn wm_install_default_app_menu() -> Int
+
 pub fn wm_ipc_pop_message_wire(Int) -> Bytes
 
 pub fn wm_ipc_request_bytes(Int, Int, Bytes, Bytes, Int) -> Bytes
@@ -57,6 +59,8 @@ pub fn wm_return_raw(Int, Bytes, Int, Bytes) -> Int
 pub fn wm_run_window(Int) -> Int
 
 pub fn wm_run_window_async(Int) -> Int
+
+pub fn wm_set_activation_policy(Int) -> Int
 
 pub fn wm_set_devtools(Int, Int) -> Int
 

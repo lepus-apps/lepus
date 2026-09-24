@@ -171,6 +171,23 @@ pub fn WindowManager::init(is_main? : Bool = true) -> WindowManager {
 }
 
 ///|
+/// Install the standard application main menu (macOS) so keyboard shortcuts
+/// work: Cmd+Q (quit app), Cmd+W (close window), Cmd+M (minimize), and the
+/// Edit menu (Cmd+Z/X/C/V/A). No-op on other platforms.
+pub fn WindowManager::install_default_app_menu(_self : WindowManager) -> Int {
+  @window_manager.wm_install_default_app_menu()
+}
+
+///|
+/// Set the NSApplication activation policy (macOS). No-op on other platforms.
+pub fn WindowManager::set_activation_policy(
+  _self : WindowManager,
+  policy : Int,
+) -> Int {
+  @window_manager.wm_set_activation_policy(policy)
+}
+
+///|
 /// Cleanup native WM runtime.
 pub fn WindowManager::destroy(self : WindowManager) -> Unit {
   @window_manager.wm_cleanup()

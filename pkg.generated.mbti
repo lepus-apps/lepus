@@ -19,6 +19,7 @@ pub struct App {
 pub fn App::add_window(Self, WindowConfig) -> Unit
 pub fn App::new(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
 pub async fn App::run(Self, window_index? : Int) -> Unit
+pub async fn App::run_single_process(Self) -> Unit
 pub fn App::window_count(Self) -> Int
 pub fn App::with_windows(Array[WindowConfig], plugins? : Array[@webview.Plugin]) -> Self
 
@@ -49,6 +50,13 @@ pub struct LabelRequest {
 } derive(ToJson, @json.FromJson)
 pub fn LabelRequest::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn LabelRequest::to_json(Self) -> Json
+
+pub struct LocalEventBus {
+  webviews : Map[String, @webview.WebView[Unit]]
+}
+pub fn LocalEventBus::new() -> Self
+pub fn LocalEventBus::plugin(Self) -> @webview.Plugin
+pub fn LocalEventBus::register(Self, String, @webview.WebView[Unit]) -> Unit
 
 pub struct MemoryFile {
   path : String

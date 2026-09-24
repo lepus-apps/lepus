@@ -356,6 +356,10 @@ async fn Window::run_child_async(self : Window) -> Unit {
       focused=self.focused,
     )
     self.runtime_window_id = webview.window_id()
+    // macOS：安装标准主菜单，使 Cmd+W/Q/M 及 Edit 系列快捷键生效
+    //（Cocoa 快捷键全由主菜单驱动）。激活策略沿用 vendor 默认的 Regular，
+    // 保证窗口能被激活为 key window 并接收键盘事件。
+    ignore(@window_manager.wm_install_default_app_menu())
     // 向主进程注册本窗口：主进程据 source_window_id 建立
     // `window_id -> 子进程 fd` 映射，从而能定向 push 事件到本窗口。
     let _reg = wm.broadcast(
@@ -407,7 +411,9 @@ priv struct ResizeRequest {
 } derive(ToJson, FromJson)
 
 ///|
-fn Window::window_controls_plugin(_self : Window, window_id : Int) -> Plugin {
+/// Builds the `window_controls` plugin bound to `window_id`, exposing
+/// close/minimize/maximize/fullscreen/drag commands to JavaScript.
+pub fn window_controls_plugin(window_id : Int) -> Plugin {
   Plugin::Plugin("window_controls", plugin => {
     plugin.command_sync("close", (_ : Json) => {
       @window_manager.wm_close_window(window_id) == 0
@@ -648,7 +654,7 @@ fn Window::install_child_plugins(
   let proxy = ProcessCommandProxy::new(wm, webview.window_id())
   let host = PluginHost::PluginHost(webview)
   if self.enable_window_controls_plugin {
-    host.install(self.window_controls_plugin(webview.window_id()))
+    host.install(window_controls_plugin(webview.window_id()))
   }
   for plugin in self.plugins {
     host.install(plugin, proxy=Some(proxy))

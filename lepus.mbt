@@ -301,6 +301,122 @@ pub async fn App::run(self : App, window_index? : Int) -> Unit {
 }
 
 ///|
+/// Runs all windows in a **single process**.
+///
+/// Unlike `App::run` (which spawns one child process per window), this mode
+/// creates every window inside the current process. All windows share one
+/// `NSApplication` / Dock icon (macOS), one menu bar, and one event loop —
+/// matching the Tauri/Electron model. Cross-window events are delivered by
+/// direct `eval` (no IPC), so this is the recommended mode for most apps.
+///
+/// The event loop runs once (a single `webview_run` services all windows);
+/// it returns when every window has closed.
+pub async fn App::run_single_process(self : App) -> Unit {
+  guard self.windows.length() > 0 else {
+    abort("App::run_single_process requires at least one window")
+  }
+  assert_unique_labels(self.windows)
+  let wm = @webview.WindowManager::init(is_main=true)
+  // macOS：单进程 = 单个 NSApplication = 单个 Dock 图标，窗口天然可聚焦。
+  // Regular 策略由 vendor 默认设置；安装标准主菜单启用快捷键。
+  ignore(wm.install_default_app_menu())
+  let bus = LocalEventBus::new()
+  @async.with_task_group(task_group => {
+    let first_id = build_single_process_windows(
+      task_group,
+      self.windows,
+      self.plugins,
+      bus,
+    )
+    guard first_id > 0 else {
+      abort("App::run_single_process: no window created")
+    }
+    // 单次 webview_run 服务全部窗口（共享 NSApp run loop）。
+    // window_ref_count 归零时 vendor 自动 terminate。
+    ignore(wm.run_window(first_id))
+  })
+}
+
+///|
+/// 在单进程内为每个 WindowConfig 创建 WebView、安装插件（直连，无 IPC）、
+/// 注册到本地事件总线，并返回首个窗口的 id（供单次 run loop 使用）。
+async fn build_single_process_windows(
+  task_group : @async.TaskGroup[Unit],
+  configs : Array[WindowConfig],
+  extra_plugins : Array[@webview.Plugin],
+  bus : LocalEventBus,
+) -> Int {
+  let mut first_id = 0
+  for config in configs {
+    let webview = @webview.WebView::new_managed(
+      task_group,
+      title=config.title,
+      url="",
+      width=config.width,
+      height=config.height,
+      debug=config.debug,
+      devtools=config.devtools,
+      frameless=config.frameless,
+      resizable=config.resizable,
+      closeable=true,
+      always_on_top=config.always_on_top,
+      transparent=config.transparent,
+      title_bar_style=match config.title_bar_style {
+        Default => Default
+        Hidden => Hidden
+      },
+      title_bar_overlay=config.title_bar_overlay,
+      traffic_light_position=config.traffic_light_position,
+      position=config.position,
+      hidden=config.hidden,
+      focused=config.focused,
+    )
+    let wid = webview.window_id()
+    if first_id == 0 {
+      first_id = wid
+    }
+    // 自定义协议
+    guard config.source is Some(source) else {
+      abort("WindowConfig::source is required")
+    }
+    let resolved = resolve_source(source)
+    resolved.custom_protocols.each(mapping => {
+      let (scheme, root_dir) = mapping
+      webview.set_custom_protocol(scheme, root_dir)
+    })
+    // 平台标题栏支持
+    if config.frameless ||
+      config.title_bar_style == Hidden ||
+      config.title_bar_overlay {
+      webview.enable_custom_titlebar_support()
+    }
+    if config.transparent {
+      webview.enable_transparent_background_support()
+    }
+    if config.traffic_light_position.0 >= 0 &&
+      config.traffic_light_position.1 >= 0 {
+      webview.set_traffic_light_position(
+        config.traffic_light_position.0,
+        config.traffic_light_position.1,
+      )
+    }
+    // 插件：window_controls + 用户插件 + 事件总线（全部直连，proxy=None）
+    let host = @webview.PluginHost::PluginHost(webview)
+    host.install(@webview.window_controls_plugin(wid))
+    for plugin in extra_plugins {
+      host.install(plugin)
+    }
+    bus.register(config.label(), webview)
+    host.install(bus.plugin())
+    // 内容
+    if resolved.url != "" {
+      webview.navigate(resolved.url)
+    }
+  }
+  first_id
+}
+
+///|
 /// Assigns a globally-unique window id to each label, matching the `base`
 /// values the child processes use when creating their windows.
 fn assign_window_ids(windows : Array[WindowConfig]) -> Map[String, Int] {
