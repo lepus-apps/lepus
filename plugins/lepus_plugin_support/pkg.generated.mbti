@@ -2,11 +2,11 @@
 package "lepus-apps/lepus/plugins/lepus_plugin_support"
 
 import {
-  "lepus-apps/lepus/lib",
+  "lepus-apps/lepus",
 }
 
 // Values
-pub fn example_html(String, String, content? : String) -> @lib.Source
+pub fn example_html(String, String, content? : String) -> @lepus.Source
 
 // Errors
 
