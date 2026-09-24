@@ -1,14 +1,7 @@
 import {
   "moonbitlang/async",
-  "moonbitlang/async/process",
-  "moonbitlang/core/argparse",
-  "moonbitlang/core/string",
-  "moonbitlang/core/env",
   "moonbitlang/x/sys",
-  "moonbitlang/core/encoding/utf8" @encoding/utf8,
-  "moonbitlang/async/fs",
-  "moonbit-community/zipc",
-  "lepus-apps/lepus/cli/platform",
+  "lepus-apps/lepus/cli/lepus_core",
 }
 
 supported_targets = "+wasm+wasm-gc+native"

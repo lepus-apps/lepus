@@ -1,118 +1,11 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "lepus-apps/lepus/cli/lepus"
 
-import {
-  "moonbitlang/core/argparse",
-}
-
 // Values
-pub fn embed_module_source(String) -> String
-
-pub async fn ensure_npm_ready(String) -> Int
-
-pub fn get_cwd() -> String
-
-pub fn get_platform() -> String
-
-pub async fn has_command(String) -> Bool
-
-pub fn join_path(String, String) -> String
-
-pub fn moonbit_string_literal(String) -> String
-
-pub fn npm_command() -> String
-
-pub fn parse_build_config(@argparse.Matches, @argparse.Matches) -> BuildConfig
-
-pub fn parse_bundle_config(@argparse.Matches, @argparse.Matches) -> BundleConfig
-
-pub fn parse_dev_config(@argparse.Matches, @argparse.Matches) -> DevConfig
-
-pub fn parse_doctor_config(@argparse.Matches, @argparse.Matches) -> DoctorConfig
-
-pub fn parse_init_config(@argparse.Matches, @argparse.Matches) -> InitConfig
-
-pub fn parse_setup_config(@argparse.Matches, @argparse.Matches) -> SetupConfig
-
-pub fn project_basename(String) -> String
-
-pub fn resolve_path(String, String?) -> String
-
-pub fn root_command() -> @argparse.Command
-
-pub async fn run_build(BuildConfig) -> Int
-
-pub async fn run_bundle(BundleConfig) -> Int
-
-pub async fn run_cli() -> Int
-
-pub async fn run_dev(DevConfig) -> Int
-
-pub async fn run_doctor(DoctorConfig) -> Int
-
-pub async fn run_moon_command(String, Array[String], extra_env? : Map[String, String]) -> Int
 
 // Errors
 
 // Types and methods
-pub struct BuildConfig {
-  cwd : String
-  frontend_dir : String?
-  dist_dir : String?
-  output_dir : String?
-  release : Bool
-  skip_frontend : Bool
-  skip_moon : Bool
-  skip_setup : Bool
-  typecheck : Bool
-  verbose : Int
-}
-
-pub struct BundleConfig {
-  cwd : String
-  app_id : String?
-  app_name : String?
-  app_version : String?
-  icon : String?
-  bin : String?
-  frontend_dir : String?
-  out_dir : String?
-  skip_build : Bool
-  skip_setup : Bool
-  verbose : Int
-}
-
-pub struct DevConfig {
-  cwd : String
-  config_path : String?
-  frontend_dir : String?
-  port : Int?
-  host : String?
-  skip_setup : Bool
-  verbose : Int
-}
-
-pub struct DoctorConfig {
-  cwd : String
-  config_path : String?
-  json : Bool
-  verbose : Int
-}
-
-pub struct InitConfig {
-  project_name : String?
-  template : String
-  frontend : String
-  force : Bool
-  cwd : String
-  verbose : Int
-}
-
-pub struct SetupConfig {
-  cwd : String
-  force : Bool
-  verbose : Int
-}
 
 // Type aliases
 
