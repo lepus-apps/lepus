@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/encoding/utf8" @encoding/utf8,
   "moonbitlang/async",
   "moonbitlang/core/string",
+  "lepus-apps/lepus/webview/ffi/webview_sys",
 }
 
 supported_targets = "+native"

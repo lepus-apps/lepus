@@ -24,7 +24,7 @@ pub(all) enum SizeHint {
 /// webview.terminate()
 /// ```
 struct WebView[X] {
-  handle : WebView_t
+  handle : @webview_sys.WebView_t
   window_id : Int
   task_group : @async.TaskGroup[X]
 }
@@ -203,7 +203,7 @@ pub fn[X] WebView::set_custom_protocol(
   root_dir : String,
 ) -> Unit {
   ignore(
-    webview_set_custom_protocol(
+    @webview_sys.webview_set_custom_protocol(
       self.handle,
       @encoding/utf8.encode(scheme),
       @encoding/utf8.encode(root_dir),
@@ -261,7 +261,7 @@ pub fn[X] WebView::reload_force(self : WebView[X]) -> Unit {
 
 ///|
 /// Returns the raw `WebView_t` handle.
-pub fn[X] WebView::get_handle(self : WebView[X]) -> WebView_t {
+pub fn[X] WebView::get_handle(self : WebView[X]) -> @webview_sys.WebView_t {
   self.handle
 }
 

@@ -1,7 +1,9 @@
-/// FFI declarations for the webview C library.
+/// FFI declarations for the window-manager C runtime (`wm_*` bindings).
 ///
-/// All extern functions are package-private. Public-facing wrappers live in
-/// webview.mbt, command.mbt and plugin.mbt.
+/// The raw `webview.h` bindings (handle type, bind/unbind, background thread,
+/// string copy, return and terminate) live in the smaller
+/// `lepus-apps/lepus/webview/ffi/webview_sys` package, imported here as
+/// `@webview_sys`.
 ///
 /// Ownership rules (moonbit-c-binding skill):
 ///   #borrow(param) — C only reads the value during the call, does not store it.
@@ -9,58 +11,6 @@
 /// Primitives (Int, Int64, Bool, …) are passed by value — no annotation needed.
 ///
 /// see: https://github.com/webview/webview/blob/master/webview.h
-
-///|
-/// Opaque handle returned by webview_create. C manages the underlying object.
-#external
-pub type WebView_t
-
-///|
-/// Opaque binding record returned by moonbit_webview_bind.
-/// C allocates and owns it; MoonBit holds it only as a cookie for unbind.
-#external
-pub type BindingHandle
-
-// ── Bindings ─────────────────────────────────────────────────────────────────
-
-///|
-/// Bind a MoonBit closure as a named JavaScript function.
-/// `name` is borrowed (used only during the call).
-/// `closure` ownership transfers to the returned BindingHandle.
-#borrow(name)
-#owned(closure)
-extern "C" fn webview_bind(
-  w : WebView_t,
-  name : Bytes,
-  call_closure : FuncRef[(Bytes, Bytes, (Bytes, Bytes) -> Unit) -> Unit],
-  closure : (Bytes, Bytes) -> Unit,
-) -> BindingHandle = "moonbit_webview_bind"
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-///|
-/// Copy a raw C string (seq/req pointer) into MoonBit-managed Bytes.
-/// This copy is necessary because the C string is only valid for the duration
-/// of the webview callback invocation.
-#borrow(cstr)
-extern "C" fn webview_copy_cstr(cstr : Bytes) -> Bytes = "moonbit_webview_copy_cstr"
-
-///|
-/// Register a custom scheme backed by a local root directory.
-#borrow(w, scheme, root_dir)
-pub extern "C" fn webview_set_custom_protocol(
-  w : WebView_t,
-  scheme : Bytes,
-  root_dir : Bytes,
-) -> Int = "webview_set_custom_protocol"
-
-///|
-/// Run a MoonBit closure on a detached native thread.
-#owned(closure)
-extern "C" fn run_in_background_thread(
-  call_closure : FuncRef[(() -> Unit) -> Unit],
-  closure : () -> Unit,
-) -> Int = "moonbit_run_in_background_thread"
 
 ///|
 /// Initialize native window manager runtime.
@@ -210,7 +160,7 @@ pub extern "C" fn wm_get_visibility(window_id : Int) -> Int = "moonbit_webview_g
 
 ///|
 /// Get native handle by managed window id.
-pub extern "C" fn wm_get_handle(window_id : Int) -> WebView_t = "moonbit_wm_get_handle"
+pub extern "C" fn wm_get_handle(window_id : Int) -> @webview_sys.WebView_t = "moonbit_wm_get_handle"
 
 ///|
 /// Respond to a JS binding call on the managed window UI thread.

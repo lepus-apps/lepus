@@ -2,6 +2,7 @@
 package "lepus-apps/lepus/webview"
 
 import {
+  "lepus-apps/lepus/webview/ffi/webview_sys",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
@@ -14,8 +15,6 @@ pub fn child_arg_for(Int, String) -> String
 pub fn[Reply : @json.FromJson] decode_process_command_response(String) -> Reply raise ProcessCommandError
 
 pub fn detect_child_window() -> (Int, String)?
-
-pub fn webview_set_custom_protocol(WebView_t, Bytes, Bytes) -> Int
 
 pub fn wm_cleanup() -> Unit
 
@@ -33,7 +32,7 @@ pub fn wm_eval_js(Int, Bytes) -> Int
 
 pub fn wm_fork_process() -> Int
 
-pub fn wm_get_handle(Int) -> WebView_t
+pub fn wm_get_handle(Int) -> @webview_sys.WebView_t
 
 pub fn wm_get_process_id() -> Int
 
@@ -105,9 +104,6 @@ pub fn wm_wait_child_noblock(Int) -> Int
 type ProcessCommandError
 
 // Types and methods
-#external
-pub type BindingHandle
-
 type CommandBridge[X]
 
 pub(all) enum CommandResponse {
@@ -263,7 +259,7 @@ pub fn[X] WebView::destroy(Self[X]) -> Unit
 pub fn[X] WebView::enable_custom_titlebar_support(Self[X]) -> Unit
 pub fn[X] WebView::enable_transparent_background_support(Self[X]) -> Unit
 pub fn[X] WebView::forward(Self[X]) -> Unit
-pub fn[X] WebView::get_handle(Self[X]) -> WebView_t
+pub fn[X] WebView::get_handle(Self[X]) -> @webview_sys.WebView_t
 pub fn[X] WebView::go(Self[X], Int) -> Unit
 pub fn[X] WebView::maximize(Self[X]) -> Unit
 pub fn[X] WebView::minimize(Self[X]) -> Unit
@@ -283,9 +279,6 @@ pub fn[X] WebView::terminate(Self[X]) -> Unit
 pub fn[X] WebView::toggle_fullscreen(Self[X]) -> Unit
 pub fn[X] WebView::toggle_maximize(Self[X]) -> Unit
 pub fn[X] WebView::unmaximize(Self[X]) -> Unit
-
-#external
-pub type WebView_t
 
 pub struct Window {
   label : String

@@ -70,13 +70,13 @@ fn[X] CommandBridge::destroy(self : CommandBridge[X]) -> Unit {
 
 ///|
 fn[X] CommandBridge::start_dispatch(self : CommandBridge[X]) -> Unit {
-  let binding = webview_bind(
+  let binding = @webview_sys.webview_bind(
     self.webview.handle,
     @encoding/utf8.encode(self.binding_name),
     fn(raw_id, raw_req, f) { f(raw_id, raw_req) },
     fn(raw_id, raw_req) {
-      let id = webview_copy_cstr(raw_id)
-      let req = webview_copy_cstr(raw_req)
+      let id = @webview_sys.webview_copy_cstr(raw_id)
+      let req = @webview_sys.webview_copy_cstr(raw_req)
       let id_str = @encoding/utf8.decode(id) catch { Malformed(_) => "" }
       let req_str = @encoding/utf8.decode(req) catch { Malformed(_) => "" }
       log(1, "[bridge:recv] id=\{id_str} req=\{req_str}")
@@ -204,7 +204,7 @@ fn[X, Payload : @json.FromJson, Reply : ToJson] CommandBridge::handle_result_bg(
       }
     }
     ignore(
-      run_in_background_thread(fn(task) { task() }, () => {
+      @webview_sys.run_in_background_thread(fn(task) { task() }, () => {
         let reply = callback(payload) catch {
           message => {
             bridge.send_response(

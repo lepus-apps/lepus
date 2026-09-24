@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "lepus-apps/lepus/webview/ffi/webview_sys"
+
+// Values
+pub fn run_in_background_thread(FuncRef[(() -> Unit) -> Unit], () -> Unit) -> Int
+
+pub fn webview_bind(WebView_t, Bytes, FuncRef[(Bytes, Bytes, (Bytes, Bytes) -> Unit) -> Unit], (Bytes, Bytes) -> Unit) -> BindingHandle
+
+pub fn webview_copy_cstr(Bytes) -> Bytes
+
+pub fn webview_return_raw(WebView_t, Bytes, Int, Bytes) -> Unit
+
+pub fn webview_set_custom_protocol(WebView_t, Bytes, Bytes) -> Int
+
+pub fn webview_terminate(WebView_t) -> Unit
+
+// Errors
+
+// Types and methods
+#external
+pub type BindingHandle
+
+#external
+pub type WebView_t
+
+// Type aliases
+
+// Traits
