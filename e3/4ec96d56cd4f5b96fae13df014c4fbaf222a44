@@ -1,0 +1,16 @@
+examples/custom_window/main.mbt
+  h_c7606fb8f0c97c 35,43
+webview/ffi/window_manager/stub.c
+  h_c7606fb8f0c97c 10,1623-1628,1631-1632,1634-1661,1663-1666
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "e34ec96d56cd4f5b96fae13df014c4fbaf222a44",
+  "prompts": {},
+  "humans": {
+    "h_c7606fb8f0c97c": {
+      "author": "oboard <oboard@outlook.com>"
+    }
+  }
+}
