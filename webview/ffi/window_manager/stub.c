@@ -7,6 +7,7 @@
  * declarations via ../common/c_abi.h.
  */
 #include "../common/c_abi.h"
+#include <stdio.h>
 
 
 /* ── 枚举类型 ─────────────────────────────────────────────────── */
@@ -1585,7 +1586,7 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
     else if (frameless)
     {
         style &= ~(NSWindowStyleMaskTitled | NSWindowStyleMaskMiniaturizable);
-        style |= NSWindowStyleMaskFullSizeContentView;
+        style &= ~NSWindowStyleMaskFullSizeContentView;
     }
     else
     {
@@ -1619,37 +1620,55 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
         mb_id_t ns_color = moonbit_objc_get_class("NSColor");
         mb_sel_t sel_clear_color = moonbit_sel_register_name("clearColor");
         mb_sel_t sel_set_background = moonbit_sel_register_name("setBackgroundColor:");
-        if (ns_color && sel_clear_color && sel_set_background)
-        {
-            mb_id_t clear = ((mb_objc_msgsend_id_ret_t)msgsend)(ns_color, sel_clear_color);
-            ((mb_objc_msgsend_id_arg_t)msgsend)((mb_id_t)ns_window, sel_set_background, clear);
-        }
+        mb_id_t clear_ns = (ns_color && sel_clear_color) ? ((mb_objc_msgsend_id_ret_t)msgsend)(ns_color, sel_clear_color) : NULL;
+        if (sel_set_background && clear_ns)
+            ((mb_objc_msgsend_id_arg_t)msgsend)((mb_id_t)ns_window, sel_set_background, clear_ns);
+        // WKWebView is the contentView here (wrapped by a KVO class); its superview is
+        // NSNextStepFrame, the window's theme frame — that's the white rect showing
+        // around rounded HTML corners. Clear the layer on every view in the chain.
         mb_sel_t sel_content_view = moonbit_sel_register_name("contentView");
-        mb_sel_t sel_subviews = moonbit_sel_register_name("subviews");
-        mb_sel_t sel_count = moonbit_sel_register_name("count");
-        mb_sel_t sel_object_at_index = moonbit_sel_register_name("objectAtIndex:");
-        mb_sel_t sel_set_opaque = moonbit_sel_register_name("setOpaque:");
-        mb_sel_t sel_set_value_for_key = moonbit_sel_register_name("setValue:forKey:");
         mb_id_t content_view = sel_content_view ? ((mb_objc_msgsend_id_ret_t)msgsend)((mb_id_t)ns_window, sel_content_view) : NULL;
-        mb_id_t views = (content_view && sel_subviews) ? ((mb_objc_msgsend_id_ret_t)msgsend)(content_view, sel_subviews) : NULL;
-        unsigned long count = (views && sel_count) ? ((mb_objc_msgsend_u64_t)msgsend)(views, sel_count) : 0;
-        mb_id_t ns_number = moonbit_objc_get_class("NSNumber");
-        mb_id_t ns_string = moonbit_objc_get_class("NSString");
-        mb_sel_t sel_number_with_bool = moonbit_sel_register_name("numberWithBool:");
-        mb_sel_t sel_string_with_utf8 = moonbit_sel_register_name("stringWithUTF8String:");
-        mb_id_t bool_no = (ns_number && sel_number_with_bool) ? ((mb_objc_msgsend_int_arg_ret_t)msgsend)(ns_number, sel_number_with_bool, 0) : NULL;
-        mb_id_t key_draws_background =
-            (ns_string && sel_string_with_utf8) ? ((mb_objc_msgsend_cstr_arg_ret_t)msgsend)(ns_string, sel_string_with_utf8, "drawsBackground") : NULL;
-        for (unsigned long i = 0; i < count; i++)
+        mb_id_t wk = moonbit_find_wk_webview(content_view, msgsend);
+        if (wk)
         {
-            mb_id_t view = sel_object_at_index ? ((mb_objc_msgsend_u64_arg_ret_t)msgsend)(views, sel_object_at_index, i) : NULL;
-            if (!view)
-                continue;
-            if (sel_set_opaque)
-                ((mb_objc_msgsend_int_arg_t)msgsend)(view, sel_set_opaque, 0);
-            if (sel_set_value_for_key && bool_no && key_draws_background)
-                ((mb_objc_msgsend_id_id_arg_t)msgsend)(view, sel_set_value_for_key, bool_no, key_draws_background);
+            mb_sel_t sel_responds = moonbit_sel_register_name("respondsToSelector:");
+            mb_sel_t sel_set_under_page_background = moonbit_sel_register_name("setUnderPageBackgroundColor:");
+            if (clear_ns && sel_responds && sel_set_under_page_background &&
+                ((mb_objc_msgsend_id_arg_int_ret_t)msgsend)(wk, sel_responds, sel_set_under_page_background))
+                ((mb_objc_msgsend_id_arg_t)msgsend)(wk, sel_set_under_page_background, clear_ns);
+            mb_sel_t sel_set_draws_priv = moonbit_sel_register_name("_setDrawsBackground:");
+            if (sel_responds && sel_set_draws_priv &&
+                ((mb_objc_msgsend_id_arg_int_ret_t)msgsend)(wk, sel_responds, sel_set_draws_priv))
+                ((mb_objc_msgsend_int_arg_t)msgsend)(wk, sel_set_draws_priv, 0);
         }
+        // Resolve a CGColorRef from the clear NSColor — CALayer::setBackgroundColor:
+        // takes a CGColorRef, passing an NSColor is a no-op.
+        mb_sel_t sel_cgcolor = moonbit_sel_register_name("CGColor");
+        mb_id_t cg_clear = (clear_ns && sel_cgcolor) ? ((mb_objc_msgsend_id_ret_t)msgsend)(clear_ns, sel_cgcolor) : NULL;
+        // Walk contentView → NSNextStepFrame → ... clearing each layer.
+        mb_sel_t sel_superview = moonbit_sel_register_name("superview");
+        mb_sel_t sel_layer = moonbit_sel_register_name("layer");
+        mb_sel_t sel_layer_set_bg = moonbit_sel_register_name("setBackgroundColor:");
+        mb_sel_t sel_layer_set_opaque = moonbit_sel_register_name("setOpaque:");
+        mb_id_t view = content_view;
+        int guard_count = 0;
+        while (view && guard_count < 8)
+        {
+            mb_id_t layer = sel_layer ? ((mb_objc_msgsend_id_ret_t)msgsend)(view, sel_layer) : NULL;
+            if (layer)
+            {
+                if (sel_layer_set_opaque)
+                    ((mb_objc_msgsend_int_arg_t)msgsend)(layer, sel_layer_set_opaque, 0);
+                if (sel_layer_set_bg && cg_clear)
+                    ((mb_objc_msgsend_id_arg_t)msgsend)(layer, sel_layer_set_bg, cg_clear);
+            }
+            view = sel_superview ? ((mb_objc_msgsend_id_ret_t)msgsend)(view, sel_superview) : NULL;
+            guard_count++;
+        }
+        // Drop the system drop shadow.
+        mb_sel_t sel_set_has_shadow = moonbit_sel_register_name("setHasShadow:");
+        if (sel_set_has_shadow)
+            ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, sel_set_has_shadow, 0);
     }
     return 0;
 #else

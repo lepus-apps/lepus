@@ -6,7 +6,7 @@ async fn main {
     height=620,
     frameless=true,
     transparent=true,
-    // devtools=true,
+    devtools=true,
     source=@lepus.Source::html(
       (
         #|<!doctype html>
@@ -32,7 +32,7 @@ async fn main {
         #|        height: 100vh;
         #|        width: 100vw;
         #|        font-family: "SF Pro Text", "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
-        #|        background: var(--bg);
+        #|        background: transparent;
         #|        color: var(--text);
         #|        display: flex;
         #|        align-items: center;
@@ -40,9 +40,9 @@ async fn main {
         #|        overflow: hidden;
         #|      }
         #|
-        #|     @lepus.Window {
+        #|      .window {
         #|        width: 100vw;
-        #|        height: 100vh; /* Fills most of the height */
+        #|        height: 100vh;
         #|        background: var(--panel);
         #|        border-radius: 16px;
         #|        box-shadow: var(--shadow);
