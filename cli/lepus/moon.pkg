@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/x/sys",
+  "lepus-apps/lepus/cli/core",
+}
+
+pkgtype(kind: "executable")

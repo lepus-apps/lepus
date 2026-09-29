@@ -33,7 +33,7 @@ async fn linux_pkg_config_args() -> Array[String] {
       let libs = output
         .trim()
         .split(" ")
-        .filter(part => part != "")
+        .filter(part => !part.is_empty())
         .map(p => p.to_owned())
         .to_array()
       if libs.length() > 0 {
