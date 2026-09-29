@@ -1,11 +1,11 @@
 name = "lepus-apps/lepus"
 
-version = "0.2.3"
+version = "0.2.4"
 
 import {
   "moonbitlang/x@0.5.5",
-  "moonbitlang/async@0.22.2",
-  "moonbitlang/parser@0.4.0",
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/parser@0.4.1",
   "moonbit-community/zipc@0.2.2",
 }
 
