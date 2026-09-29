@@ -1,0 +1,16 @@
+cli/platform/platform.mbt
+  h_c7606fb8f0c97c 4-6,50-52,62-64
+cli/cc/main.mbt
+  h_c7606fb8f0c97c 83,96,102,104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "f4caa52bf6359162fc6a797fccfe3f1bca6f43c6",
+  "prompts": {},
+  "humans": {
+    "h_c7606fb8f0c97c": {
+      "author": "oboard <oboard@outlook.com>"
+    }
+  }
+}
