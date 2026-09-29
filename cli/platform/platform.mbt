@@ -1,6 +1,9 @@
 ///|
 /// The operating system platform.
 pub enum Platform {
+  OpenHarmony
+  IOS
+  Android
   MacOS
   Linux
   Windows
@@ -10,6 +13,9 @@ pub enum Platform {
 ///|
 pub fn Platform::to_string(self : Platform) -> String {
   match self {
+    OpenHarmony => "openharmony"
+    IOS => "ios"
+    Android => "android"
     MacOS => "macos"
     Linux => "linux"
     Windows => "windows"
@@ -41,24 +47,24 @@ pub impl Show for Arch with fn output(self, logger) {
 /// The combined system target (OS + architecture).
 pub enum Target {
   Unknown
-  DarwinArm64
-  DarwinX86_64
-  LinuxArm64
-  LinuxX86_64
-  WindowsArm64
-  WindowsX86_64
+  Darwin_Arm64
+  Darwin_X86_64
+  Linux_Arm64
+  Linux_X86_64
+  Windows_Arm64
+  Windows_X86_64
 }
 
 ///|
 pub fn Target::to_string(self : Target) -> String {
   match self {
     Unknown => "unknown"
-    DarwinArm64 => "darwin_arm64"
-    DarwinX86_64 => "darwin_x86_64"
-    LinuxArm64 => "linux_arm64"
-    LinuxX86_64 => "linux_x86_64"
-    WindowsArm64 => "windows_arm64"
-    WindowsX86_64 => "windows_x86_64"
+    Darwin_Arm64 => "darwin_arm64"
+    Darwin_X86_64 => "darwin_x86_64"
+    Linux_Arm64 => "linux_arm64"
+    Linux_X86_64 => "linux_x86_64"
+    Windows_Arm64 => "windows_arm64"
+    Windows_X86_64 => "windows_x86_64"
   }
 }
 
@@ -79,6 +85,9 @@ pub fn detect_platform() -> Platform {
 ///|
 fn Platform::parse(s : String) -> Platform {
   match s {
+    "openharmony" | "ohos" => OpenHarmony
+    "ios" => IOS
+    "android" => Android
     "macos" | "darwin" => MacOS
     "linux" => Linux
     "windows" | "win32" | "cygwin" | "msys" => Windows
@@ -151,7 +160,7 @@ fn detect_arch_from_env() -> Arch {
 ///   1. LEPUS_TARGET (explicit override, e.g. "darwin_arm64")
 ///   2. OSTYPE / OS + HOSTTYPE / PROCESSOR_ARCHITECTURE
 pub fn detect_target() -> Target {
-  guard @env.get_env_var("LEPUS_TARGET") is Some([..] as t) else {
+  guard @env.get_env_var("LEPUS_TARGET") is Some([_, ..] as t) else {
     return Target(detect_platform(), detect_arch())
   }
   Target::parse(t.to_lower())
@@ -160,12 +169,12 @@ pub fn detect_target() -> Target {
 ///|
 fn Target::parse(s : String) -> Target {
   match s {
-    "darwin_arm64" => DarwinArm64
-    "darwin_x86_64" => DarwinX86_64
-    "linux_arm64" => LinuxArm64
-    "linux_x86_64" => LinuxX86_64
-    "windows_arm64" => WindowsArm64
-    "windows_x86_64" => WindowsX86_64
+    "darwin_arm64" => Darwin_Arm64
+    "darwin_x86_64" => Darwin_X86_64
+    "linux_arm64" => Linux_Arm64
+    "linux_x86_64" => Linux_X86_64
+    "windows_arm64" => Windows_Arm64
+    "windows_x86_64" => Windows_X86_64
     _ => Unknown
   }
 }
@@ -173,12 +182,12 @@ fn Target::parse(s : String) -> Target {
 ///|
 fn Target::Target(platform : Platform, arch : Arch) -> Target {
   match (platform, arch) {
-    (MacOS, Arm64) => DarwinArm64
-    (MacOS, X86_64) => DarwinX86_64
-    (Linux, Arm64) => LinuxArm64
-    (Linux, X86_64) => LinuxX86_64
-    (Windows, Arm64) => WindowsArm64
-    (Windows, X86_64) => WindowsX86_64
+    (MacOS, Arm64) => Darwin_Arm64
+    (MacOS, X86_64) => Darwin_X86_64
+    (Linux, Arm64) => Linux_Arm64
+    (Linux, X86_64) => Linux_X86_64
+    (Windows, Arm64) => Windows_Arm64
+    (Windows, X86_64) => Windows_X86_64
     _ => Unknown
   }
 }

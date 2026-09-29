@@ -15,10 +15,15 @@ pub enum Arch {
   Arm64
   X86_64
 }
+pub fn Arch::output(Self, &Logger) -> Unit
 pub fn Arch::to_string(Self) -> String
+pub impl Show for Arch
 
 pub enum Platform {
-  Macos
+  OpenHarmony
+  IOS
+  Android
+  MacOS
   Linux
   Windows
   Unknown
@@ -27,12 +32,12 @@ pub fn Platform::to_string(Self) -> String
 
 pub enum Target {
   Unknown
-  DarwinArm64
-  DarwinX86_64
-  LinuxArm64
-  LinuxX86_64
-  WindowsArm64
-  WindowsX86_64
+  Darwin_Arm64
+  Darwin_X86_64
+  Linux_Arm64
+  Linux_X86_64
+  Windows_Arm64
+  Windows_X86_64
 }
 pub fn Target::to_string(Self) -> String
 
