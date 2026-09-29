@@ -24,6 +24,19 @@ pub fn Platform::to_string(self : Platform) -> String {
 }
 
 ///|
+fn Platform::from_int(n : Int) -> Platform {
+  match n {
+    1 => OpenHarmony
+    2 => IOS
+    3 => Android
+    4 => MacOS
+    5 => Linux
+    6 => Windows
+    _ => Unknown
+  }
+}
+
+///|
 /// The CPU architecture.
 pub enum Arch {
   Arm64
@@ -41,6 +54,14 @@ pub impl Show for Arch with fn output(self, logger) {
       X86_64 => "x86_64"
     },
   )
+}
+
+///|
+fn Arch::from_int(n : Int) -> Arch {
+  match n {
+    0 => Arm64
+    _ => X86_64
+  }
 }
 
 ///|
@@ -69,16 +90,48 @@ pub fn Target::to_string(self : Target) -> String {
 }
 
 ///|
-/// Detect the current platform using environment variables.
+fn Target::from_int(n : Int) -> Target {
+  match n {
+    1 => Darwin_Arm64
+    2 => Darwin_X86_64
+    3 => Linux_Arm64
+    4 => Linux_X86_64
+    5 => Windows_Arm64
+    6 => Windows_X86_64
+    _ => Unknown
+  }
+}
+
+///|
+/// Native platform detection via the C preprocessor (`detect.c`).
+/// Reliable at build time, unlike `OSTYPE`/`HOSTTYPE` which shell variables
+/// do not export to child processes.
+///
+/// Return codes are kept in sync with `Platform::from_int` /
+/// `Arch::from_int` / `Target::from_int`.
+extern "C" fn native_detect_os() -> Int = "lepus_platform_detect_os"
+
+///|
+extern "C" fn native_detect_arch() -> Int = "lepus_platform_detect_arch"
+
+///|
+extern "C" fn native_detect_target() -> Int = "lepus_platform_detect_target"
+
+///|
+/// Detect the current platform.
 ///
 /// Checks in order:
 ///   1. LEPUS_PLATFORM (explicit override, e.g. "macos", "linux", "windows")
-///   2. OSTYPE (bash/zsh convention)
-///   3. OS (Windows CMD convention, Windows_NT)
+///   2. native C detection (build-time preprocessor)
+///   3. OSTYPE / OS (shell convention, may not be exported to children)
 pub fn detect_platform() -> Platform {
   match @env.get_env_var("LEPUS_PLATFORM") {
     Some(p) if !p.is_empty() => Platform::parse(p.to_lower())
-    _ => detect_platform_from_env()
+    _ =>
+      match native_detect_os() {
+        0 => detect_platform_from_env()
+        n => Platform::from_int(n)
+      }
   }
 }
 
@@ -114,17 +167,23 @@ fn detect_platform_from_env() -> Platform {
 }
 
 ///|
-/// Detect the CPU architecture using environment variables.
+/// Detect the CPU architecture.
 ///
 /// Checks in order:
 ///   1. LEPUS_ARCH (explicit override, e.g. "arm64", "x86_64")
-///   2. HOSTTYPE (bash/zsh convention)
-///   3. PROCESSOR_ARCHITECTURE (Windows CMD convention)
-///   4. PROCESSOR_ARCHITEW6432 (Windows CMD WoW64 convention)
+///   2. native C detection (build-time preprocessor)
+///   3. HOSTTYPE / PROCESSOR_ARCHITECTURE (shell / Windows CMD convention)
 pub fn detect_arch() -> Arch {
   match @env.get_env_var("LEPUS_ARCH") {
     Some(a) if !a.is_empty() => Arch::parse(a.to_lower())
-    _ => detect_arch_from_env()
+    _ =>
+      match native_detect_arch() {
+        // native returns 0 for Arm64, 1 for X86_64; both are known, so only
+        // fall back to env probes when the C layer reports the unknown slot.
+        // (No unknown slot is currently emitted, but keep the guard for safety.)
+        -1 => detect_arch_from_env()
+        n => Arch::from_int(n)
+      }
   }
 }
 
@@ -154,16 +213,21 @@ fn detect_arch_from_env() -> Arch {
 }
 
 ///|
-/// Detect the combined system target using environment variables.
+/// Detect the combined system target.
 ///
 /// Checks in order:
 ///   1. LEPUS_TARGET (explicit override, e.g. "darwin_arm64")
-///   2. OSTYPE / OS + HOSTTYPE / PROCESSOR_ARCHITECTURE
+///   2. native C detection (build-time preprocessor, combines OS + arch)
+///   3. detect_platform() + detect_arch()
 pub fn detect_target() -> Target {
-  guard @env.get_env_var("LEPUS_TARGET") is Some([_, ..] as t) else {
-    return Target(detect_platform(), detect_arch())
+  match @env.get_env_var("LEPUS_TARGET") {
+    Some(t) if !t.is_empty() => Target::parse(t.to_lower())
+    _ =>
+      match native_detect_target() {
+        0 => Target(detect_platform(), detect_arch())
+        n => Target::from_int(n)
+      }
   }
-  Target::parse(t.to_lower())
 }
 
 ///|

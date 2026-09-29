@@ -33,7 +33,7 @@ async fn linux_pkg_config_args() -> Array[String] {
       let libs = output
         .trim()
         .split(" ")
-        .filter(part => !part.is_empty())
+        .filter(part => part != "")
         .map(p => p.to_owned())
         .to_array()
       if libs.length() > 0 {
@@ -80,8 +80,7 @@ fn select_windows_compiler(
         Some(cc) => (cc, [])
         None =>
           match target {
-            _ if target is @platform.Windows_Arm64 =>
-              ("zig", ["c++", "-target", "aarch64-windows-gnu"])
+            Windows_Arm64 => ("zig", ["c++", "-target", "aarch64-windows-gnu"])
             _ => ("zig", ["c++", "-target", "x86_64-windows-gnu"])
           }
       }
@@ -93,15 +92,14 @@ async fn target_toolchain(
   target : @platform.Target,
 ) -> (String, Array[String], Array[String]) {
   match target {
-    _ if target is @platform.Darwin_Arm64 || target is @platform.Darwin_X86_64 =>
+    Darwin_Arm64 | Darwin_X86_64 =>
       (
         "cc",
         [],
         ["-lc++", "-lobjc", "-framework", "Cocoa", "-framework", "WebKit"],
       )
-    _ if target is @platform.Linux_Arm64 || target is @platform.Linux_X86_64 =>
-      ("cc", [], linux_link_args())
-    _ if target is @platform.Windows_Arm64 || target is @platform.Windows_X86_64 => {
+    Linux_Arm64 | Linux_X86_64 => ("cc", [], linux_link_args())
+    Windows_Arm64 | Windows_X86_64 => {
       let (compiler, prefix_args) = select_windows_compiler(target)
       (compiler, prefix_args, windows_link_args())
     }

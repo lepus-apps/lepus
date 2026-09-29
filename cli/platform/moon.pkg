@@ -1,3 +1,9 @@
 import {
   "moonbitlang/core/env",
 }
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "detect.c" ],
+)
