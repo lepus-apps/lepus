@@ -3,14 +3,84 @@
 async fn main {
   let args = @env.args()[1:]
   let (compiler, compiler_args) = get_compile_args()
-  @sys.exit(
-    @process.run(compiler, [..args, ..compiler_args]) catch {
-      err => {
-        println("Failed to execute compiler: \{err}")
-        1
+  let exit_code = @process.run(compiler, [..args, ..compiler_args]) catch {
+    err => {
+      println("Failed to execute compiler: \{err}")
+      1
+    }
+  }
+  if exit_code == 0 {
+    strip_linked_output(args)
+  }
+  @sys.exit(exit_code)
+}
+
+///|
+/// Drops the Mach-O symbol table from the freshly linked executable.
+///
+/// A release build still carries ~4k symbols plus a ~180 KB string table in
+/// `__LINKEDIT` that the process never reads at runtime; removing them takes
+/// roughly 20% off the binary. Neither `moon build --strip` (debug info only)
+/// nor `ld -s` (obsolete, no longer does anything) removes that table, so it is
+/// done here as a post-link step.
+///
+/// Skipped for non-Darwin targets and for compile-only invocations. Only release
+/// artifacts are touched; `strip` rewrites the embedded ad-hoc signature itself,
+/// so no separate re-signing step is needed.
+///
+/// Set `LEPUS_SKIP_STRIP=1` to keep symbol names, e.g. so panic backtraces stay
+/// symbolicated.
+async fn strip_linked_output(args : ArrayView[String]) -> Unit {
+  let enabled = match @platform.detect_target() {
+    Darwin_Arm64 | Darwin_X86_64 => @env.get_env_var("LEPUS_SKIP_STRIP") is None
+    _ => false
+  }
+  // `-c`/`-S`/`-E` produce no executable, so there is nothing to strip.
+  let compile_only = args.contains("-c") ||
+    args.contains("-S") ||
+    args.contains("-E")
+  if enabled && !compile_only {
+    match output_path(args) {
+      Some(path) =>
+        if is_release_output(path) {
+          ignore(@process.run("strip", [path]) catch { _ => 0 })
+        }
+      None => ()
+    }
+  }
+}
+
+///|
+/// Tells a release artifact from a debug one.
+///
+/// `moon build` does not pass `-g` to the link step, so the output location is
+/// the reliable signal: release builds land in `_build/<target>/release/...`
+/// while debug builds land in `_build/<target>/debug/...`. Should that layout
+/// ever change this fails safe — no strip, just a larger binary.
+fn is_release_output(path : String) -> Bool {
+  path.contains("/release/")
+}
+
+///|
+/// Extracts the `-o` destination so the post-link `strip` knows what to target,
+/// accepting both the separated (`-o path`) and joined (`-opath`) spellings.
+fn output_path(args : ArrayView[String]) -> String? {
+  let mut index = 0
+  while index < args.length() {
+    let arg = args[index]
+    if arg == "-o" {
+      return if index + 1 < args.length() {
+        Some(args[index + 1])
+      } else {
+        None
       }
-    },
-  )
+    }
+    if arg is [.. "-o", .. path] {
+      return Some(path.to_owned())
+    }
+    index = index + 1
+  }
+  None
 }
 
 ///|
