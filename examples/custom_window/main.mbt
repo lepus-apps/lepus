@@ -41,8 +41,8 @@ async fn main {
         #|      }
         #|
         #|      .window {
-        #|        width: 100vw;
-        #|        height: 100vh;
+        #|        width: calc(100vw - 100px);
+        #|        height: calc(100vh - 100px);
         #|        background: var(--panel);
         #|        border-radius: 16px;
         #|        box-shadow: var(--shadow);

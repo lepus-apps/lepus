@@ -503,10 +503,7 @@ static int ipc_recv(socket_handle_t fd, ipc_message_t *out)
     if (read_exact(fd, &hdr, sizeof(hdr)) < 0)
         return -1;
     if (hdr.magic != IPC_MAGIC)
-    {
-        fprintf(stderr, "[IPC] bad magic 0x%08X\n", hdr.magic);
         return -1;
-    }
 
     memset(out, 0, sizeof(*out));
     out->source_window_id = hdr.source_window_id;
@@ -521,10 +518,7 @@ static int ipc_recv(socket_handle_t fd, ipc_message_t *out)
     if (data_len > 0)
     {
         if (data_len > IPC_MAX_DATA)
-        {
-            fprintf(stderr, "[IPC] message too large: %d bytes\n", data_len);
             return -1;
-        }
         out->data = (char *)malloc(data_len + 1);
         if (!out->data)
             return -1;
@@ -655,7 +649,6 @@ static void *ipc_server_thread(void *arg)
         {
             if (socket_interrupted(socket_last_error()))
                 continue;
-            perror("[IPC] select");
             break;
         }
         if (ret == 0)
@@ -663,13 +656,7 @@ static void *ipc_server_thread(void *arg)
 
         socket_handle_t client_fd = accept(g_wm.ipc_socket, NULL, NULL);
         if (client_fd == IPC_INVALID_SOCKET)
-        {
-            int err = socket_last_error();
-            if (socket_interrupted(err) || socket_would_block(err))
-                continue;
-            perror("[IPC] accept");
             continue;
-        }
         /* 客户端 fd 保持阻塞模式，由专属线程驱动 */
 
         ipc_conn_ctx_t *ctx = (ipc_conn_ctx_t *)calloc(1, sizeof(ipc_conn_ctx_t));
@@ -733,10 +720,7 @@ static socket_handle_t create_ipc_server_socket(void)
 #ifdef _WIN32
     socket_handle_t sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == IPC_INVALID_SOCKET)
-    {
-        perror("[IPC] socket");
         return IPC_INVALID_SOCKET;
-    }
 
     set_nonblocking(sock);
 
@@ -748,7 +732,6 @@ static socket_handle_t create_ipc_server_socket(void)
 
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) != 0)
     {
-        perror("[IPC] bind");
         socket_close(sock);
         return IPC_INVALID_SOCKET;
     }
@@ -756,14 +739,12 @@ static socket_handle_t create_ipc_server_socket(void)
     int addr_len = (int)sizeof(addr);
     if (getsockname(sock, (struct sockaddr *)&addr, &addr_len) != 0)
     {
-        perror("[IPC] getsockname");
         socket_close(sock);
         return IPC_INVALID_SOCKET;
     }
 
     if (listen(sock, IPC_LISTEN_BACKLOG) != 0)
     {
-        perror("[IPC] listen");
         socket_close(sock);
         return IPC_INVALID_SOCKET;
     }
@@ -778,10 +759,7 @@ static socket_handle_t create_ipc_server_socket(void)
 #else
     socket_handle_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sock < 0)
-    {
-        perror("[IPC] socket");
         return IPC_INVALID_SOCKET;
-    }
     set_nonblocking(sock);
 
     struct sockaddr_un addr;
@@ -792,13 +770,11 @@ static socket_handle_t create_ipc_server_socket(void)
 
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-        perror("[IPC] bind");
         socket_close(sock);
         return IPC_INVALID_SOCKET;
     }
     if (listen(sock, IPC_LISTEN_BACKLOG) < 0)
     {
-        perror("[IPC] listen");
         socket_close(sock);
         return IPC_INVALID_SOCKET;
     }
@@ -817,16 +793,12 @@ static socket_handle_t connect_to_ipc_server(void)
             return IPC_INVALID_SOCKET;
         socket_handle_t sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (sock == IPC_INVALID_SOCKET)
-        {
-            perror("[IPC] socket");
             return IPC_INVALID_SOCKET;
-        }
 
         const char *port_str = getenv(IPC_ENDPOINT_ENV);
         if (!port_str || !port_str[0])
         {
             socket_close(sock);
-            fprintf(stderr, "[IPC] missing %s\n", IPC_ENDPOINT_ENV);
             return IPC_INVALID_SOCKET;
         }
 
@@ -838,10 +810,7 @@ static socket_handle_t connect_to_ipc_server(void)
 #else
         socket_handle_t sock = socket(AF_UNIX, SOCK_STREAM, 0);
         if (sock < 0)
-        {
-            perror("[IPC] socket");
             return IPC_INVALID_SOCKET;
-        }
 
         struct sockaddr_un addr;
         memset(&addr, 0, sizeof(addr));
@@ -857,7 +826,6 @@ static socket_handle_t connect_to_ipc_server(void)
         struct timespec ts = {0, 50000000}; /* 50ms */
         nanosleep(&ts, NULL);
     }
-    fprintf(stderr, "[IPC] connect failed after retries\n");
     return IPC_INVALID_SOCKET;
 }
 
@@ -1631,6 +1599,20 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
         mb_id_t wk = moonbit_find_wk_webview(content_view, msgsend);
         if (wk)
         {
+            mb_id_t ns_number = moonbit_objc_get_class("NSNumber");
+            mb_sel_t sel_number_with_bool = moonbit_sel_register_name("numberWithBool:");
+            mb_id_t bool_no = (ns_number && sel_number_with_bool) ? ((mb_objc_msgsend_int_arg_ret_t)msgsend)(ns_number, sel_number_with_bool, 0) : NULL;
+            mb_id_t key_draws_background = moonbit_nsstring_from_utf8("drawsBackground", msgsend);
+            mb_sel_t sel_set_value_for_key = moonbit_sel_register_name("setValue:forKey:");
+            if (bool_no && key_draws_background && sel_set_value_for_key)
+            {
+                ((mb_objc_msgsend_id_id_arg_t)msgsend)(wk, sel_set_value_for_key, bool_no, key_draws_background);
+                mb_id_t config = ((mb_objc_msgsend_id_ret_t)msgsend)(wk, moonbit_sel_register_name("configuration"));
+                if (config)
+                    ((mb_objc_msgsend_id_id_arg_t)msgsend)(config, sel_set_value_for_key, bool_no, key_draws_background);
+            }
+            if (sel_set_background && clear_ns)
+                ((mb_objc_msgsend_id_arg_t)msgsend)(wk, sel_set_background, clear_ns);
             mb_sel_t sel_responds = moonbit_sel_register_name("respondsToSelector:");
             mb_sel_t sel_set_under_page_background = moonbit_sel_register_name("setUnderPageBackgroundColor:");
             if (clear_ns && sel_responds && sel_set_under_page_background &&
@@ -2556,15 +2538,11 @@ MOONBIT_FFI_EXPORT int moonbit_wm_create_child_window(
     (void)width;
     (void)height;
     (void)parent_window_id;
-    fprintf(stderr, "[WM] moonbit_wm_create_child_window is not supported on WIN32; use spawn/connect flow instead\n");
     return -1;
 #else
     pid_t pid = fork();
     if (pid < 0)
-    {
-        perror("[WM] fork");
         return -1;
-    }
 
     if (pid == 0)
     {
@@ -2581,7 +2559,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_create_child_window(
         socket_handle_t sock = connect_to_ipc_server();
         if (sock == IPC_INVALID_SOCKET)
         {
-            fprintf(stderr, "[WM-child] IPC connect failed\n");
             exit(1);
         }
 
@@ -2599,7 +2576,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_create_child_window(
                                            0, 0, 0, 0, parent_window_id);
         if (wid < 0)
         {
-            fprintf(stderr, "[WM-child] create_window failed\n");
             exit(1);
         }
 
@@ -2638,7 +2614,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_create_child_window(
 MOONBIT_FFI_EXPORT int moonbit_wm_fork_process(void)
 {
 #ifdef _WIN32
-    fprintf(stderr, "[WM] moonbit_wm_fork_process is not supported on WIN32; use moonbit_wm_spawn_process instead\n");
     return -1;
 #else
     if (!g_wm.initialized)
@@ -2649,10 +2624,7 @@ MOONBIT_FFI_EXPORT int moonbit_wm_fork_process(void)
 
     pid_t pid = fork();
     if (pid < 0)
-    {
-        perror("[WM] fork");
         return -1;
-    }
 
     if (pid == 0)
     {
@@ -2668,7 +2640,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_fork_process(void)
         socket_handle_t sock = connect_to_ipc_server();
         if (sock == IPC_INVALID_SOCKET)
         {
-            fprintf(stderr, "[WM-child] IPC connect failed\n");
             exit(1);
         }
 
@@ -2678,7 +2649,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_fork_process(void)
 
         if (moonbit_wm_init(0) != 0)
         {
-            fprintf(stderr, "[WM-child] init failed\n");
             exit(1);
         }
 
@@ -2725,7 +2695,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_spawn_process(
             &si,
             &pi))
     {
-        fprintf(stderr, "[WM] CreateProcess failed: %lu\n", (unsigned long)GetLastError());
         return -1;
     }
 
@@ -2741,11 +2710,7 @@ MOONBIT_FFI_EXPORT int moonbit_wm_spawn_process(
 
     int rc = posix_spawn(&pid, program, NULL, NULL, argv, environ);
     if (rc != 0)
-    {
-        errno = rc;
-        perror("[WM] posix_spawn");
         return -1;
-    }
     return (int)pid;
 #endif
 }
@@ -2763,10 +2728,7 @@ MOONBIT_FFI_EXPORT int moonbit_wm_connect_child_process(void)
 
     socket_handle_t sock = connect_to_ipc_server();
     if (sock == IPC_INVALID_SOCKET)
-    {
-        fprintf(stderr, "[WM-child] IPC connect failed\n");
         return -1;
-    }
 
     g_ipc_client.socket_fd = sock;
     g_ipc_client.connected = 1;
@@ -2972,16 +2934,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_ipc_send(
                 fd = g_remote_window_fds[target_window_id];
             pthread_mutex_unlock(&g_wm.mutex);
             rc = (fd != IPC_INVALID_SOCKET) ? ipc_send(fd, &msg) : -1;
-            if (rc != 0)
-            {
-                /* 定向发送失败通常意味着目标窗口尚未注册（fd 表无映射），
-                 * 或连接已断开被清除；保留一条诊断日志便于排查。 */
-                fprintf(stderr,
-                        "[WM] ipc_send failed: target=%d type=%d sub=%s\n",
-                        target_window_id, message_type,
-                        msg.subtype);
-                fflush(stderr);
-            }
         }
     }
 

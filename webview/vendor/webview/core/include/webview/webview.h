@@ -3036,6 +3036,9 @@ private:
 
     auto config = objc::autoreleased(
         objc::msg_send<id>("WKWebViewConfiguration"_cls, "new"_sel));
+    objc::msg_send<id>(config, "setValue:forKey:"_sel,
+                       objc::msg_send<id>("NSNumber"_cls, "numberWithBool:"_sel, NO),
+                       "drawsBackground"_str);
 
     for (const auto &mapping : get_custom_protocol_mappings(this)) {
       auto handler = create_url_scheme_handler(this);
