@@ -1,0 +1,14 @@
+examples/custom_window/main.mbt
+  h_c7606fb8f0c97c 44-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "bc0e1ca7697e02c5cf5bd4944a96850c2d5bc3b2",
+  "prompts": {},
+  "humans": {
+    "h_c7606fb8f0c97c": {
+      "author": "oboard <oboard@outlook.com>"
+    }
+  }
+}
