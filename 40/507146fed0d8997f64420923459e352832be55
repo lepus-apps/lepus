@@ -1,0 +1,20 @@
+cli/lepus/moon.pkg
+  h_c7606fb8f0c97c 8
+cli/core/moon.pkg
+  h_c7606fb8f0c97c 12-13
+cli/moon.pkg
+  h_c7606fb8f0c97c 8
+lepus.mbt
+  h_c7606fb8f0c97c 34-39,43-45,211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "40507146fed0d8997f64420923459e352832be55",
+  "prompts": {},
+  "humans": {
+    "h_c7606fb8f0c97c": {
+      "author": "oboard <oboard@outlook.com>"
+    }
+  }
+}
