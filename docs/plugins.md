@@ -90,7 +90,7 @@ The root package installs these automatically for multi-window applications:
 
 Not every official plugin is a production native implementation. Some are Web
 API adapters, examples, in-memory/local implementations, or explicit
-unsupported placeholders. Read [PLUGINS.md](../PLUGINS.md) before use.
+unsupported placeholders. Read the [Plugin Matrix](/plugin-matrix) before use.
 
 Treat frontend input as untrusted. In particular, restrict filesystem paths,
 process/shell commands, URLs, uploaded data, and SQL to the minimum capability

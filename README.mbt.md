@@ -202,6 +202,14 @@ moon test --target native
 moon info && moon fmt
 ```
 
+Documentation site:
+
+```sh
+npm install
+npm run docs:dev
+npm run docs:build
+```
+
 Run CLI help with:
 
 ```sh

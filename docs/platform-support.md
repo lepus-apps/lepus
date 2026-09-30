@@ -41,7 +41,7 @@ Official plugins fall into three groups:
 3. Explicit placeholders that return unsupported results until a native backend
    is implemented.
 
-See [Plugin Matrix](../PLUGINS.md) for the status of every plugin.
+See the [Plugin Matrix](/plugin-matrix) for the status of every plugin.
 
 ## Runtime libraries
 

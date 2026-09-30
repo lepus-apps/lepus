@@ -3,3 +3,6 @@ _build/
 .mooncakes/
 .moonagent/
 .joycode
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
