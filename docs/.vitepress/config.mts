@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   lang: 'en-US',
   title: 'Lepus',
   description: 'A native desktop application toolkit for MoonBit.',
@@ -10,8 +11,21 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#7c3aed' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
   ],
+  mermaid: {
+    theme: 'default',
+  },
+  vite: {
+    optimizeDeps: {
+      include: ['fastdom', 'fastdom/extensions/fastdom-promised.js'],
+    },
+  },
   markdown: {
     lineNumbers: true,
+    theme: {
+      light: 'github-light',
+      dark: 'dracula',
+    },
+    languages: [import('./moonbit.tmLanguage.json') as any],
   },
   themeConfig: {
     logo: '/logo.svg',
@@ -49,6 +63,9 @@ export default defineConfig({
     search: {
       provider: 'local',
     },
+    editLink: {
+      pattern: 'https://github.com/lepus-apps/lepus/edit/main/docs/:path',
+    },
     outline: {
       label: 'On this page',
       level: [2, 3],
@@ -62,4 +79,4 @@ export default defineConfig({
       copyright: 'Copyright © Lepus contributors',
     },
   },
-})
+}))

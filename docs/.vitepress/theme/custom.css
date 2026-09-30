@@ -22,3 +22,105 @@
   display: table;
   width: 100%;
 }
+
+body {
+  background: #fff;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.14), transparent 34rem),
+    linear-gradient(180deg, #080817 0%, #0d1022 46%, #080817 100%);
+}
+
+.VPNavBar {
+  border-bottom: 1px solid rgba(124, 58, 237, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.VPNavBar.has-sidebar .content,
+.VPNavBar:not(.has-sidebar) {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.dark .VPNavBar.has-sidebar .content,
+.dark .VPNavBar:not(.has-sidebar) {
+  background: rgba(8, 8, 23, 0.78);
+}
+
+.VPNavBarTitle .logo {
+  border-radius: 9px;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.35), 0 0 22px rgba(37, 99, 235, 0.24);
+}
+
+.VPHome {
+  overflow: hidden;
+}
+
+.VPHero {
+  position: relative;
+  padding-top: 74px !important;
+}
+
+.VPHero::before {
+  position: absolute;
+  inset: -120px 0 auto;
+  z-index: -2;
+  height: 720px;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 18% 22%, rgba(124, 58, 237, 0.14), transparent 13rem),
+    radial-gradient(circle at 76% 18%, rgba(37, 99, 235, 0.12), transparent 15rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.35) 72%, transparent);
+}
+
+.dark .VPHero::before {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(124, 58, 237, 0.2), transparent 13rem),
+    radial-gradient(circle at 76% 18%, rgba(37, 99, 235, 0.18), transparent 15rem),
+    linear-gradient(180deg, rgba(8, 8, 23, 0.96), rgba(8, 8, 23, 0.4) 72%, transparent);
+}
+
+.VPHero .name {
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.18));
+}
+
+.VPHero .tagline {
+  max-width: 620px;
+  font-size: 20px;
+}
+
+.VPHero .image-src {
+  width: min(340px, 76vw);
+  max-height: none;
+  border-radius: 34px;
+  filter: drop-shadow(0 22px 70px rgba(37, 99, 235, 0.25));
+}
+
+.VPHero .VPButton,
+.VPFeature,
+.vp-doc div[class*="language-"],
+.VPHome div[class*="language-"] {
+  border-radius: 12px;
+}
+
+.VPFeature {
+  background: linear-gradient(180deg, var(--vp-c-bg-soft), color-mix(in srgb, var(--vp-c-bg-soft) 78%, transparent));
+}
+
+.vp-doc div[class*="language-"],
+.VPHome div[class*="language-"] {
+  border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.14);
+}
+
+@media (max-width: 640px) {
+  .VPHero {
+    padding-top: 38px !important;
+  }
+
+  .VPHero .tagline {
+    font-size: 17px;
+  }
+}
