@@ -38,9 +38,10 @@ pub fn EventBus::new(window_ids : Map[String, Int]) -> EventBus {
 ///|
 /// Returns the window id for a label, or `-1` if unknown.
 pub fn EventBus::window_id(self : EventBus, label : String) -> Int {
-  match self.window_ids.get(label) {
-    Some(id) => id
-    None => -1
+  if self.window_ids.get(label) is Some(id) {
+    id
+  } else {
+    -1
   }
 }
 
@@ -50,12 +51,7 @@ pub fn EventBus::window_id(self : EventBus, label : String) -> Int {
 fn event_eval_js(event : String, payload : Json) -> String {
   let event_literal = Json::string(event).stringify()
   let payload_json = payload.stringify()
-  "window.dispatchEvent(new CustomEvent(\"lepus_event\",{detail:" +
-  "{\"event\":" +
-  event_literal +
-  ",\"payload\":" +
-  payload_json +
-  "}}));"
+  "window.dispatchEvent(new CustomEvent(\"lepus_event\",{detail:{\"event\":\{event_literal},\"payload\":\{payload_json}}}));"
 }
 
 ///|
@@ -81,7 +77,7 @@ pub fn EventBus::plugin(
 
 ///|
 test "event eval snippet embeds event and payload as a JS object literal" {
-  let js = event_eval_js("greet", Json::string("hi"))
+  let js = event_eval_js("greet", "hi")
   assert_eq(
     js, "window.dispatchEvent(new CustomEvent(\"lepus_event\",{detail:{\"event\":\"greet\",\"payload\":\"hi\"}}));",
   )

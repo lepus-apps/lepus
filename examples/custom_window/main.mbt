@@ -4,8 +4,14 @@ async fn main {
     title="Lepus Custom Window",
     width=980,
     height=620,
-    frameless=true,
+    decorations=false,
+    title_bar_style=@lepus.TitleBarStyle::Overlay,
+    hidden_title=true,
     transparent=true,
+    shadow=false,
+    always_on_top=false,
+    minimizable=true,
+    maximizable=true,
     devtools=true,
     source=@lepus.Source::html(
       (
@@ -153,7 +159,9 @@ async fn main {
         #|      <div class="content">
         #|        <h1>Custom Title Bar</h1>
         #|        <p> 
-        #|          This window is started with <code>frameless=true</code>. 
+        #|          This window is started with <code>decorations=false</code>,
+        #|          <code>title_bar_style=Overlay</code>, <code>hidden_title=true</code>
+        #|          and <code>transparent=true</code>.
         #|          Drag the top bar area marked by <code>.lepus-drag</code>; 
         #|          interactive controls stay clickable with <code>.lepus-no-drag</code>.
         #|        </p>

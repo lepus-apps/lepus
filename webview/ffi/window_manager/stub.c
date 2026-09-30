@@ -1478,13 +1478,20 @@ static void moonbit_macos_activate_app(void)
 
 MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
     int window_id,
-    int frameless,
+    int decorations,
     int resizable,
     int closeable,
+    int minimizable,
+    int maximizable,
     int always_on_top,
+    int always_on_bottom,
     int transparent,
+    int shadow,
+    int skip_taskbar,
+    int visible_on_all_workspaces,
     int title_bar_style,
-    int title_bar_overlay)
+    int title_bar_overlay,
+    int hidden_title)
 {
     pthread_mutex_lock(&g_wm.mutex);
     webview_window_t *w = find_window(window_id);
@@ -1492,13 +1499,17 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
     if (!w || !w->handle)
         return -1;
 
+    int frameless = !decorations;
+
 #ifdef _WIN32
     HWND hwnd = (HWND)moonbit_window_native_handle(w);
     if (!hwnd)
         return -1;
-    int hidden_title_bar = title_bar_style == 1;
+    (void)hidden_title;           /* no Win32 equivalent */
+    (void)visible_on_all_workspaces; /* no Win32 equivalent */
+    (void)shadow;                 /* Win32 drops the shadow only via DWM/none */
     LONG style = GetWindowLong(hwnd, GWL_STYLE);
-    if (frameless && !title_bar_overlay && !hidden_title_bar)
+    if (frameless && !title_bar_overlay && title_bar_style != 2)
         style &= ~(WS_CAPTION | WS_THICKFRAME);
     else
         style |= WS_CAPTION;
@@ -1510,12 +1521,24 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
         style |= (WS_THICKFRAME | WS_MAXIMIZEBOX);
     else
         style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
+    if (minimizable)
+        style |= WS_MINIMIZEBOX;
+    else
+        style &= ~WS_MINIMIZEBOX;
+    if (maximizable)
+        style |= WS_MAXIMIZEBOX;
+    else
+        style &= ~WS_MAXIMIZEBOX;
     SetWindowLong(hwnd, GWL_STYLE, style);
     LONG exstyle = GetWindowLong(hwnd, GWL_EXSTYLE);
     if (transparent)
         exstyle |= WS_EX_LAYERED;
     else
         exstyle &= ~WS_EX_LAYERED;
+    if (skip_taskbar)
+        exstyle |= WS_EX_TOOLWINDOW;
+    else
+        exstyle &= ~WS_EX_TOOLWINDOW;
     SetWindowLong(hwnd, GWL_EXSTYLE, exstyle);
     if (transparent)
         SetLayeredWindowAttributes(hwnd, 0, 235, LWA_ALPHA);
@@ -1523,7 +1546,7 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
         SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
     SetWindowPos(
         hwnd,
-        always_on_top ? HWND_TOPMOST : HWND_NOTOPMOST,
+        always_on_top ? HWND_TOPMOST : (always_on_bottom ? HWND_BOTTOM : HWND_NOTOPMOST),
         0,
         0,
         0,
@@ -1535,7 +1558,9 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
     void *msgsend = moonbit_objc_msgsend_symbol();
     if (!ns_window || !msgsend)
         return -1;
-    int hidden_title_bar = title_bar_style == 1;
+    (void)skip_taskbar; /* macOS hides via activation policy, not per-window */
+    int overlay_title_bar = title_bar_style == 2; /* Overlay */
+    int transparent_title_bar = title_bar_style == 0;  /* Transparent */
     mb_sel_t sel_style_mask = moonbit_sel_register_name("styleMask");
     mb_sel_t sel_set_style_mask = moonbit_sel_register_name("setStyleMask:");
     if (!sel_style_mask || !sel_set_style_mask)
@@ -1546,8 +1571,9 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
     const unsigned long NSWindowStyleMaskMiniaturizable = 1UL << 2;
     const unsigned long NSWindowStyleMaskResizable = 1UL << 3;
     const unsigned long NSWindowStyleMaskFullSizeContentView = 1UL << 15;
-    if (hidden_title_bar)
+    if (overlay_title_bar)
     {
+        /* Overlay: content extends below the native title bar. */
         style |= (NSWindowStyleMaskTitled | NSWindowStyleMaskMiniaturizable);
         style |= NSWindowStyleMaskFullSizeContentView;
     }
@@ -1569,17 +1595,38 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
         style |= NSWindowStyleMaskResizable;
     else
         style &= ~NSWindowStyleMaskResizable;
+    if (minimizable)
+        style |= NSWindowStyleMaskMiniaturizable;
+    else
+        style &= ~NSWindowStyleMaskMiniaturizable;
     ((mb_objc_msgsend_u64_arg_t)msgsend)((mb_id_t)ns_window, sel_set_style_mask, style);
-    if (frameless || hidden_title_bar || title_bar_overlay)
+    /* `maximizable` maps to the zoom (green) button being enabled. */
+    mb_sel_t sel_standard_button = moonbit_sel_register_name("standardWindowButton:");
+    if (sel_standard_button)
     {
-        ((mb_objc_msgsend_long_arg_t)msgsend)((mb_id_t)ns_window, moonbit_sel_register_name("setTitleVisibility:"), 1L);
-        ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, moonbit_sel_register_name("setTitlebarAppearsTransparent:"), 1);
+        mb_id_t zoom_btn = ((mb_objc_msgsend_int_arg_ret_t)msgsend)((mb_id_t)ns_window, sel_standard_button, 2);
+        if (zoom_btn)
+            ((mb_objc_msgsend_u64_arg_t)msgsend)(
+                zoom_btn,
+                moonbit_sel_register_name("setEnabled:"),
+                maximizable ? 1UL : 0UL);
+    }
+    /* `visible_on_all_workspaces` → NSWindowCollectionBehaviorCanJoinAllSpaces. */
+    mb_sel_t sel_set_collection_behavior = moonbit_sel_register_name("setCollectionBehavior:");
+    if (visible_on_all_workspaces && sel_set_collection_behavior)
+        ((mb_objc_msgsend_u64_arg_t)msgsend)((mb_id_t)ns_window, sel_set_collection_behavior, 1UL << 0);
+    if (frameless || overlay_title_bar || transparent_title_bar || title_bar_overlay)
+    {
+        ((mb_objc_msgsend_long_arg_t)msgsend)((mb_id_t)ns_window, moonbit_sel_register_name("setTitlebarAppearsTransparent:"), 1);
         ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, moonbit_sel_register_name("setMovableByWindowBackground:"), 1);
     }
+    mb_sel_t sel_set_title_visibility = moonbit_sel_register_name("setTitleVisibility:");
+    if (sel_set_title_visibility)
+        ((mb_objc_msgsend_long_arg_t)msgsend)((mb_id_t)ns_window, sel_set_title_visibility, hidden_title ? 1L : 0L);
     ((mb_objc_msgsend_long_arg_t)msgsend)(
         (mb_id_t)ns_window,
         moonbit_sel_register_name("setLevel:"),
-        always_on_top ? 3L : 0L);
+        always_on_top ? 3L : (always_on_bottom ? -1L : 0L));
     mb_sel_t sel_set_opaque = moonbit_sel_register_name("setOpaque:");
     if (sel_set_opaque)
         ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, sel_set_opaque, transparent ? 0 : 1);
@@ -1647,20 +1694,26 @@ MOONBIT_FFI_EXPORT int moonbit_wm_set_window_customization(
             view = sel_superview ? ((mb_objc_msgsend_id_ret_t)msgsend)(view, sel_superview) : NULL;
             guard_count++;
         }
-        // Drop the system drop shadow.
-        mb_sel_t sel_set_has_shadow = moonbit_sel_register_name("setHasShadow:");
-        if (sel_set_has_shadow)
-            ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, sel_set_has_shadow, 0);
     }
+    mb_sel_t sel_set_has_shadow = moonbit_sel_register_name("setHasShadow:");
+    if (sel_set_has_shadow)
+        ((mb_objc_msgsend_int_arg_t)msgsend)((mb_id_t)ns_window, sel_set_has_shadow, shadow ? 1 : 0);
     return 0;
 #else
     (void)frameless;
     (void)resizable;
     (void)closeable;
+    (void)minimizable;
+    (void)maximizable;
     (void)always_on_top;
+    (void)always_on_bottom;
     (void)transparent;
+    (void)shadow;
+    (void)skip_taskbar;
+    (void)visible_on_all_workspaces;
     (void)title_bar_style;
     (void)title_bar_overlay;
+    (void)hidden_title;
     return 0;
 #endif
 }
@@ -1858,8 +1911,6 @@ MOONBIT_FFI_EXPORT int moonbit_wm_toggle_maximize_window(int window_id)
 }
 
 /*
- * 将窗口带到最前并获得键盘焦点（对应 Tauri 的 Window::set_focus / tao 的
- * set_focus）：
  * - macOS：先激活本进程为前台 app，再对窗口执行 makeKeyAndOrderFront:。
  * - Windows：SetForegroundWindow（最小化时先 SW_RESTORE）。
  * - Linux：未实现，返回 -1（与本文件其他窗口控制导出一致）。

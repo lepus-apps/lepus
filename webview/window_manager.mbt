@@ -39,12 +39,103 @@ pub(all) enum IpcMessageType {
 pub fn IpcMessageType::int(self : IpcMessageType) -> Int = "%identity"
 
 ///|
+/// macOS title-bar style, mirrors Tauri 2's `titleBarStyle`. On other
+/// platforms it selects the closest native title-bar behavior.
 pub(all) enum TitleBarStyle {
-  /// Title bar style: default native title bar.
-  Default = 0
-  /// Title bar style: hidden title bar (macOS keeps traffic lights).
-  Hidden = 1
+  /// Visible: normal native title bar (default).
+  Visible = 0
+  /// Transparent: native title bar rendered transparent, still present.
+  Transparent = 1
+  /// Overlay: content extends underneath the native title bar (macOS keeps
+  /// the traffic-light buttons); the typical starting point for a custom
+  /// title bar.
+  Overlay = 2
 } derive(Debug, Eq)
+
+///|
+/// Native window style configuration, aligned with the subset of Tauri 2's
+/// `WindowConfig` that maps onto a desktop window's native chrome.
+///
+/// Every field has a Tauri-compatible default; build one by overriding only
+/// what you need. `decorations = false` is the frameless/borderless mode
+/// (`frameless` in earlier Lepus versions).
+pub struct WindowOptions {
+  /// Whether the window keeps the OS-provided chrome (title bar + border).
+  /// `false` produces a frameless window.
+  decorations : Bool
+  /// Whether the user may resize the window.
+  resizable : Bool
+  /// Whether the window's close button is enabled.
+  closeable : Bool
+  /// Whether the window's minimize button is enabled.
+  minimizable : Bool
+  /// Whether the window's maximize/zoom button is enabled.
+  maximizable : Bool
+  /// Keep the window above all normal windows.
+  always_on_top : Bool
+  /// Keep the window below all normal windows.
+  always_on_bottom : Bool
+  /// Window background is transparent (requires page background support).
+  transparent : Bool
+  /// Draw the system drop shadow.
+  shadow : Bool
+  /// Hide the window from the taskbar / Dock window list.
+  skip_taskbar : Bool
+  /// Show the window on every workspace (macOS/Linux).
+  visible_on_all_workspaces : Bool
+  /// Native title-bar style (macOS `titleBarStyle`).
+  title_bar_style : TitleBarStyle
+  /// Let window content extend under the title bar (custom title bars).
+  title_bar_overlay : Bool
+  /// Hide only the title text while keeping the title bar.
+  hidden_title : Bool
+}
+
+///|
+/// Tauri-compatible defaults for [`WindowOptions`].
+pub fn WindowOptions::default() -> WindowOptions {
+  {
+    decorations: true,
+    resizable: true,
+    closeable: true,
+    minimizable: true,
+    maximizable: true,
+    always_on_top: false,
+    always_on_bottom: false,
+    transparent: false,
+    shadow: true,
+    skip_taskbar: false,
+    visible_on_all_workspaces: false,
+    title_bar_style: Visible,
+    title_bar_overlay: false,
+    hidden_title: false,
+  }
+}
+
+///|
+test "WindowOptions::default matches Tauri window defaults" {
+  let options = WindowOptions::default()
+  assert_true(options.decorations)
+  assert_true(options.resizable)
+  assert_true(options.closeable)
+  assert_true(options.minimizable)
+  assert_true(options.maximizable)
+  assert_false(options.always_on_top)
+  assert_false(options.always_on_bottom)
+  assert_false(options.transparent)
+  assert_true(options.shadow)
+  assert_false(options.skip_taskbar)
+  assert_false(options.visible_on_all_workspaces)
+  assert_eq(options.title_bar_style, TitleBarStyle::Visible)
+  assert_false(options.title_bar_overlay)
+  assert_false(options.hidden_title)
+}
+
+///|
+test "wm_flag encodes booleans as the native 1/0 layout" {
+  assert_eq(wm_flag(true), 1)
+  assert_eq(wm_flag(false), 0)
+}
 
 ///|
 /// Thin high-level wrapper over native window manager (stub.c wm_* APIs).
@@ -304,52 +395,45 @@ pub fn WindowManager::destroy_window(
 }
 
 ///|
-/// Apply native custom-window style flags.
+/// Encode a boolean flag as the `1`/`0` int the native layer expects.
+fn wm_flag(value : Bool) -> Int {
+  if value {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+/// Flatten `options` into the positional FFI call.
+fn wm_apply_window_options(window_id : Int, options : WindowOptions) -> Int {
+  wm_set_window_customization(
+    window_id,
+    wm_flag(options.decorations),
+    wm_flag(options.resizable),
+    wm_flag(options.closeable),
+    wm_flag(options.minimizable),
+    wm_flag(options.maximizable),
+    wm_flag(options.always_on_top),
+    wm_flag(options.always_on_bottom),
+    wm_flag(options.transparent),
+    wm_flag(options.shadow),
+    wm_flag(options.skip_taskbar),
+    wm_flag(options.visible_on_all_workspaces),
+    options.title_bar_style,
+    wm_flag(options.title_bar_overlay),
+    wm_flag(options.hidden_title),
+  )
+}
+
+///|
+/// Apply the native window style described by `options`.
 pub fn WindowManager::set_window_customization(
   _self : WindowManager,
   window_id : Int,
-  frameless : Bool,
-  resizable : Bool,
-  closeable : Bool,
-  always_on_top : Bool,
-  transparent : Bool,
-  title_bar_style : TitleBarStyle,
-  title_bar_overlay : Bool,
+  options : WindowOptions,
 ) -> Int {
-  wm_set_window_customization(
-    window_id,
-    if frameless {
-      1
-    } else {
-      0
-    },
-    if resizable {
-      1
-    } else {
-      0
-    },
-    if closeable {
-      1
-    } else {
-      0
-    },
-    if always_on_top {
-      1
-    } else {
-      0
-    },
-    if transparent {
-      1
-    } else {
-      0
-    },
-    title_bar_style,
-    if title_bar_overlay {
-      1
-    } else {
-      0
-    },
-  )
+  wm_apply_window_options(window_id, options)
 }
 
 ///|

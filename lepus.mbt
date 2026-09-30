@@ -1,7 +1,12 @@
 ///|
-pub enum TitleBarStyle {
-  Default = 0
-  Hidden = 1
+/// macOS title-bar style
+pub(all) enum TitleBarStyle {
+  /// Normal native title bar (default).
+  Visible = 0
+  /// Native title bar rendered transparent, still present.
+  Transparent = 1
+  /// Content extends underneath the native title bar (custom title bars).
+  Overlay = 2
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
@@ -24,6 +29,7 @@ pub(all) enum Source {
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
+/// Window configuration
 pub struct WindowConfig {
   label : String
   title : String
@@ -31,12 +37,22 @@ pub struct WindowConfig {
   height : Int
   debug : Int
   devtools : Bool
-  frameless : Bool
+  /// Keep the OS-provided window chrome (title bar + border). `false` produces
+  /// a frameless window; `frameless` is kept as a back-compat alias.
+  decorations : Bool
   resizable : Bool
+  closeable : Bool
+  minimizable : Bool
+  maximizable : Bool
   always_on_top : Bool
+  always_on_bottom : Bool
   transparent : Bool
+  shadow : Bool
+  skip_taskbar : Bool
+  visible_on_all_workspaces : Bool
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
+  hidden_title : Bool
   traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
@@ -95,12 +111,21 @@ pub fn WindowConfig::new(
   height? : Int = 600,
   debug? : Int = 0,
   devtools? : Bool = false,
-  frameless? : Bool = false,
+  decorations? : Bool = true,
   resizable? : Bool = true,
+  closeable? : Bool = true,
+  minimizable? : Bool = true,
+  maximizable? : Bool = true,
   always_on_top? : Bool = false,
+  always_on_bottom? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = Default,
+  shadow? : Bool = true,
+  skip_taskbar? : Bool = false,
+  visible_on_all_workspaces? : Bool = false,
+  title_bar_style? : TitleBarStyle = Visible,
   title_bar_overlay? : Bool = false,
+  hidden_title? : Bool = false,
+  frameless? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
@@ -114,12 +139,20 @@ pub fn WindowConfig::new(
     height,
     debug,
     devtools,
-    frameless,
+    decorations: decorations && !frameless,
     resizable,
+    closeable,
+    minimizable,
+    maximizable,
     always_on_top,
+    always_on_bottom,
     transparent,
+    shadow,
+    skip_taskbar,
+    visible_on_all_workspaces,
     title_bar_style,
     title_bar_overlay,
+    hidden_title,
     traffic_light_position,
     position,
     hidden,
@@ -176,12 +209,21 @@ pub fn Window::Window(
   height? : Int = 600,
   debug? : Int = 0,
   devtools? : Bool = false,
-  frameless? : Bool = false,
+  decorations? : Bool = true,
   resizable? : Bool = true,
+  closeable? : Bool = true,
+  minimizable? : Bool = true,
+  maximizable? : Bool = true,
   always_on_top? : Bool = false,
+  always_on_bottom? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = Default,
+  shadow? : Bool = true,
+  skip_taskbar? : Bool = false,
+  visible_on_all_workspaces? : Bool = false,
+  title_bar_style? : TitleBarStyle = Visible,
   title_bar_overlay? : Bool = false,
+  hidden_title? : Bool = false,
+  frameless? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
@@ -197,12 +239,20 @@ pub fn Window::Window(
       height,
       debug,
       devtools,
-      frameless,
+      decorations: decorations && !frameless,
       resizable,
+      closeable,
+      minimizable,
+      maximizable,
       always_on_top,
+      always_on_bottom,
       transparent,
+      shadow,
+      skip_taskbar,
+      visible_on_all_workspaces,
       title_bar_style,
       title_bar_overlay,
+      hidden_title,
       traffic_light_position,
       position,
       hidden,
@@ -356,16 +406,24 @@ async fn build_single_process_windows(
       height=config.height,
       debug=config.debug,
       devtools=config.devtools,
-      frameless=config.frameless,
+      decorations=config.decorations,
       resizable=config.resizable,
-      closeable=true,
+      closeable=config.closeable,
+      minimizable=config.minimizable,
+      maximizable=config.maximizable,
       always_on_top=config.always_on_top,
+      always_on_bottom=config.always_on_bottom,
       transparent=config.transparent,
+      shadow=config.shadow,
+      skip_taskbar=config.skip_taskbar,
+      visible_on_all_workspaces=config.visible_on_all_workspaces,
       title_bar_style=match config.title_bar_style {
-        Default => Default
-        Hidden => Hidden
+        Visible => @webview.TitleBarStyle::Visible
+        Transparent => @webview.TitleBarStyle::Transparent
+        Overlay => @webview.TitleBarStyle::Overlay
       },
       title_bar_overlay=config.title_bar_overlay,
+      hidden_title=config.hidden_title,
       traffic_light_position=config.traffic_light_position,
       position=config.position,
       hidden=config.hidden,
@@ -385,8 +443,8 @@ async fn build_single_process_windows(
       webview.set_custom_protocol(scheme, root_dir)
     })
     // 平台标题栏支持
-    if config.frameless ||
-      config.title_bar_style == Hidden ||
+    if !config.decorations ||
+      config.title_bar_style != Visible ||
       config.title_bar_overlay {
       webview.enable_custom_titlebar_support()
     }
@@ -471,15 +529,24 @@ async fn build_runtime_window(
     height=config.height,
     debug=config.debug,
     devtools=config.devtools,
-    frameless=config.frameless,
+    decorations=config.decorations,
     resizable=config.resizable,
+    closeable=config.closeable,
+    minimizable=config.minimizable,
+    maximizable=config.maximizable,
     always_on_top=config.always_on_top,
+    always_on_bottom=config.always_on_bottom,
     transparent=config.transparent,
+    shadow=config.shadow,
+    skip_taskbar=config.skip_taskbar,
+    visible_on_all_workspaces=config.visible_on_all_workspaces,
     title_bar_style=match config.title_bar_style {
-      Default => Default
-      Hidden => Hidden
+      Visible => @webview.TitleBarStyle::Visible
+      Transparent => @webview.TitleBarStyle::Transparent
+      Overlay => @webview.TitleBarStyle::Overlay
     },
     title_bar_overlay=config.title_bar_overlay,
+    hidden_title=config.hidden_title,
     traffic_light_position=config.traffic_light_position,
     position=config.position,
     hidden=config.hidden,

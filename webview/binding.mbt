@@ -25,11 +25,18 @@ pub extern "C" fn wm_set_size(
 /// Apply native custom-window style flags.
 pub extern "C" fn wm_set_window_customization(
   window_id : Int,
-  frameless : Int,
+  decorations : Int,
   resizable : Int,
   closeable : Int,
+  minimizable : Int,
+  maximizable : Int,
   always_on_top : Int,
+  always_on_bottom : Int,
   transparent : Int,
+  shadow : Int,
+  skip_taskbar : Int,
+  visible_on_all_workspaces : Int,
   title_bar_style : TitleBarStyle,
   title_bar_overlay : Int,
+  hidden_title : Int,
 ) -> Int = "moonbit_wm_set_window_customization"

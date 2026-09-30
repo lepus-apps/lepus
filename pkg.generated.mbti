@@ -117,9 +117,10 @@ pub fn Source::to_json(Self) -> Json
 pub fn Source::to_repr(Self) -> @debug.Repr
 pub fn Source::zip(Bytes) -> Self raise
 
-pub enum TitleBarStyle {
-  Default
-  Hidden
+pub(all) enum TitleBarStyle {
+  Visible
+  Transparent
+  Overlay
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
 pub fn TitleBarStyle::equal(Self, Self) -> Bool
 pub fn TitleBarStyle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
@@ -134,7 +135,7 @@ pub struct Window {
   plugins : Array[@webview.Plugin]
 }
 #alias(new, deprecated)
-pub fn Window::Window(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, source? : Source, plugins? : Array[@webview.Plugin]) -> Self
+pub fn Window::Window(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, decorations? : Bool, resizable? : Bool, closeable? : Bool, minimizable? : Bool, maximizable? : Bool, always_on_top? : Bool, always_on_bottom? : Bool, transparent? : Bool, shadow? : Bool, skip_taskbar? : Bool, visible_on_all_workspaces? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, hidden_title? : Bool, frameless? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, source? : Source, plugins? : Array[@webview.Plugin]) -> Self
 pub fn Window::navigate(Self, String) -> Self
 pub async fn Window::run(Self) -> Unit
 pub fn Window::set_source(Self, Source) -> Self
@@ -146,12 +147,20 @@ pub struct WindowConfig {
   height : Int
   debug : Int
   devtools : Bool
-  frameless : Bool
+  decorations : Bool
   resizable : Bool
+  closeable : Bool
+  minimizable : Bool
+  maximizable : Bool
   always_on_top : Bool
+  always_on_bottom : Bool
   transparent : Bool
+  shadow : Bool
+  skip_taskbar : Bool
+  visible_on_all_workspaces : Bool
   title_bar_style : TitleBarStyle
   title_bar_overlay : Bool
+  hidden_title : Bool
   traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
@@ -164,7 +173,7 @@ pub fn WindowConfig::hash(Self) -> Int
 pub fn WindowConfig::hash_combine(Self, Hasher) -> Unit
 pub fn WindowConfig::label(Self) -> String
 pub fn WindowConfig::navigate(Self, String) -> Self
-pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, source? : Source) -> Self
+pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, decorations? : Bool, resizable? : Bool, closeable? : Bool, minimizable? : Bool, maximizable? : Bool, always_on_top? : Bool, always_on_bottom? : Bool, transparent? : Bool, shadow? : Bool, skip_taskbar? : Bool, visible_on_all_workspaces? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, hidden_title? : Bool, frameless? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, source? : Source) -> Self
 pub fn WindowConfig::not_equal(Self, Self) -> Bool
 pub fn WindowConfig::set_source(Self, Source) -> Self
 pub fn WindowConfig::to_json(Self) -> Json

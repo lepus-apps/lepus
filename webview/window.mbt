@@ -10,13 +10,7 @@ pub struct Window {
   debug : Int
   devtools : Bool
   child_arg : String
-  mut frameless : Bool
-  mut resizable : Bool
-  mut closeable : Bool
-  mut always_on_top : Bool
-  mut transparent : Bool
-  mut title_bar_style : TitleBarStyle
-  mut title_bar_overlay : Bool
+  mut options : WindowOptions
   mut traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
@@ -43,13 +37,21 @@ pub fn Window::Window(
   debug? : Int = 0,
   devtools? : Bool = false,
   child_arg? : String = "--moonbit-webview-child",
-  frameless? : Bool = false,
+  decorations? : Bool = true,
   resizable? : Bool = true,
   closeable? : Bool = true,
+  minimizable? : Bool = true,
+  maximizable? : Bool = true,
   always_on_top? : Bool = false,
+  always_on_bottom? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = Default,
+  shadow? : Bool = true,
+  skip_taskbar? : Bool = false,
+  visible_on_all_workspaces? : Bool = false,
+  title_bar_style? : TitleBarStyle = Visible,
   title_bar_overlay? : Bool = false,
+  hidden_title? : Bool = false,
+  frameless? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
@@ -65,13 +67,22 @@ pub fn Window::Window(
     debug,
     devtools,
     child_arg,
-    frameless,
-    resizable,
-    closeable,
-    always_on_top,
-    transparent,
-    title_bar_style,
-    title_bar_overlay,
+    options: {
+      decorations: decorations && !frameless,
+      resizable,
+      closeable,
+      minimizable,
+      maximizable,
+      always_on_top,
+      always_on_bottom,
+      transparent,
+      shadow,
+      skip_taskbar,
+      visible_on_all_workspaces,
+      title_bar_style,
+      title_bar_overlay,
+      hidden_title,
+    },
     traffic_light_position,
     position,
     hidden,
@@ -97,61 +108,14 @@ pub fn Window::label(self : Window) -> String {
 }
 
 ///|
-/// Applies native custom-window style flags.
+/// Applies the native window style described by `options`.
 pub fn Window::set_window_customization(
   self : Window,
-  frameless : Bool,
-  resizable : Bool,
-  closeable : Bool,
-  always_on_top : Bool,
-  transparent : Bool,
-  title_bar_style : TitleBarStyle,
-  title_bar_overlay : Bool,
+  options : WindowOptions,
 ) -> Unit {
-  self.frameless = frameless
-  self.resizable = resizable
-  self.closeable = closeable
-  self.always_on_top = always_on_top
-  self.transparent = transparent
-  self.title_bar_style = title_bar_style
-  self.title_bar_overlay = title_bar_overlay
+  self.options = options
   if self.runtime_window_id > 0 {
-    ignore(
-      wm_set_window_customization(
-        self.runtime_window_id,
-        if frameless {
-          1
-        } else {
-          0
-        },
-        if resizable {
-          1
-        } else {
-          0
-        },
-        if closeable {
-          1
-        } else {
-          0
-        },
-        if always_on_top {
-          1
-        } else {
-          0
-        },
-        if transparent {
-          1
-        } else {
-          0
-        },
-        title_bar_style,
-        if title_bar_overlay {
-          1
-        } else {
-          0
-        },
-      ),
-    )
+    ignore(wm_apply_window_options(self.runtime_window_id, options))
   }
 }
 
@@ -343,13 +307,20 @@ async fn Window::run_child_async(self : Window) -> Unit {
       height=self.height,
       debug=self.debug,
       devtools=self.devtools,
-      frameless=self.frameless,
-      resizable=self.resizable,
-      closeable=self.closeable,
-      always_on_top=self.always_on_top,
-      transparent=self.transparent,
-      title_bar_style=self.title_bar_style,
-      title_bar_overlay=self.title_bar_overlay,
+      decorations=self.options.decorations,
+      resizable=self.options.resizable,
+      closeable=self.options.closeable,
+      minimizable=self.options.minimizable,
+      maximizable=self.options.maximizable,
+      always_on_top=self.options.always_on_top,
+      always_on_bottom=self.options.always_on_bottom,
+      transparent=self.options.transparent,
+      shadow=self.options.shadow,
+      skip_taskbar=self.options.skip_taskbar,
+      visible_on_all_workspaces=self.options.visible_on_all_workspaces,
+      title_bar_style=self.options.title_bar_style,
+      title_bar_overlay=self.options.title_bar_overlay,
+      hidden_title=self.options.hidden_title,
       traffic_light_position=self.traffic_light_position,
       position=self.position,
       hidden=self.hidden,
@@ -372,12 +343,12 @@ async fn Window::run_child_async(self : Window) -> Unit {
       webview.set_custom_protocol(scheme, root_dir)
     })
     self.install_child_plugins(webview, wm)
-    if self.frameless ||
-      self.title_bar_style == Hidden ||
-      self.title_bar_overlay {
+    if !self.options.decorations ||
+      self.options.title_bar_style != Visible ||
+      self.options.title_bar_overlay {
       webview.enable_custom_titlebar_support()
     }
-    if self.transparent {
+    if self.options.transparent {
       webview.enable_transparent_background_support()
     }
     if self.traffic_light_position.0 >= 0 && self.traffic_light_position.1 >= 0 {
@@ -619,7 +590,6 @@ pub fn Window::hide(self : Window) -> Unit {
 
 ///|
 /// Bring the native window to front and focus it. On macOS this also activates
-/// the owning process as the foreground app (Tauri `Window::set_focus` parity).
 pub fn Window::focus(self : Window) -> Unit {
   let window_id = self.require_runtime_window_id()
   ignore(@window_manager.wm_focus_window(window_id))

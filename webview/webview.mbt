@@ -69,19 +69,27 @@ fn log(level : Int, msg : String) -> Unit {
 /// `navigate/set_html/eval/init`) will be routed through `wm_*` APIs.
 pub fn[X] WebView::new_managed(
   task_group : @async.TaskGroup[X],
-  title? : String = "MoonBit WebView",
+  title? : String = "",
   url? : String = "",
   width? : Int = 800,
   height? : Int = 600,
   debug? : Int = 0,
   devtools? : Bool = false,
-  frameless? : Bool = false,
+  decorations? : Bool = true,
   resizable? : Bool = true,
   closeable? : Bool = true,
+  minimizable? : Bool = true,
+  maximizable? : Bool = true,
   always_on_top? : Bool = false,
+  always_on_bottom? : Bool = false,
   transparent? : Bool = false,
-  title_bar_style? : TitleBarStyle = Default,
+  shadow? : Bool = true,
+  skip_taskbar? : Bool = false,
+  visible_on_all_workspaces? : Bool = false,
+  title_bar_style? : TitleBarStyle = Visible,
   title_bar_overlay? : Bool = false,
+  hidden_title? : Bool = false,
+  frameless? : Bool = false,
   traffic_light_position? : (Int, Int) = (-1, -1),
   position? : (Int, Int) = (-1, -1),
   hidden? : Bool = false,
@@ -109,42 +117,23 @@ pub fn[X] WebView::new_managed(
   if devtools {
     ignore(@window_manager.wm_set_devtools(window_id, 1))
   }
-  ignore(
-    wm_set_window_customization(
-      window_id,
-      if frameless {
-        1
-      } else {
-        0
-      },
-      if resizable {
-        1
-      } else {
-        0
-      },
-      if closeable {
-        1
-      } else {
-        0
-      },
-      if always_on_top {
-        1
-      } else {
-        0
-      },
-      if transparent {
-        1
-      } else {
-        0
-      },
-      title_bar_style,
-      if title_bar_overlay {
-        1
-      } else {
-        0
-      },
-    ),
-  )
+  let options : WindowOptions = {
+    decorations: decorations && !frameless,
+    resizable,
+    closeable,
+    minimizable,
+    maximizable,
+    always_on_top,
+    always_on_bottom,
+    transparent,
+    shadow,
+    skip_taskbar,
+    visible_on_all_workspaces,
+    title_bar_style,
+    title_bar_overlay,
+    hidden_title,
+  }
+  ignore(wm_apply_window_options(window_id, options))
   if traffic_light_position.0 >= 0 && traffic_light_position.1 >= 0 {
     ignore(
       @window_manager.wm_set_traffic_light_position(
@@ -160,7 +149,6 @@ pub fn[X] WebView::new_managed(
   if hidden {
     ignore(@window_manager.wm_set_visibility(window_id, 0))
   } else if focused {
-    // 与 Tauri window 配置 `focused`（默认 true）一致：
     // 新窗口创建后激活 app 并置顶获得键盘焦点；
     // focused=false 的窗口只由 webview 库自身排到最前，不抢焦点。
     ignore(@window_manager.wm_focus_window(window_id))
@@ -312,53 +300,12 @@ pub fn[X] WebView::set_size(
 }
 
 ///|
-/// Applies native custom-window style flags at runtime.
+/// Applies the native window style described by `options` at runtime.
 pub fn[X] WebView::set_window_customization(
   self : WebView[X],
-  frameless : Bool,
-  resizable : Bool,
-  closeable : Bool,
-  always_on_top : Bool,
-  transparent : Bool,
-  title_bar_style : TitleBarStyle,
-  title_bar_overlay : Bool,
+  options : WindowOptions,
 ) -> Unit {
-  ignore(
-    wm_set_window_customization(
-      self.window_id,
-      if frameless {
-        1
-      } else {
-        0
-      },
-      if resizable {
-        1
-      } else {
-        0
-      },
-      if closeable {
-        1
-      } else {
-        0
-      },
-      if always_on_top {
-        1
-      } else {
-        0
-      },
-      if transparent {
-        1
-      } else {
-        0
-      },
-      title_bar_style,
-      if title_bar_overlay {
-        1
-      } else {
-        0
-      },
-    ),
-  )
+  ignore(wm_apply_window_options(self.window_id, options))
 }
 
 ///|

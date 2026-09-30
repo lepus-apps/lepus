@@ -21,7 +21,7 @@ pub fn window_controls_plugin(Int) -> Plugin
 
 pub fn wm_set_size(Int, Int, Int, SizeHint) -> Int
 
-pub fn wm_set_window_customization(Int, Int, Int, Int, Int, Int, TitleBarStyle, Int) -> Int
+pub fn wm_set_window_customization(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, TitleBarStyle, Int, Int) -> Int
 
 // Errors
 type ProcessCommandError
@@ -168,8 +168,9 @@ pub(all) enum SizeHint {
 }
 
 pub(all) enum TitleBarStyle {
-  Default
-  Hidden
+  Visible
+  Transparent
+  Overlay
 } derive(Eq, @debug.Debug)
 pub fn TitleBarStyle::equal(Self, Self) -> Bool
 pub fn TitleBarStyle::not_equal(Self, Self) -> Bool
@@ -188,7 +189,7 @@ pub fn[X] WebView::go(Self[X], Int) -> Unit
 pub fn[X] WebView::maximize(Self[X]) -> Unit
 pub fn[X] WebView::minimize(Self[X]) -> Unit
 pub fn[X] WebView::navigate(Self[X], String) -> Unit
-pub fn[X] WebView::new_managed(@async.TaskGroup[X], title? : String, url? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool) -> Self[X]
+pub fn[X] WebView::new_managed(@async.TaskGroup[X], title? : String, url? : String, width? : Int, height? : Int, debug? : Int, devtools? : Bool, decorations? : Bool, resizable? : Bool, closeable? : Bool, minimizable? : Bool, maximizable? : Bool, always_on_top? : Bool, always_on_bottom? : Bool, transparent? : Bool, shadow? : Bool, skip_taskbar? : Bool, visible_on_all_workspaces? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, hidden_title? : Bool, frameless? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool) -> Self[X]
 pub fn[X] WebView::reload(Self[X]) -> Unit
 pub fn[X] WebView::reload_force(Self[X]) -> Unit
 pub fn[X] WebView::set_custom_protocol(Self[X], String, String) -> Unit
@@ -198,7 +199,7 @@ pub fn[X] WebView::set_html(Self[X], String) -> Unit
 pub fn[X] WebView::set_size(Self[X], Int, Int, SizeHint) -> Unit
 pub fn[X] WebView::set_title(Self[X], String) -> Unit
 pub fn[X] WebView::set_traffic_light_position(Self[X], Int, Int) -> Unit
-pub fn[X] WebView::set_window_customization(Self[X], Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Unit
+pub fn[X] WebView::set_window_customization(Self[X], WindowOptions) -> Unit
 pub fn[X] WebView::start_drag(Self[X]) -> Unit
 pub fn[X] WebView::terminate(Self[X]) -> Unit
 pub fn[X] WebView::toggle_fullscreen(Self[X]) -> Unit
@@ -215,13 +216,7 @@ pub struct Window {
   debug : Int
   devtools : Bool
   child_arg : String
-  mut frameless : Bool
-  mut resizable : Bool
-  mut closeable : Bool
-  mut always_on_top : Bool
-  mut transparent : Bool
-  mut title_bar_style : TitleBarStyle
-  mut title_bar_overlay : Bool
+  mut options : WindowOptions
   mut traffic_light_position : (Int, Int)
   position : (Int, Int)
   hidden : Bool
@@ -234,7 +229,7 @@ pub struct Window {
   plugins : Array[Plugin]
 }
 #alias(new, deprecated)
-pub fn Window::Window(label? : String, title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, frameless? : Bool, resizable? : Bool, closeable? : Bool, always_on_top? : Bool, transparent? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, enable_window_controls_plugin? : Bool) -> Self
+pub fn Window::Window(label? : String, title? : String, url? : String, width? : Int, height? : Int, size_hint? : SizeHint, debug? : Int, devtools? : Bool, child_arg? : String, decorations? : Bool, resizable? : Bool, closeable? : Bool, minimizable? : Bool, maximizable? : Bool, always_on_top? : Bool, always_on_bottom? : Bool, transparent? : Bool, shadow? : Bool, skip_taskbar? : Bool, visible_on_all_workspaces? : Bool, title_bar_style? : TitleBarStyle, title_bar_overlay? : Bool, hidden_title? : Bool, frameless? : Bool, traffic_light_position? : (Int, Int), position? : (Int, Int), hidden? : Bool, focused? : Bool, enable_window_controls_plugin? : Bool) -> Self
 pub fn Window::close(Self) -> Unit
 pub fn Window::eval(Self, String) -> Unit
 pub fn Window::focus(Self) -> Unit
@@ -253,7 +248,7 @@ pub fn Window::set_html(Self, String) -> Unit
 pub fn Window::set_position(Self, Int, Int) -> Unit
 pub fn Window::set_size(Self, Int, Int, hint? : SizeHint) -> Unit
 pub fn Window::set_traffic_light_position(Self, Int, Int) -> Unit
-pub fn Window::set_window_customization(Self, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Unit
+pub fn Window::set_window_customization(Self, WindowOptions) -> Unit
 pub fn Window::show(Self) -> Unit
 pub fn Window::start_drag(Self) -> Unit
 pub fn Window::toggle_fullscreen(Self) -> Unit
@@ -291,7 +286,7 @@ pub fn WindowManager::set_position(Self, Int, Int, Int) -> Int
 pub fn WindowManager::set_size(Self, Int, Int, Int, SizeHint) -> Int
 pub fn WindowManager::set_traffic_light_position(Self, Int, Int, Int) -> Int
 pub fn WindowManager::set_visibility(Self, Int, Bool) -> Int
-pub fn WindowManager::set_window_customization(Self, Int, Bool, Bool, Bool, Bool, Bool, TitleBarStyle, Bool) -> Int
+pub fn WindowManager::set_window_customization(Self, Int, WindowOptions) -> Int
 pub fn WindowManager::set_window_id_base(Self, Int) -> Int
 pub fn WindowManager::spawn_process(Self, String, String) -> Int
 pub fn WindowManager::start_drag_window(Self, Int) -> Int
@@ -300,6 +295,24 @@ pub fn WindowManager::toggle_maximize_window(Self, Int) -> Int
 pub fn WindowManager::try_pop_message(Self, Int) -> IpcMessage?
 pub fn WindowManager::unmaximize_window(Self, Int) -> Int
 pub fn WindowManager::wait_child_noblock(Self, Int) -> Int
+
+pub struct WindowOptions {
+  decorations : Bool
+  resizable : Bool
+  closeable : Bool
+  minimizable : Bool
+  maximizable : Bool
+  always_on_top : Bool
+  always_on_bottom : Bool
+  transparent : Bool
+  shadow : Bool
+  skip_taskbar : Bool
+  visible_on_all_workspaces : Bool
+  title_bar_style : TitleBarStyle
+  title_bar_overlay : Bool
+  hidden_title : Bool
+}
+pub fn WindowOptions::default() -> Self
 
 pub(all) enum WindowState {
   Unknown
