@@ -141,30 +141,30 @@ pub async fn Window::run(Self) -> Unit
 pub fn Window::set_source(Self, Source) -> Self
 
 pub struct WindowConfig {
-  label : String
-  title : String
-  width : Int
-  height : Int
-  debug : Int
-  devtools : Bool
-  decorations : Bool
-  resizable : Bool
-  closeable : Bool
-  minimizable : Bool
-  maximizable : Bool
-  always_on_top : Bool
-  always_on_bottom : Bool
-  transparent : Bool
-  shadow : Bool
-  skip_taskbar : Bool
-  visible_on_all_workspaces : Bool
-  title_bar_style : TitleBarStyle
-  title_bar_overlay : Bool
-  hidden_title : Bool
-  traffic_light_position : (Int, Int)
-  position : (Int, Int)
-  hidden : Bool
-  focused : Bool
+  label : String?
+  title : String?
+  width : Int?
+  height : Int?
+  debug : Int?
+  devtools : Bool?
+  decorations : Bool?
+  resizable : Bool?
+  closeable : Bool?
+  minimizable : Bool?
+  maximizable : Bool?
+  always_on_top : Bool?
+  always_on_bottom : Bool?
+  transparent : Bool?
+  shadow : Bool?
+  skip_taskbar : Bool?
+  visible_on_all_workspaces : Bool?
+  title_bar_style : TitleBarStyle?
+  title_bar_overlay : Bool?
+  hidden_title : Bool?
+  traffic_light_position : (Int, Int)?
+  position : (Int, Int)?
+  hidden : Bool?
+  focused : Bool?
   source : Source?
 } derive(Eq, Hash, ToJson, @debug.Debug, @json.FromJson)
 pub fn WindowConfig::equal(Self, Self) -> Bool

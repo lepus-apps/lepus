@@ -5,13 +5,13 @@ async fn main {
     width=980,
     height=620,
     decorations=false,
+    // Every option is optional. Omitted options (`decorations`, `shadow`,
+    // `focused`, …) are left to the native platform and cost no native call;
+    // only the ones listed here are actually applied.
     title_bar_style=@lepus.TitleBarStyle::Overlay,
     hidden_title=true,
     transparent=true,
     shadow=false,
-    always_on_top=false,
-    minimizable=true,
-    maximizable=true,
     devtools=true,
     source=@lepus.Source::html(
       (

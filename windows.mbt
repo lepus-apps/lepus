@@ -112,7 +112,8 @@ pub struct WindowRegistry {
 pub fn WindowRegistry::new(configs : Array[WindowConfig]) -> WindowRegistry {
   let focused : Map[String, Bool] = Map([])
   for config in configs {
-    focused.set(config.label(), config.focused)
+    // Unspecified `focused` keeps the native default (a new window is focused).
+    focused.set(config.label(), config.focused.unwrap_or(true))
   }
   { ids: assign_window_ids(configs), pids: Map([]), children: [], focused, }
 }
@@ -362,7 +363,7 @@ pub async fn Windows::run(self : Windows) -> Unit {
       let registry = WindowRegistry::new(self.configs)
       // Spawn non-hidden windows immediately.
       for config in self.configs {
-        if !config.hidden {
+        if !(config.hidden is Some(true)) {
           let opened = registry.open(wm, argv0, config.label())
           guard opened else {
             abort("Windows::run: spawn child for " + config.label() + " failed")

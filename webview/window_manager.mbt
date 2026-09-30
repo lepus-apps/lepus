@@ -56,85 +56,326 @@ pub(all) enum TitleBarStyle {
 /// Native window style configuration, aligned with the subset of Tauri 2's
 /// `WindowConfig` that maps onto a desktop window's native chrome.
 ///
-/// Every field has a Tauri-compatible default; build one by overriding only
-/// what you need. `decorations = false` is the frameless/borderless mode
-/// (`frameless` in earlier Lepus versions).
+/// Every field is optional: `None` means "not specified — don't touch that
+/// native property", `Some(v)` means "apply `v`". This keeps the framework
+/// from paying for native calls the caller never asked for; when *no* field
+/// is set the FFI call is skipped altogether.
+///
+/// `decorations = Some(false)` is the frameless/borderless mode (`frameless`
+/// in earlier Lepus versions).
 pub struct WindowOptions {
   /// Whether the window keeps the OS-provided chrome (title bar + border).
-  /// `false` produces a frameless window.
-  decorations : Bool
+  /// `Some(false)` produces a frameless window.
+  decorations : Bool?
   /// Whether the user may resize the window.
-  resizable : Bool
+  resizable : Bool?
   /// Whether the window's close button is enabled.
-  closeable : Bool
+  closeable : Bool?
   /// Whether the window's minimize button is enabled.
-  minimizable : Bool
+  minimizable : Bool?
   /// Whether the window's maximize/zoom button is enabled.
-  maximizable : Bool
+  maximizable : Bool?
   /// Keep the window above all normal windows.
-  always_on_top : Bool
+  always_on_top : Bool?
   /// Keep the window below all normal windows.
-  always_on_bottom : Bool
+  always_on_bottom : Bool?
   /// Window background is transparent (requires page background support).
-  transparent : Bool
+  transparent : Bool?
   /// Draw the system drop shadow.
-  shadow : Bool
+  shadow : Bool?
   /// Hide the window from the taskbar / Dock window list.
-  skip_taskbar : Bool
+  skip_taskbar : Bool?
   /// Show the window on every workspace (macOS/Linux).
-  visible_on_all_workspaces : Bool
+  visible_on_all_workspaces : Bool?
   /// Native title-bar style (macOS `titleBarStyle`).
-  title_bar_style : TitleBarStyle
+  title_bar_style : TitleBarStyle?
   /// Let window content extend under the title bar (custom title bars).
-  title_bar_overlay : Bool
+  title_bar_overlay : Bool?
   /// Hide only the title text while keeping the title bar.
-  hidden_title : Bool
+  hidden_title : Bool?
 }
 
 ///|
-/// Tauri-compatible defaults for [`WindowOptions`].
+/// An empty patch: nothing is overridden, so the native window keeps its
+/// platform defaults (which already match Tauri's documented defaults).
 pub fn WindowOptions::default() -> WindowOptions {
   {
-    decorations: true,
-    resizable: true,
-    closeable: true,
-    minimizable: true,
-    maximizable: true,
-    always_on_top: false,
-    always_on_bottom: false,
-    transparent: false,
-    shadow: true,
-    skip_taskbar: false,
-    visible_on_all_workspaces: false,
-    title_bar_style: Visible,
-    title_bar_overlay: false,
-    hidden_title: false,
+    decorations: None,
+    resizable: None,
+    closeable: None,
+    minimizable: None,
+    maximizable: None,
+    always_on_top: None,
+    always_on_bottom: None,
+    transparent: None,
+    shadow: None,
+    skip_taskbar: None,
+    visible_on_all_workspaces: None,
+    title_bar_style: None,
+    title_bar_overlay: None,
+    hidden_title: None,
   }
 }
 
 ///|
-test "WindowOptions::default matches Tauri window defaults" {
-  let options = WindowOptions::default()
-  assert_true(options.decorations)
-  assert_true(options.resizable)
-  assert_true(options.closeable)
-  assert_true(options.minimizable)
-  assert_true(options.maximizable)
-  assert_false(options.always_on_top)
-  assert_false(options.always_on_bottom)
-  assert_false(options.transparent)
-  assert_true(options.shadow)
-  assert_false(options.skip_taskbar)
-  assert_false(options.visible_on_all_workspaces)
-  assert_eq(options.title_bar_style, TitleBarStyle::Visible)
-  assert_false(options.title_bar_overlay)
-  assert_false(options.hidden_title)
+/// Returns `true` when the patch overrides nothing.
+pub fn WindowOptions::is_empty(self : WindowOptions) -> Bool {
+  self.wm_mask() == 0
 }
 
 ///|
-test "wm_flag encodes booleans as the native 1/0 layout" {
-  assert_eq(wm_flag(true), 1)
-  assert_eq(wm_flag(false), 0)
+/// Returns `preferred` when it is set, otherwise `fallback`.
+fn[T] wm_pick(preferred : T?, fallback : T?) -> T? {
+  match preferred {
+    Some(_) => preferred
+    None => fallback
+  }
+}
+
+///|
+/// Merges `other` into `self`: a field set in `other` wins, an unset field
+/// keeps `self`'s value. Lets callers apply incremental style patches without
+/// forgetting the options they set earlier.
+pub fn WindowOptions::merge(
+  self : WindowOptions,
+  other : WindowOptions,
+) -> WindowOptions {
+  {
+    decorations: wm_pick(other.decorations, self.decorations),
+    resizable: wm_pick(other.resizable, self.resizable),
+    closeable: wm_pick(other.closeable, self.closeable),
+    minimizable: wm_pick(other.minimizable, self.minimizable),
+    maximizable: wm_pick(other.maximizable, self.maximizable),
+    always_on_top: wm_pick(other.always_on_top, self.always_on_top),
+    always_on_bottom: wm_pick(other.always_on_bottom, self.always_on_bottom),
+    transparent: wm_pick(other.transparent, self.transparent),
+    shadow: wm_pick(other.shadow, self.shadow),
+    skip_taskbar: wm_pick(other.skip_taskbar, self.skip_taskbar),
+    visible_on_all_workspaces: wm_pick(
+      other.visible_on_all_workspaces,
+      self.visible_on_all_workspaces,
+    ),
+    title_bar_style: wm_pick(other.title_bar_style, self.title_bar_style),
+    title_bar_overlay: wm_pick(other.title_bar_overlay, self.title_bar_overlay),
+    hidden_title: wm_pick(other.hidden_title, self.hidden_title),
+  }
+}
+
+///|
+test "merge applies only the fields set in the patch" {
+  let base : WindowOptions = {
+    ..WindowOptions::default(),
+    decorations: Some(false),
+    shadow: Some(false),
+  }
+  let patch : WindowOptions = {
+    ..WindowOptions::default(),
+    hidden_title: Some(true),
+  }
+  let merged = base.merge(patch)
+  // Untouched by the patch: kept from `base`.
+  assert_eq(merged.decorations, Some(false))
+  assert_eq(merged.shadow, Some(false))
+  // From the patch.
+  assert_eq(merged.hidden_title, Some(true))
+  // Never specified anywhere: still unset.
+  assert_true(merged.transparent is None)
+  assert_eq(
+    merged.wm_mask(),
+    WM_SET_DECORATIONS | WM_SET_SHADOW | WM_SET_HIDDEN_TITLE,
+  )
+}
+
+///|
+test "merge lets a later patch override an earlier value" {
+  let base : WindowOptions = {
+    ..WindowOptions::default(),
+    shadow: Some(false),
+  }
+  let patch : WindowOptions = {
+    ..WindowOptions::default(),
+    shadow: Some(true),
+  }
+  assert_eq(base.merge(patch).shadow, Some(true))
+  // An empty patch changes nothing.
+  assert_eq(base.merge(WindowOptions::default()).shadow, Some(false))
+}
+
+///|
+/// Encodes a boolean flag as the `1`/`0` int the native layer expects.
+fn wm_flag(value : Bool) -> Int {
+  if value {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+/// Encodes an optional boolean: unset flags are sent as `0` and are ignored
+/// by the native side because their presence bit is clear.
+fn wm_opt_flag(value : Bool?) -> Int {
+  match value {
+    Some(v) => wm_flag(v)
+    None => 0
+  }
+}
+
+///|
+/// Presence bits for `wm_set_window_customization`. Must stay in sync with
+/// the `WM_SET_*` macros in `ffi/window_manager/stub.c`.
+pub const WM_SET_DECORATIONS : Int = 1 << 0
+
+///|
+pub const WM_SET_RESIZABLE : Int = 1 << 1
+
+///|
+pub const WM_SET_CLOSEABLE : Int = 1 << 2
+
+///|
+pub const WM_SET_MINIMIZABLE : Int = 1 << 3
+
+///|
+pub const WM_SET_MAXIMIZABLE : Int = 1 << 4
+
+///|
+pub const WM_SET_ALWAYS_ON_TOP : Int = 1 << 5
+
+///|
+pub const WM_SET_ALWAYS_ON_BOTTOM : Int = 1 << 6
+
+///|
+pub const WM_SET_TRANSPARENT : Int = 1 << 7
+
+///|
+pub const WM_SET_SHADOW : Int = 1 << 8
+
+///|
+pub const WM_SET_SKIP_TASKBAR : Int = 1 << 9
+
+///|
+pub const WM_SET_VISIBLE_ON_ALL_WORKSPACES : Int = 1 << 10
+
+///|
+pub const WM_SET_TITLE_BAR_STYLE : Int = 1 << 11
+
+///|
+pub const WM_SET_TITLE_BAR_OVERLAY : Int = 1 << 12
+
+///|
+pub const WM_SET_HIDDEN_TITLE : Int = 1 << 13
+
+///|
+/// Bit for `flag`, or `0` when the option was not specified.
+fn wm_presence(bit : Int, specified : Bool) -> Int {
+  if specified {
+    bit
+  } else {
+    0
+  }
+}
+
+///|
+/// Builds the presence mask: one bit per field that is actually set.
+pub fn WindowOptions::wm_mask(self : WindowOptions) -> Int {
+  wm_presence(WM_SET_DECORATIONS, self.decorations is Some(_)) |
+  wm_presence(WM_SET_RESIZABLE, self.resizable is Some(_)) |
+  wm_presence(WM_SET_CLOSEABLE, self.closeable is Some(_)) |
+  wm_presence(WM_SET_MINIMIZABLE, self.minimizable is Some(_)) |
+  wm_presence(WM_SET_MAXIMIZABLE, self.maximizable is Some(_)) |
+  wm_presence(WM_SET_ALWAYS_ON_TOP, self.always_on_top is Some(_)) |
+  wm_presence(WM_SET_ALWAYS_ON_BOTTOM, self.always_on_bottom is Some(_)) |
+  wm_presence(WM_SET_TRANSPARENT, self.transparent is Some(_)) |
+  wm_presence(WM_SET_SHADOW, self.shadow is Some(_)) |
+  wm_presence(WM_SET_SKIP_TASKBAR, self.skip_taskbar is Some(_)) |
+  wm_presence(
+    WM_SET_VISIBLE_ON_ALL_WORKSPACES,
+    self.visible_on_all_workspaces is Some(_),
+  ) |
+  wm_presence(WM_SET_TITLE_BAR_STYLE, self.title_bar_style is Some(_)) |
+  wm_presence(WM_SET_TITLE_BAR_OVERLAY, self.title_bar_overlay is Some(_)) |
+  wm_presence(WM_SET_HIDDEN_TITLE, self.hidden_title is Some(_))
+}
+
+///|
+/// `true` when the patch explicitly asks for a custom (non-native) title bar,
+/// which needs the injected title-bar CSS/JS support layer.
+pub fn WindowOptions::wants_custom_titlebar(self : WindowOptions) -> Bool {
+  if self.decorations is Some(false) {
+    return true
+  }
+  if self.title_bar_overlay is Some(true) {
+    return true
+  }
+  match self.title_bar_style {
+    Some(Transparent) | Some(Overlay) => true
+    _ => false
+  }
+}
+
+///|
+/// `true` only when the patch asks for a transparent background. An unset
+/// `transparent` must stay `false`: injecting the transparency support layer
+/// is expensive and would change the look of windows that never asked.
+pub fn WindowOptions::wants_transparency(self : WindowOptions) -> Bool {
+  self.transparent is Some(true)
+}
+
+///|
+test "WindowOptions::default overrides nothing" {
+  let options = WindowOptions::default()
+  assert_eq(options.wm_mask(), 0)
+  assert_true(options.is_empty())
+}
+
+///|
+test "wm_mask sets exactly one bit per specified option" {
+  let options : WindowOptions = {
+    ..WindowOptions::default(),
+    shadow: Some(false),
+  }
+  assert_eq(options.wm_mask(), WM_SET_SHADOW)
+  assert_false(options.is_empty())
+  let both : WindowOptions = {
+    ..WindowOptions::default(),
+    decorations: Some(false),
+    title_bar_style: Some(Overlay),
+  }
+  assert_eq(both.wm_mask(), WM_SET_DECORATIONS | WM_SET_TITLE_BAR_STYLE)
+}
+
+///|
+test "wants_custom_titlebar and wants_transparency require an explicit opt-in" {
+  assert_false(WindowOptions::default().wants_custom_titlebar())
+  assert_false(WindowOptions::default().wants_transparency())
+  let frameless : WindowOptions = {
+    ..WindowOptions::default(),
+    decorations: Some(false),
+  }
+  assert_true(frameless.wants_custom_titlebar())
+  let overlay : WindowOptions = {
+    ..WindowOptions::default(),
+    title_bar_style: Some(Overlay),
+  }
+  assert_true(overlay.wants_custom_titlebar())
+  let opaque_patch : WindowOptions = {
+    ..WindowOptions::default(),
+    transparent: Some(false),
+  }
+  assert_false(opaque_patch.wants_transparency())
+}
+
+///|
+test "wm_opt_flag encodes unset options as 0 and pins the flag layout" {
+  assert_eq(wm_opt_flag(Some(true)), 1)
+  assert_eq(wm_opt_flag(Some(false)), 0)
+  assert_eq(wm_opt_flag(None), 0)
+}
+
+///|
+test "wm_presence yields the bit only for specified options" {
+  assert_eq(wm_presence(WM_SET_SHADOW, true), WM_SET_SHADOW)
+  assert_eq(wm_presence(WM_SET_SHADOW, false), 0)
 }
 
 ///|
@@ -395,34 +636,32 @@ pub fn WindowManager::destroy_window(
 }
 
 ///|
-/// Encode a boolean flag as the `1`/`0` int the native layer expects.
-fn wm_flag(value : Bool) -> Int {
-  if value {
-    1
-  } else {
-    0
-  }
-}
-
-///|
 /// Flatten `options` into the positional FFI call.
+///
+/// Returns `0` without calling into C when the patch is empty, so windows that
+/// only use platform defaults never pay for a native round-trip.
 fn wm_apply_window_options(window_id : Int, options : WindowOptions) -> Int {
+  let mask = options.wm_mask()
+  if mask == 0 {
+    return 0
+  }
   wm_set_window_customization(
     window_id,
-    wm_flag(options.decorations),
-    wm_flag(options.resizable),
-    wm_flag(options.closeable),
-    wm_flag(options.minimizable),
-    wm_flag(options.maximizable),
-    wm_flag(options.always_on_top),
-    wm_flag(options.always_on_bottom),
-    wm_flag(options.transparent),
-    wm_flag(options.shadow),
-    wm_flag(options.skip_taskbar),
-    wm_flag(options.visible_on_all_workspaces),
-    options.title_bar_style,
-    wm_flag(options.title_bar_overlay),
-    wm_flag(options.hidden_title),
+    mask,
+    wm_opt_flag(options.decorations),
+    wm_opt_flag(options.resizable),
+    wm_opt_flag(options.closeable),
+    wm_opt_flag(options.minimizable),
+    wm_opt_flag(options.maximizable),
+    wm_opt_flag(options.always_on_top),
+    wm_opt_flag(options.always_on_bottom),
+    wm_opt_flag(options.transparent),
+    wm_opt_flag(options.shadow),
+    wm_opt_flag(options.skip_taskbar),
+    wm_opt_flag(options.visible_on_all_workspaces),
+    options.title_bar_style.unwrap_or(Visible),
+    wm_opt_flag(options.title_bar_overlay),
+    wm_opt_flag(options.hidden_title),
   )
 }
 

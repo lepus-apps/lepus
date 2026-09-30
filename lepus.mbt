@@ -29,34 +29,43 @@ pub(all) enum Source {
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
 ///|
-/// Window configuration
+/// Window configuration.
+///
+/// Every field is optional. `None` means "not specified — keep the native
+/// platform default", so unspecified style options never trigger a native
+/// call at all. Pass a value to override it, e.g. `decorations=false` or
+/// `title_bar_style=Overlay`.
+///
+/// `focused` is the one option whose default needs an action rather than
+/// inaction: a new window is focused by default, and only `focused=false`
+/// opts out of taking focus.
 pub struct WindowConfig {
-  label : String
-  title : String
-  width : Int
-  height : Int
-  debug : Int
-  devtools : Bool
-  /// Keep the OS-provided window chrome (title bar + border). `false` produces
-  /// a frameless window; `frameless` is kept as a back-compat alias.
-  decorations : Bool
-  resizable : Bool
-  closeable : Bool
-  minimizable : Bool
-  maximizable : Bool
-  always_on_top : Bool
-  always_on_bottom : Bool
-  transparent : Bool
-  shadow : Bool
-  skip_taskbar : Bool
-  visible_on_all_workspaces : Bool
-  title_bar_style : TitleBarStyle
-  title_bar_overlay : Bool
-  hidden_title : Bool
-  traffic_light_position : (Int, Int)
-  position : (Int, Int)
-  hidden : Bool
-  focused : Bool
+  label : String?
+  title : String?
+  width : Int?
+  height : Int?
+  debug : Int?
+  devtools : Bool?
+  /// Keep the OS-provided window chrome (title bar + border). `Some(false)`
+  /// produces a frameless window; `frameless` is kept as a back-compat alias.
+  decorations : Bool?
+  resizable : Bool?
+  closeable : Bool?
+  minimizable : Bool?
+  maximizable : Bool?
+  always_on_top : Bool?
+  always_on_bottom : Bool?
+  transparent : Bool?
+  shadow : Bool?
+  skip_taskbar : Bool?
+  visible_on_all_workspaces : Bool?
+  title_bar_style : TitleBarStyle?
+  title_bar_overlay : Bool?
+  hidden_title : Bool?
+  traffic_light_position : (Int, Int)?
+  position : (Int, Int)?
+  hidden : Bool?
+  focused : Bool?
   source : Source?
 } derive(Debug, Eq, ToJson, FromJson, Hash)
 
@@ -105,31 +114,31 @@ pub fn Source::zip(zip : Bytes) -> Source raise {
 
 ///|
 pub fn WindowConfig::new(
-  label? : String = "",
-  title? : String = "Lepus App",
-  width? : Int = 800,
-  height? : Int = 600,
-  debug? : Int = 0,
-  devtools? : Bool = false,
-  decorations? : Bool = true,
-  resizable? : Bool = true,
-  closeable? : Bool = true,
-  minimizable? : Bool = true,
-  maximizable? : Bool = true,
-  always_on_top? : Bool = false,
-  always_on_bottom? : Bool = false,
-  transparent? : Bool = false,
-  shadow? : Bool = true,
-  skip_taskbar? : Bool = false,
-  visible_on_all_workspaces? : Bool = false,
-  title_bar_style? : TitleBarStyle = Visible,
-  title_bar_overlay? : Bool = false,
-  hidden_title? : Bool = false,
+  label? : String,
+  title? : String,
+  width? : Int,
+  height? : Int,
+  debug? : Int,
+  devtools? : Bool,
+  decorations? : Bool,
+  resizable? : Bool,
+  closeable? : Bool,
+  minimizable? : Bool,
+  maximizable? : Bool,
+  always_on_top? : Bool,
+  always_on_bottom? : Bool,
+  transparent? : Bool,
+  shadow? : Bool,
+  skip_taskbar? : Bool,
+  visible_on_all_workspaces? : Bool,
+  title_bar_style? : TitleBarStyle,
+  title_bar_overlay? : Bool,
+  hidden_title? : Bool,
   frameless? : Bool = false,
-  traffic_light_position? : (Int, Int) = (-1, -1),
-  position? : (Int, Int) = (-1, -1),
-  hidden? : Bool = false,
-  focused? : Bool = true,
+  traffic_light_position? : (Int, Int),
+  position? : (Int, Int),
+  hidden? : Bool,
+  focused? : Bool,
   source? : Source,
 ) -> WindowConfig {
   {
@@ -139,7 +148,11 @@ pub fn WindowConfig::new(
     height,
     debug,
     devtools,
-    decorations: decorations && !frameless,
+    decorations: if frameless {
+      Some(false)
+    } else {
+      decorations
+    },
     resizable,
     closeable,
     minimizable,
@@ -163,12 +176,12 @@ pub fn WindowConfig::new(
 
 ///|
 /// Returns the window label used for stable cross-window addressing.
-/// Falls back to `title` when no explicit label was given.
+/// Falls back to `title`, then to the default app title, when no explicit
+/// label was given.
 pub fn WindowConfig::label(self : WindowConfig) -> String {
-  if self.label.is_empty() {
-    self.title
-  } else {
-    self.label
+  match self.label {
+    Some(l) if !l.is_empty() => l
+    _ => self.title.unwrap_or("Lepus App")
   }
 }
 
@@ -189,6 +202,120 @@ pub fn WindowConfig::navigate(
 }
 
 ///|
+/// Maps the config's title-bar style onto the `@webview` enum, preserving
+/// "not specified".
+fn to_webview_title_bar_style(
+  style : TitleBarStyle?,
+) -> @webview.TitleBarStyle? {
+  match style {
+    Some(Visible) => Some(@webview.TitleBarStyle::Visible)
+    Some(Transparent) => Some(@webview.TitleBarStyle::Transparent)
+    Some(Overlay) => Some(@webview.TitleBarStyle::Overlay)
+    None => None
+  }
+}
+
+///|
+/// `true` when the config explicitly asks for a custom (non-native) title bar,
+/// which is what needs the injected title-bar support layer.
+fn wants_custom_titlebar(config : WindowConfig) -> Bool {
+  if config.decorations is Some(false) {
+    return true
+  }
+  if config.title_bar_overlay is Some(true) {
+    return true
+  }
+  match config.title_bar_style {
+    Some(Transparent) | Some(Overlay) => true
+    _ => false
+  }
+}
+
+///|
+/// `true` only when the config explicitly asks for a transparent background.
+/// An unset `transparent` must not opt in: the support layer is expensive and
+/// would change how the window looks.
+fn wants_transparency(config : WindowConfig) -> Bool {
+  config.transparent is Some(true)
+}
+
+///|
+test "a default window config leaves every native option unset" {
+  let config = WindowConfig::new(source=Source::html(""))
+  assert_true(config.width is None)
+  assert_true(config.height is None)
+  assert_true(config.decorations is None)
+  assert_true(config.shadow is None)
+  assert_true(config.title_bar_style is None)
+  assert_true(config.position is None)
+  assert_true(config.hidden is None)
+  assert_true(config.focused is None)
+  // Nothing opted in, so no support layer is injected.
+  assert_false(wants_custom_titlebar(config))
+  assert_false(wants_transparency(config))
+  // Title still falls back to the documented default.
+  assert_eq(config.label(), "Lepus App")
+}
+
+///|
+test "frameless keeps working as a decorations alias" {
+  let config = WindowConfig::new(frameless=true, source=Source::html(""))
+  assert_eq(config.decorations, Some(false))
+  assert_true(wants_custom_titlebar(config))
+  let explicit = WindowConfig::new(decorations=false, source=Source::html(""))
+  assert_eq(explicit.decorations, Some(false))
+}
+
+///|
+test "transparency support is only injected on an explicit opt-in" {
+  assert_false(
+    wants_transparency(
+      WindowConfig::new(transparent=false, source=Source::html("")),
+    ),
+  )
+  assert_true(
+    wants_transparency(
+      WindowConfig::new(transparent=true, source=Source::html("")),
+    ),
+  )
+}
+
+///|
+test "overlay and transparent title bars request custom-titlebar support" {
+  for style in [Transparent, Overlay] {
+    assert_true(
+      wants_custom_titlebar(
+        WindowConfig::new(title_bar_style=style, source=Source::html("")),
+      ),
+    )
+  }
+  assert_false(
+    wants_custom_titlebar(
+      WindowConfig::new(title_bar_style=Visible, source=Source::html("")),
+    ),
+  )
+}
+
+///|
+test "a config JSON round trip preserves which options were set" {
+  let config = WindowConfig::new(
+    decorations=false,
+    title_bar_style=Overlay,
+    source=Source::Url("https://example.com"),
+  )
+  let restored : WindowConfig = @json.from_json(config.to_json())
+  // Specified options survive...
+  assert_eq(restored.decorations, Some(false))
+  assert_eq(restored.title_bar_style, Some(Overlay))
+  // ...and unspecified ones stay unspecified instead of turning into
+  // concrete "reset to default" values.
+  assert_true(restored.shadow is None)
+  assert_true(restored.focused is None)
+  assert_true(restored.transparent is None)
+  assert_eq(restored, config)
+}
+
+///|
 pub struct App {
   windows : Array[WindowConfig]
   plugins : Array[@webview.Plugin]
@@ -201,33 +328,37 @@ pub struct Window {
 }
 
 ///|
+/// Creates a single-window app.
+///
+/// Every window option is optional; an omitted option keeps the native
+/// platform default and costs no native call.
 #alias(new, deprecated="Use `Window()` instead")
 pub fn Window::Window(
-  label? : String = "",
-  title? : String = "Lepus App",
-  width? : Int = 800,
-  height? : Int = 600,
-  debug? : Int = 0,
-  devtools? : Bool = false,
-  decorations? : Bool = true,
-  resizable? : Bool = true,
-  closeable? : Bool = true,
-  minimizable? : Bool = true,
-  maximizable? : Bool = true,
-  always_on_top? : Bool = false,
-  always_on_bottom? : Bool = false,
-  transparent? : Bool = false,
-  shadow? : Bool = true,
-  skip_taskbar? : Bool = false,
-  visible_on_all_workspaces? : Bool = false,
-  title_bar_style? : TitleBarStyle = Visible,
-  title_bar_overlay? : Bool = false,
-  hidden_title? : Bool = false,
+  label? : String,
+  title? : String,
+  width? : Int,
+  height? : Int,
+  debug? : Int,
+  devtools? : Bool,
+  decorations? : Bool,
+  resizable? : Bool,
+  closeable? : Bool,
+  minimizable? : Bool,
+  maximizable? : Bool,
+  always_on_top? : Bool,
+  always_on_bottom? : Bool,
+  transparent? : Bool,
+  shadow? : Bool,
+  skip_taskbar? : Bool,
+  visible_on_all_workspaces? : Bool,
+  title_bar_style? : TitleBarStyle,
+  title_bar_overlay? : Bool,
+  hidden_title? : Bool,
   frameless? : Bool = false,
-  traffic_light_position? : (Int, Int) = (-1, -1),
-  position? : (Int, Int) = (-1, -1),
-  hidden? : Bool = false,
-  focused? : Bool = true,
+  traffic_light_position? : (Int, Int),
+  position? : (Int, Int),
+  hidden? : Bool,
+  focused? : Bool,
   source? : Source,
   plugins? : Array[@webview.Plugin] = [],
 ) -> Window {
@@ -239,7 +370,11 @@ pub fn Window::Window(
       height,
       debug,
       devtools,
-      decorations: decorations && !frameless,
+      decorations: if frameless {
+        Some(false)
+      } else {
+        decorations
+      },
       resizable,
       closeable,
       minimizable,
@@ -400,34 +535,30 @@ async fn build_single_process_windows(
   for config in configs {
     let webview = @webview.WebView::new_managed(
       task_group,
-      title=config.title,
+      title=config.title.unwrap_or("Lepus App"),
       url="",
-      width=config.width,
-      height=config.height,
-      debug=config.debug,
-      devtools=config.devtools,
-      decorations=config.decorations,
-      resizable=config.resizable,
-      closeable=config.closeable,
-      minimizable=config.minimizable,
-      maximizable=config.maximizable,
-      always_on_top=config.always_on_top,
-      always_on_bottom=config.always_on_bottom,
-      transparent=config.transparent,
-      shadow=config.shadow,
-      skip_taskbar=config.skip_taskbar,
-      visible_on_all_workspaces=config.visible_on_all_workspaces,
-      title_bar_style=match config.title_bar_style {
-        Visible => @webview.TitleBarStyle::Visible
-        Transparent => @webview.TitleBarStyle::Transparent
-        Overlay => @webview.TitleBarStyle::Overlay
-      },
-      title_bar_overlay=config.title_bar_overlay,
-      hidden_title=config.hidden_title,
-      traffic_light_position=config.traffic_light_position,
-      position=config.position,
-      hidden=config.hidden,
-      focused=config.focused,
+      width?=config.width,
+      height?=config.height,
+      debug?=config.debug,
+      devtools?=config.devtools,
+      decorations?=config.decorations,
+      resizable?=config.resizable,
+      closeable?=config.closeable,
+      minimizable?=config.minimizable,
+      maximizable?=config.maximizable,
+      always_on_top?=config.always_on_top,
+      always_on_bottom?=config.always_on_bottom,
+      transparent?=config.transparent,
+      shadow?=config.shadow,
+      skip_taskbar?=config.skip_taskbar,
+      visible_on_all_workspaces?=config.visible_on_all_workspaces,
+      title_bar_style?=to_webview_title_bar_style(config.title_bar_style),
+      title_bar_overlay?=config.title_bar_overlay,
+      hidden_title?=config.hidden_title,
+      traffic_light_position?=config.traffic_light_position,
+      position?=config.position,
+      hidden?=config.hidden,
+      focused?=config.focused,
     )
     let wid = webview.window_id()
     if first_id == 0 {
@@ -443,20 +574,16 @@ async fn build_single_process_windows(
       webview.set_custom_protocol(scheme, root_dir)
     })
     // 平台标题栏支持
-    if !config.decorations ||
-      config.title_bar_style != Visible ||
-      config.title_bar_overlay {
+    if wants_custom_titlebar(config) {
       webview.enable_custom_titlebar_support()
     }
-    if config.transparent {
+    if wants_transparency(config) {
       webview.enable_transparent_background_support()
     }
-    if config.traffic_light_position.0 >= 0 &&
-      config.traffic_light_position.1 >= 0 {
-      webview.set_traffic_light_position(
-        config.traffic_light_position.0,
-        config.traffic_light_position.1,
-      )
+    match config.traffic_light_position {
+      Some((x, y)) if x >= 0 && y >= 0 =>
+        webview.set_traffic_light_position(x, y)
+      _ => ()
     }
     // 插件：window_controls + 用户插件 + 事件总线（全部直连，proxy=None）
     let host = @webview.PluginHost::PluginHost(webview)
@@ -524,33 +651,29 @@ async fn build_runtime_window(
 ) -> @webview.Window {
   let window = @webview.Window(
     label=config.label(),
-    title=config.title,
-    width=config.width,
-    height=config.height,
-    debug=config.debug,
-    devtools=config.devtools,
-    decorations=config.decorations,
-    resizable=config.resizable,
-    closeable=config.closeable,
-    minimizable=config.minimizable,
-    maximizable=config.maximizable,
-    always_on_top=config.always_on_top,
-    always_on_bottom=config.always_on_bottom,
-    transparent=config.transparent,
-    shadow=config.shadow,
-    skip_taskbar=config.skip_taskbar,
-    visible_on_all_workspaces=config.visible_on_all_workspaces,
-    title_bar_style=match config.title_bar_style {
-      Visible => @webview.TitleBarStyle::Visible
-      Transparent => @webview.TitleBarStyle::Transparent
-      Overlay => @webview.TitleBarStyle::Overlay
-    },
-    title_bar_overlay=config.title_bar_overlay,
-    hidden_title=config.hidden_title,
-    traffic_light_position=config.traffic_light_position,
-    position=config.position,
-    hidden=config.hidden,
-    focused=config.focused,
+    title=config.title.unwrap_or("Lepus App"),
+    width?=config.width,
+    height?=config.height,
+    debug?=config.debug,
+    devtools?=config.devtools,
+    decorations?=config.decorations,
+    resizable?=config.resizable,
+    closeable?=config.closeable,
+    minimizable?=config.minimizable,
+    maximizable?=config.maximizable,
+    always_on_top?=config.always_on_top,
+    always_on_bottom?=config.always_on_bottom,
+    transparent?=config.transparent,
+    shadow?=config.shadow,
+    skip_taskbar?=config.skip_taskbar,
+    visible_on_all_workspaces?=config.visible_on_all_workspaces,
+    title_bar_style?=to_webview_title_bar_style(config.title_bar_style),
+    title_bar_overlay?=config.title_bar_overlay,
+    hidden_title?=config.hidden_title,
+    traffic_light_position?=config.traffic_light_position,
+    position?=config.position,
+    hidden?=config.hidden,
+    focused?=config.focused,
   )
   guard config.source is Some(source) else {
     abort("WindowConfig::source is required")

@@ -9,6 +9,34 @@ import {
 }
 
 // Values
+pub const WM_SET_ALWAYS_ON_BOTTOM : Int = 64
+
+pub const WM_SET_ALWAYS_ON_TOP : Int = 32
+
+pub const WM_SET_CLOSEABLE : Int = 4
+
+pub const WM_SET_DECORATIONS : Int = 1
+
+pub const WM_SET_HIDDEN_TITLE : Int = 8192
+
+pub const WM_SET_MAXIMIZABLE : Int = 16
+
+pub const WM_SET_MINIMIZABLE : Int = 8
+
+pub const WM_SET_RESIZABLE : Int = 2
+
+pub const WM_SET_SHADOW : Int = 256
+
+pub const WM_SET_SKIP_TASKBAR : Int = 512
+
+pub const WM_SET_TITLE_BAR_OVERLAY : Int = 4096
+
+pub const WM_SET_TITLE_BAR_STYLE : Int = 2048
+
+pub const WM_SET_TRANSPARENT : Int = 128
+
+pub const WM_SET_VISIBLE_ON_ALL_WORKSPACES : Int = 1024
+
 pub fn build_router(Array[Plugin]) -> ProcessCommandRouter
 
 pub fn child_arg_for(Int, String) -> String
@@ -21,7 +49,7 @@ pub fn window_controls_plugin(Int) -> Plugin
 
 pub fn wm_set_size(Int, Int, Int, SizeHint) -> Int
 
-pub fn wm_set_window_customization(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, TitleBarStyle, Int, Int) -> Int
+pub fn wm_set_window_customization(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, TitleBarStyle, Int, Int) -> Int
 
 // Errors
 type ProcessCommandError
@@ -210,17 +238,17 @@ pub fn[X] WebView::window_id(Self[X]) -> Int
 pub struct Window {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int?
+  height : Int?
   size_hint : SizeHint
-  debug : Int
-  devtools : Bool
+  debug : Int?
+  devtools : Bool?
   child_arg : String
   mut options : WindowOptions
-  mut traffic_light_position : (Int, Int)
-  position : (Int, Int)
-  hidden : Bool
-  focused : Bool
+  mut traffic_light_position : (Int, Int)?
+  position : (Int, Int)?
+  hidden : Bool?
+  focused : Bool?
   enable_window_controls_plugin : Bool
   mut url : String
   mut html : String
@@ -297,22 +325,27 @@ pub fn WindowManager::unmaximize_window(Self, Int) -> Int
 pub fn WindowManager::wait_child_noblock(Self, Int) -> Int
 
 pub struct WindowOptions {
-  decorations : Bool
-  resizable : Bool
-  closeable : Bool
-  minimizable : Bool
-  maximizable : Bool
-  always_on_top : Bool
-  always_on_bottom : Bool
-  transparent : Bool
-  shadow : Bool
-  skip_taskbar : Bool
-  visible_on_all_workspaces : Bool
-  title_bar_style : TitleBarStyle
-  title_bar_overlay : Bool
-  hidden_title : Bool
+  decorations : Bool?
+  resizable : Bool?
+  closeable : Bool?
+  minimizable : Bool?
+  maximizable : Bool?
+  always_on_top : Bool?
+  always_on_bottom : Bool?
+  transparent : Bool?
+  shadow : Bool?
+  skip_taskbar : Bool?
+  visible_on_all_workspaces : Bool?
+  title_bar_style : TitleBarStyle?
+  title_bar_overlay : Bool?
+  hidden_title : Bool?
 }
 pub fn WindowOptions::default() -> Self
+pub fn WindowOptions::is_empty(Self) -> Bool
+pub fn WindowOptions::merge(Self, Self) -> Self
+pub fn WindowOptions::wants_custom_titlebar(Self) -> Bool
+pub fn WindowOptions::wants_transparency(Self) -> Bool
+pub fn WindowOptions::wm_mask(Self) -> Int
 
 pub(all) enum WindowState {
   Unknown

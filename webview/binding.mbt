@@ -22,9 +22,16 @@ pub extern "C" fn wm_set_size(
 ) -> Int = "moonbit_wm_set_size"
 
 ///|
-/// Apply native custom-window style flags.
+/// Apply native custom-window style flags (Tauri-2 `WindowConfig` aligned).
+///
+/// `mask` carries one presence bit per option (see the `wm_set_bit_*` helpers
+/// in `window_manager.mbt`): a set bit means "the caller supplied this value,
+/// apply it", a clear bit means "leave that native property alone".
+/// `mask == 0` is a no-op in C, so callers skip the FFI call entirely when
+/// nothing was configured.
 pub extern "C" fn wm_set_window_customization(
   window_id : Int,
+  mask : Int,
   decorations : Int,
   resizable : Int,
   closeable : Int,

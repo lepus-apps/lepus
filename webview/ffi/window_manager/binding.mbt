@@ -29,6 +29,10 @@ pub extern "C" fn wm_cleanup() -> Unit = "moonbit_wm_cleanup"
 
 ///|
 /// Create a managed native window and register it in WM.
+///
+/// `hints` is a `SizeHint` value and `debug` enables webview devtools. A
+/// non-positive `width`/`height` means "use the platform default", which is
+/// what `WebView::new_managed` sends for an unspecified size.
 #borrow(title, url)
 pub extern "C" fn wm_create_window(
   title : Bytes,
@@ -37,8 +41,8 @@ pub extern "C" fn wm_create_window(
   height : Int,
   x : Int,
   y : Int,
-  has_x : Int,
-  has_y : Int,
+  hints : Int,
+  debug : Int,
   parent_window_id : Int,
 ) -> Int = "moonbit_wm_create_window"
 

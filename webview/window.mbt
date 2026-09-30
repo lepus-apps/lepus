@@ -4,17 +4,17 @@
 pub struct Window {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int?
+  height : Int?
   size_hint : SizeHint
-  debug : Int
-  devtools : Bool
+  debug : Int?
+  devtools : Bool?
   child_arg : String
   mut options : WindowOptions
-  mut traffic_light_position : (Int, Int)
-  position : (Int, Int)
-  hidden : Bool
-  focused : Bool
+  mut traffic_light_position : (Int, Int)?
+  position : (Int, Int)?
+  hidden : Bool?
+  focused : Bool?
   enable_window_controls_plugin : Bool
   mut url : String
   mut html : String
@@ -26,36 +26,39 @@ pub struct Window {
 ///|
 /// Creates a managed app. The library handles the parent dispatcher and child
 /// webview process automatically.
+///
+/// All window options are optional; omitting one leaves it to the native
+/// platform (see [`WindowOptions`]).
 #alias(new, deprecated="Use `Window()` instead")
 pub fn Window::Window(
   label? : String = "",
   title? : String = "MoonBit WebView",
   url? : String = "",
-  width? : Int = 800,
-  height? : Int = 600,
+  width? : Int,
+  height? : Int,
   size_hint? : SizeHint = None,
-  debug? : Int = 0,
-  devtools? : Bool = false,
+  debug? : Int,
+  devtools? : Bool,
   child_arg? : String = "--moonbit-webview-child",
-  decorations? : Bool = true,
-  resizable? : Bool = true,
-  closeable? : Bool = true,
-  minimizable? : Bool = true,
-  maximizable? : Bool = true,
-  always_on_top? : Bool = false,
-  always_on_bottom? : Bool = false,
-  transparent? : Bool = false,
-  shadow? : Bool = true,
-  skip_taskbar? : Bool = false,
-  visible_on_all_workspaces? : Bool = false,
-  title_bar_style? : TitleBarStyle = Visible,
-  title_bar_overlay? : Bool = false,
-  hidden_title? : Bool = false,
+  decorations? : Bool,
+  resizable? : Bool,
+  closeable? : Bool,
+  minimizable? : Bool,
+  maximizable? : Bool,
+  always_on_top? : Bool,
+  always_on_bottom? : Bool,
+  transparent? : Bool,
+  shadow? : Bool,
+  skip_taskbar? : Bool,
+  visible_on_all_workspaces? : Bool,
+  title_bar_style? : TitleBarStyle,
+  title_bar_overlay? : Bool,
+  hidden_title? : Bool,
   frameless? : Bool = false,
-  traffic_light_position? : (Int, Int) = (-1, -1),
-  position? : (Int, Int) = (-1, -1),
-  hidden? : Bool = false,
-  focused? : Bool = true,
+  traffic_light_position? : (Int, Int),
+  position? : (Int, Int),
+  hidden? : Bool,
+  focused? : Bool,
   enable_window_controls_plugin? : Bool = true,
 ) -> Window {
   {
@@ -68,7 +71,11 @@ pub fn Window::Window(
     devtools,
     child_arg,
     options: {
-      decorations: decorations && !frameless,
+      decorations: if frameless {
+        Some(false)
+      } else {
+        decorations
+      },
       resizable,
       closeable,
       minimizable,
@@ -109,11 +116,20 @@ pub fn Window::label(self : Window) -> String {
 
 ///|
 /// Applies the native window style described by `options`.
+///
+/// `options` is a *patch*: only the fields set to `Some(_)` are applied, and an
+/// all-unset patch performs no native work. Unset fields keep whatever value
+/// the window already has, so successive calls are incremental rather than
+/// wholesale resets.
 pub fn Window::set_window_customization(
   self : Window,
   options : WindowOptions,
 ) -> Unit {
-  self.options = options
+  // Remember the merge so options set by earlier calls are not forgotten when
+  // the child process later re-creates this window, but only push the incoming
+  // patch to the native side — applying the whole merged set would re-issue
+  // native calls for properties that did not change.
+  self.options = self.options.merge(options)
   if self.runtime_window_id > 0 {
     ignore(wm_apply_window_options(self.runtime_window_id, options))
   }
@@ -126,7 +142,7 @@ pub fn Window::set_traffic_light_position(
   x : Int,
   y : Int,
 ) -> Unit {
-  self.traffic_light_position = (x, y)
+  self.traffic_light_position = Some((x, y))
   if self.runtime_window_id > 0 {
     ignore(
       @window_manager.wm_set_traffic_light_position(
@@ -303,28 +319,28 @@ async fn Window::run_child_async(self : Window) -> Unit {
       task_group,
       title=self.title,
       url="",
-      width=self.width,
-      height=self.height,
-      debug=self.debug,
-      devtools=self.devtools,
-      decorations=self.options.decorations,
-      resizable=self.options.resizable,
-      closeable=self.options.closeable,
-      minimizable=self.options.minimizable,
-      maximizable=self.options.maximizable,
-      always_on_top=self.options.always_on_top,
-      always_on_bottom=self.options.always_on_bottom,
-      transparent=self.options.transparent,
-      shadow=self.options.shadow,
-      skip_taskbar=self.options.skip_taskbar,
-      visible_on_all_workspaces=self.options.visible_on_all_workspaces,
-      title_bar_style=self.options.title_bar_style,
-      title_bar_overlay=self.options.title_bar_overlay,
-      hidden_title=self.options.hidden_title,
-      traffic_light_position=self.traffic_light_position,
-      position=self.position,
-      hidden=self.hidden,
-      focused=self.focused,
+      width?=self.width,
+      height?=self.height,
+      debug?=self.debug,
+      devtools?=self.devtools,
+      decorations?=self.options.decorations,
+      resizable?=self.options.resizable,
+      closeable?=self.options.closeable,
+      minimizable?=self.options.minimizable,
+      maximizable?=self.options.maximizable,
+      always_on_top?=self.options.always_on_top,
+      always_on_bottom?=self.options.always_on_bottom,
+      transparent?=self.options.transparent,
+      shadow?=self.options.shadow,
+      skip_taskbar?=self.options.skip_taskbar,
+      visible_on_all_workspaces?=self.options.visible_on_all_workspaces,
+      title_bar_style?=self.options.title_bar_style,
+      title_bar_overlay?=self.options.title_bar_overlay,
+      hidden_title?=self.options.hidden_title,
+      traffic_light_position?=self.traffic_light_position,
+      position?=self.position,
+      hidden?=self.hidden,
+      focused?=self.focused,
     )
     self.runtime_window_id = webview.window_id()
     // macOS：安装标准主菜单，使 Cmd+W/Q/M 及 Edit 系列快捷键生效
@@ -343,19 +359,16 @@ async fn Window::run_child_async(self : Window) -> Unit {
       webview.set_custom_protocol(scheme, root_dir)
     })
     self.install_child_plugins(webview, wm)
-    if !self.options.decorations ||
-      self.options.title_bar_style != Visible ||
-      self.options.title_bar_overlay {
+    if self.options.wants_custom_titlebar() {
       webview.enable_custom_titlebar_support()
     }
-    if self.options.transparent {
+    if self.options.wants_transparency() {
       webview.enable_transparent_background_support()
     }
-    if self.traffic_light_position.0 >= 0 && self.traffic_light_position.1 >= 0 {
-      webview.set_traffic_light_position(
-        self.traffic_light_position.0,
-        self.traffic_light_position.1,
-      )
+    match self.traffic_light_position {
+      Some((x, y)) if x >= 0 && y >= 0 =>
+        webview.set_traffic_light_position(x, y)
+      _ => ()
     }
     if self.url != "" {
       webview.navigate(self.url)

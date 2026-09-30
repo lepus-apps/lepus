@@ -265,6 +265,48 @@ spawn/connect, and platform view control (macOS Objective-C / Win32 / GTK).
 Both stubs include `moonbit.h` for `moonbit_decref`, `moonbit_make_bytes_raw`,
 and `moonbit_bytes_t`.
 
+### Window style options: the presence-mask protocol
+
+Native window styling is driven by `WindowOptions` (`window_manager.mbt`), a
+struct whose every field is optional. `None` means "not specified — leave that
+native property alone", so callers never pay for style they did not ask for.
+
+`moonbit_wm_set_window_customization` therefore takes a `mask` argument in
+addition to the flag values:
+
+```
+moonbit_wm_set_window_customization(window_id, mask,
+    decorations, resizable, closeable, minimizable, maximizable,
+    always_on_top, always_on_bottom, transparent, shadow,
+    skip_taskbar, visible_on_all_workspaces,
+    title_bar_style, title_bar_overlay, hidden_title)
+```
+
+* One bit per option; a set bit means "the caller supplied this value, apply
+  it", a clear bit means "leave the native property untouched".
+* `mask == 0` returns immediately in C, and `wm_apply_window_options` skips the
+  FFI call entirely, so a window with no style options performs zero native
+  style calls.
+* **The bit values must stay in sync** between the `WM_SET_*` macros in
+  `ffi/window_manager/stub.c` and the `WM_SET_*` constants in
+  `window_manager.mbt`. They are cross-checked by the
+  `wm_mask sets exactly one bit per specified option` test plus the
+  `wm_presence` / `wm_opt_flag` tests; keep them updated together.
+* `TitleBarStyle` crosses the ABI as an int: `0 = Visible`, `1 = Transparent`,
+  `2 = Overlay`. `window_manager.mbt` sends `Visible` (`0`) for an unset style;
+  C only reads it when `WM_SET_TITLE_BAR_STYLE` is set.
+* `window_manager.mbt`'s `wm_flag` / `wm_opt_flag` / `wm_presence` /
+  `WindowOptions::wm_mask` are the single place that encodes MoonBit options
+  into the wire format — add new options there, never inline in callers.
+
+After changing either side, rebuild and confirm the exported symbol:
+
+```bash
+moon build --target native examples/custom_window
+nm -gU _build/native/release/build/webview/ffi/window_manager/stub.o |
+  grep moonbit_wm_set_window_customization
+```
+
 ---
 
 ## JavaScript Bridge Protocol

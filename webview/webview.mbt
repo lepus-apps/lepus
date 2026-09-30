@@ -67,42 +67,51 @@ fn log(level : Int, msg : String) -> Unit {
 ///
 /// Window lifecycle operations (`terminate/set_title/set_size/`
 /// `navigate/set_html/eval/init`) will be routed through `wm_*` APIs.
+///
+/// Every style/size option is optional: `None` (the default) means "leave it
+/// to the native platform" and costs no native call at all.
 pub fn[X] WebView::new_managed(
   task_group : @async.TaskGroup[X],
-  title? : String = "",
-  url? : String = "",
-  width? : Int = 800,
-  height? : Int = 600,
-  debug? : Int = 0,
-  devtools? : Bool = false,
-  decorations? : Bool = true,
-  resizable? : Bool = true,
-  closeable? : Bool = true,
-  minimizable? : Bool = true,
-  maximizable? : Bool = true,
-  always_on_top? : Bool = false,
-  always_on_bottom? : Bool = false,
-  transparent? : Bool = false,
-  shadow? : Bool = true,
-  skip_taskbar? : Bool = false,
-  visible_on_all_workspaces? : Bool = false,
-  title_bar_style? : TitleBarStyle = Visible,
-  title_bar_overlay? : Bool = false,
-  hidden_title? : Bool = false,
+  title? : String,
+  url? : String,
+  width? : Int,
+  height? : Int,
+  debug? : Int,
+  devtools? : Bool,
+  decorations? : Bool,
+  resizable? : Bool,
+  closeable? : Bool,
+  minimizable? : Bool,
+  maximizable? : Bool,
+  always_on_top? : Bool,
+  always_on_bottom? : Bool,
+  transparent? : Bool,
+  shadow? : Bool,
+  skip_taskbar? : Bool,
+  visible_on_all_workspaces? : Bool,
+  title_bar_style? : TitleBarStyle,
+  title_bar_overlay? : Bool,
+  hidden_title? : Bool,
   frameless? : Bool = false,
-  traffic_light_position? : (Int, Int) = (-1, -1),
-  position? : (Int, Int) = (-1, -1),
-  hidden? : Bool = false,
-  focused? : Bool = true,
+  traffic_light_position? : (Int, Int),
+  position? : (Int, Int),
+  hidden? : Bool,
+  focused? : Bool,
 ) -> WebView[X] {
-  let create_debug = if devtools && debug <= 0 { 1 } else { debug }
+  let debug_level = debug.unwrap_or(0)
+  let devtools_enabled = devtools.unwrap_or(false)
+  let create_debug = if devtools_enabled && debug_level <= 0 {
+    1
+  } else {
+    debug_level
+  }
   let window_id = @window_manager.wm_create_window(
-    @encoding/utf8.encode(title),
-    @encoding/utf8.encode(url),
-    width,
-    height,
-    position.0,
-    position.1,
+    @encoding/utf8.encode(title.unwrap_or("")),
+    @encoding/utf8.encode(url.unwrap_or("")),
+    width.unwrap_or(800),
+    height.unwrap_or(600),
+    -1,
+    -1,
     0,
     create_debug,
     -1,
@@ -114,11 +123,17 @@ pub fn[X] WebView::new_managed(
   if create_debug > 0 {
     set_log_level(create_debug)
   }
-  if devtools {
+  if devtools_enabled {
     ignore(@window_manager.wm_set_devtools(window_id, 1))
   }
+  // `None` fields stay unset so the native side keeps its platform default;
+  // an all-unset patch skips the FFI call entirely.
   let options : WindowOptions = {
-    decorations: decorations && !frameless,
+    decorations: if frameless {
+      Some(false)
+    } else {
+      decorations
+    },
     resizable,
     closeable,
     minimizable,
@@ -134,23 +149,23 @@ pub fn[X] WebView::new_managed(
     hidden_title,
   }
   ignore(wm_apply_window_options(window_id, options))
-  if traffic_light_position.0 >= 0 && traffic_light_position.1 >= 0 {
-    ignore(
-      @window_manager.wm_set_traffic_light_position(
-        window_id,
-        traffic_light_position.0,
-        traffic_light_position.1,
-      ),
-    )
+  match traffic_light_position {
+    Some((x, y)) if x >= 0 && y >= 0 =>
+      ignore(@window_manager.wm_set_traffic_light_position(window_id, x, y))
+    _ => ()
   }
-  if position.0 >= 0 && position.1 >= 0 {
-    ignore(@window_manager.wm_set_position(window_id, position.0, position.1))
+  match position {
+    Some((x, y)) if x >= 0 && y >= 0 =>
+      ignore(@window_manager.wm_set_position(window_id, x, y))
+    _ => ()
   }
-  if hidden {
+  if hidden is Some(true) {
     ignore(@window_manager.wm_set_visibility(window_id, 0))
-  } else if focused {
-    // 新窗口创建后激活 app 并置顶获得键盘焦点；
-    // focused=false 的窗口只由 webview 库自身排到最前，不抢焦点。
+  } else if !(focused is Some(false)) {
+    // `focused` defaults to `true` (native/Tauri default), so only an explicit
+    // `false` opts out. Leaving it unset still activates the app and makes the
+    // new window key — a "do nothing" default cannot achieve that, so this is
+    // the one option whose unset state does not skip the native call.
     ignore(@window_manager.wm_focus_window(window_id))
   }
   { handle, window_id, task_group, }
