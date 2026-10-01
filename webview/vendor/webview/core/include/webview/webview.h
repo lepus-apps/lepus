@@ -2929,6 +2929,23 @@ private:
     }
     return objc::msg_send<id>((id)cls, "new"_sel);
   }
+  static Class get_window_class() {
+    constexpr auto class_name = "LepusWebviewNSWindow";
+    auto cls = objc_lookUpClass(class_name);
+    if (!cls) {
+      auto base = (Class) "NSWindow"_cls;
+      cls = objc_allocateClassPair(base, class_name, 0);
+      // Lepus can remove the titled style for frameless windows. NSWindow's
+      // default implementation then refuses keyboard focus, even when the
+      // WebView's input element is focused. Owned WebView windows stay editable.
+      auto selector = "canBecomeKeyWindow"_sel;
+      class_addMethod(
+          cls, selector, (IMP)(+[](id, SEL) -> BOOL { return YES; }),
+          method_getTypeEncoding(class_getInstanceMethod(base, selector)));
+      objc_registerClassPair(cls);
+    }
+    return cls;
+  }
   static id get_shared_application() {
     return objc::msg_send<id>("NSApplication"_cls, "sharedApplication"_sel);
   }
@@ -2990,7 +3007,7 @@ private:
 
     // Main window
     if (m_owns_window) {
-      m_window = objc::msg_send<id>("NSWindow"_cls, "alloc"_sel);
+      m_window = objc::msg_send<id>((id)get_window_class(), "alloc"_sel);
       auto style = NSWindowStyleMaskTitled;
       m_window = objc::msg_send<id>(
           m_window, "initWithContentRect:styleMask:backing:defer:"_sel,
